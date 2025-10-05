@@ -2,6 +2,7 @@ import streamlit as st
 import anthropic
 import base64
 import json
+import os
 from io import BytesIO
 from PIL import Image
 from datetime import datetime
@@ -543,8 +544,8 @@ def show_login_prompt(message, key_prefix):
             st.session_state.show_login_modal = True
             st.rerun()
 
-# Get API key from secrets or user input
-api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
+# Get API key from environment variables or secrets
+api_key = os.environ.get("ANTHROPIC_API_KEY", "") or st.secrets.get("ANTHROPIC_API_KEY", "")
 
 # Header
 col1, col2 = st.columns([6, 1])
