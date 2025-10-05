@@ -524,7 +524,7 @@ def generate_pdf(workout_plan, duration, fitness_level):
     buffer.seek(0)
     return buffer
 
-def show_login_prompt(message):
+def show_login_prompt(message, key_prefix):
     """Show a login prompt with custom message"""
     st.markdown(f"""
     <div class="login-prompt">
@@ -535,11 +535,11 @@ def show_login_prompt(message):
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📝 Create Account", type="primary", use_container_width=True):
+        if st.button("📝 Create Account", type="primary", use_container_width=True, key=f"create_{key_prefix}"):
             st.session_state.show_login_modal = True
             st.rerun()
     with col2:
-        if st.button("🔐 Login", use_container_width=True):
+        if st.button("🔐 Login", use_container_width=True, key=f"login_{key_prefix}"):
             st.session_state.show_login_modal = True
             st.rerun()
 
@@ -877,7 +877,7 @@ with tab2:
 
 with tab3:
     if not st.session_state.logged_in:
-        show_login_prompt("Login to View Your Workout History")
+        show_login_prompt("Login to View Your Workout History", "history")
     else:
         st.header("📊 Workout History")
         
@@ -933,7 +933,7 @@ with tab3:
 
 with tab4:
     if not st.session_state.logged_in:
-        show_login_prompt("Login to View Shared Workouts")
+        show_login_prompt("Login to View Shared Workouts", "shared")
     else:
         st.header("🤝 Shared Workouts")
         
@@ -977,7 +977,7 @@ with tab4:
 
 with tab5:
     if not st.session_state.logged_in:
-        show_login_prompt("Login to Access Settings")
+        show_login_prompt("Login to Access Settings", "settings")
     else:
         st.header("⚙️ Account Settings")
         
