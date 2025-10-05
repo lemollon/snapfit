@@ -46,12 +46,16 @@ st.markdown(”””
         font-size: 0.875rem;
     }
     .exercise-card {
-        background: linear-gradient(135deg, #1F2937 0%, #374151 100%);
-        padding: 1rem;
-        border-radius: 0.5rem;
-        margin-bottom: 0.75rem;
-        border: 1px solid #4B5563;
-        color: #F9FAFB;
+        background: linear-gradient(135deg, #1F2937 0%, #374151 100%) !important;
+        padding: 1rem !important;
+        border-radius: 0.5rem !important;
+        margin-bottom: 0.75rem !important;
+        border: 1px solid #4B5563 !important;
+        color: #F9FAFB !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+    }
+    .exercise-card * {
+        color: inherit !important;
     }
     .timer-display {
         font-size: 4rem;
@@ -848,7 +852,7 @@ if st.session_state.workout_plan:
     with st.expander("🔥 WARM-UP", expanded=True):
         for ex in workout['warmup']:
             st.markdown(f"""
-            <div class="exercise-card">
+            <div style="background: linear-gradient(135deg, #1F2937 0%, #374151 100%); padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; border: 1px solid #4B5563; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                 <strong style="color: #F9FAFB; font-size: 1.1rem;">{ex['name']}</strong> - <span style="color: #FCD34D; font-weight: 600;">{ex['duration']}</span><br>
                 <small style="color: #E5E7EB;">{ex['description']}</small>
             </div>
@@ -857,7 +861,7 @@ if st.session_state.workout_plan:
     with st.expander("💪 MAIN WORKOUT", expanded=True):
         for ex in workout['main']:
             st.markdown(f"""
-            <div class="exercise-card">
+            <div style="background: linear-gradient(135deg, #1F2937 0%, #374151 100%); padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; border: 1px solid #4B5563; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                 <strong style="color: #F9FAFB; font-size: 1.1rem;">{ex['name']}</strong> - <span style="color: #A78BFA; font-weight: 600;">{ex['sets']} sets × {ex['reps']}</span><br>
                 <strong style="color: #D1D5DB;">Equipment:</strong> <span style="color: #E5E7EB;">{ex['equipment']}</span><br>
                 <strong style="color: #D1D5DB;">Tips:</strong> <span style="color: #E5E7EB;">{ex['tips']}</span>
@@ -867,7 +871,7 @@ if st.session_state.workout_plan:
     with st.expander("🧘 COOL-DOWN & STRETCH", expanded=True):
         for ex in workout['cooldown']:
             st.markdown(f"""
-            <div class="exercise-card">
+            <div style="background: linear-gradient(135deg, #1F2937 0%, #374151 100%); padding: 1rem; border-radius: 0.5rem; margin-bottom: 0.75rem; border: 1px solid #4B5563; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">
                 <strong style="color: #F9FAFB; font-size: 1.1rem;">{ex['name']}</strong> - <span style="color: #6EE7B7; font-weight: 600;">{ex['duration']}</span><br>
                 <small style="color: #E5E7EB;">{ex['description']}</small>
             </div>
