@@ -677,20 +677,37 @@ with tab1:
     with col1:
         st.header("📸 Capture Your Environment")
         
+        # Camera option
+        st.subheader("Take a Photo Now")
+        camera_photo = st.camera_input("Use your camera", key="camera")
+        
+        if camera_photo is not None:
+            image = Image.open(camera_photo)
+            # Create a unique filename
+            image.filename = f"camera_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+            # Check if this photo is already added
+            if not any(hasattr(p, 'filename') and p.filename == image.filename for p in st.session_state.photos):
+                st.session_state.photos.append(image)
+                st.success("📸 Photo captured!")
+        
+        st.divider()
+        
+        # File upload option
+        st.subheader("Or Browse Your Photos")
         uploaded_files = st.file_uploader(
-            "Upload photos of your workout space",
+            "Upload photos from your gallery",
             type=["jpg", "jpeg", "png"],
             accept_multiple_files=True,
-            help="You can upload multiple photos"
+            help="Select multiple photos from your device"
         )
         
         if uploaded_files:
             for uploaded_file in uploaded_files:
-                if not any(p.filename == uploaded_file.name for p in st.session_state.photos if hasattr(p, 'filename')):
+                if not any(hasattr(p, 'filename') and p.filename == uploaded_file.name for p in st.session_state.photos):
                     image = Image.open(uploaded_file)
                     image.filename = uploaded_file.name
                     st.session_state.photos.append(image)
-            st.success(f"✅ {len(st.session_state.photos)} photo(s) uploaded")
+            st.success(f"✅ {len(st.session_state.photos)} photo(s) total")
         
         if st.session_state.photos:
             st.subheader("Your Photos")
