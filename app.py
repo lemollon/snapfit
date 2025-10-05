@@ -54,13 +54,14 @@ st.markdown("""
         color: #4F46E5;
         margin: 1rem 0;
     }
-    .login-container {
-        max-width: 400px;
-        margin: 2rem auto;
-        padding: 2rem;
+    .login-prompt {
+        text-align: center;
+        padding: 3rem 2rem;
         background: white;
         border-radius: 1rem;
         box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        max-width: 500px;
+        margin: 2rem auto;
     }
     .share-code {
         background-color: #EFF6FF;
@@ -380,6 +381,8 @@ if 'timer_seconds' not in st.session_state:
     st.session_state.timer_seconds = 60
 if 'timer_start_time' not in st.session_state:
     st.session_state.timer_start_time = None
+if 'show_login_modal' not in st.session_state:
+    st.session_state.show_login_modal = False
 
 def image_to_base64(image):
     """Convert PIL Image to base64 string"""
@@ -521,185 +524,228 @@ def generate_pdf(workout_plan, duration, fitness_level):
     buffer.seek(0)
     return buffer
 
-# Login/Register Page
-if not st.session_state.logged_in:
-    st.markdown('<div class="login-container">', unsafe_allow_html=True)
+def show_login_prompt(message):
+    """Show a login prompt with custom message"""
+    st.markdown(f"""
+    <div class="login-prompt">
+        <h2>🔒 {message}</h2>
+        <p style="color: #6B7280; margin: 1rem 0;">Create a free account to unlock this feature</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    st.title("📸 Welcome to SnapFit")
-    st.caption("Snap. Train. Transform.")
-    
-    tab1, tab2 = st.tabs(["🔐 Login", "📝 Register"])
-    
-    with tab1:
-        st.subheader("Login to Your Account")
-        login_username = st.text_input("Username", key="login_username")
-        login_password = st.text_input("Password", type="password", key="login_password")
-        
-        if st.button("Login", type="primary", use_container_width=True):
-            if login_username and login_password:
-                user_id = authenticate_user(login_username, login_password)
-                if user_id:
-                    st.session_state.logged_in = True
-                    st.session_state.user_id = user_id
-                    st.session_state.username = login_username
-                    st.success(f"Welcome back, {login_username}!")
-                    st.rerun()
-                else:
-                    st.error("Invalid username or password")
-            else:
-                st.warning("Please enter both username and password")
-    
-    with tab2:
-        st.subheader("Create New Account")
-        reg_username = st.text_input("Choose Username", key="reg_username")
-        reg_email = st.text_input("Email (optional, for password recovery)", key="reg_email")
-        reg_password = st.text_input("Choose Password", type="password", key="reg_password")
-        reg_password_confirm = st.text_input("Confirm Password", type="password", key="reg_password_confirm")
-        
-        if st.button("Register", type="primary", use_container_width=True):
-            if reg_username and reg_password and reg_password_confirm:
-                if len(reg_username) < 3:
-                    st.error("Username must be at least 3 characters")
-                elif len(reg_password) < 6:
-                    st.error("Password must be at least 6 characters")
-                elif reg_password != reg_password_confirm:
-                    st.error("Passwords don't match")
-                else:
-                    if create_user(reg_username, reg_password, reg_email or None):
-                        st.success("Account created successfully! Please login.")
-                    else:
-                        st.error("Username already exists")
-            else:
-                st.warning("Please fill in username and password fields")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# Main App
-else:
-    # Get API key from secrets or user input
-    api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
-    
-    # Header with logout
-    col1, col2 = st.columns([6, 1])
+    col1, col2 = st.columns(2)
     with col1:
-        st.title("📸 SnapFit")
-        st.caption("Snap. Train. Transform.")
-        st.markdown(f"Welcome back, **{st.session_state.username}**!")
+        if st.button("📝 Create Account", type="primary", use_container_width=True):
+            st.session_state.show_login_modal = True
+            st.rerun()
     with col2:
+        if st.button("🔐 Login", use_container_width=True):
+            st.session_state.show_login_modal = True
+            st.rerun()
+
+# Get API key from secrets or user input
+api_key = st.secrets.get("ANTHROPIC_API_KEY", "")
+
+# Header
+col1, col2 = st.columns([6, 1])
+with col1:
+    st.title("📸 SnapFit")
+    st.caption("Snap. Train. Transform.")
+    if st.session_state.logged_in:
+        st.markdown(f"Welcome back, **{st.session_state.username}**!")
+    else:
+        st.markdown("**Try it free** - No account needed to generate workouts!")
+
+with col2:
+    if st.session_state.logged_in:
         if st.button("🚪 Logout"):
             st.session_state.logged_in = False
             st.session_state.user_id = None
             st.session_state.username = None
+            st.rerun()
+    else:
+        if st.button("🔐 Login"):
+            st.session_state.show_login_modal = True
+            st.rerun()
+
+# Show login/register modal if triggered
+if st.session_state.show_login_modal and not st.session_state.logged_in:
+    with st.container():
+        st.markdown("---")
+        tab1, tab2 = st.tabs(["🔐 Login", "📝 Register"])
+        
+        with tab1:
+            st.subheader("Login to Your Account")
+            login_username = st.text_input("Username", key="login_username")
+            login_password = st.text_input("Password", type="password", key="login_password")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Login", type="primary", use_container_width=True):
+                    if login_username and login_password:
+                        user_id = authenticate_user(login_username, login_password)
+                        if user_id:
+                            st.session_state.logged_in = True
+                            st.session_state.user_id = user_id
+                            st.session_state.username = login_username
+                            st.session_state.show_login_modal = False
+                            st.success(f"Welcome back, {login_username}!")
+                            st.rerun()
+                        else:
+                            st.error("Invalid username or password")
+                    else:
+                        st.warning("Please enter both username and password")
+            with col2:
+                if st.button("Cancel", use_container_width=True):
+                    st.session_state.show_login_modal = False
+                    st.rerun()
+        
+        with tab2:
+            st.subheader("Create New Account")
+            reg_username = st.text_input("Choose Username", key="reg_username")
+            reg_email = st.text_input("Email (optional)", key="reg_email")
+            reg_password = st.text_input("Choose Password", type="password", key="reg_password")
+            reg_password_confirm = st.text_input("Confirm Password", type="password", key="reg_password_confirm")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Register", type="primary", use_container_width=True):
+                    if reg_username and reg_password and reg_password_confirm:
+                        if len(reg_username) < 3:
+                            st.error("Username must be at least 3 characters")
+                        elif len(reg_password) < 6:
+                            st.error("Password must be at least 6 characters")
+                        elif reg_password != reg_password_confirm:
+                            st.error("Passwords don't match")
+                        else:
+                            if create_user(reg_username, reg_password, reg_email or None):
+                                user_id = authenticate_user(reg_username, reg_password)
+                                st.session_state.logged_in = True
+                                st.session_state.user_id = user_id
+                                st.session_state.username = reg_username
+                                st.session_state.show_login_modal = False
+                                st.success("Account created! Welcome to SnapFit!")
+                                st.rerun()
+                            else:
+                                st.error("Username already exists")
+                    else:
+                        st.warning("Please fill in username and password fields")
+            with col2:
+                if st.button("Cancel ", use_container_width=True):
+                    st.session_state.show_login_modal = False
+                    st.rerun()
+        st.markdown("---")
+
+# Create tabs
+if st.session_state.logged_in:
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏋️ Create Workout", "⏱️ Rest Timer", "📊 History", "🤝 Shared", "⚙️ Settings"])
+else:
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏋️ Create Workout", "⏱️ Rest Timer", "📊 History", "🤝 Shared", "⚙️ Settings"])
+
+with tab1:
+    # Sidebar
+    with st.sidebar:
+        st.header("⚙️ Your Preferences")
+        
+        if not api_key:
+            api_key = st.text_input("Anthropic API Key", type="password", help="Enter your Anthropic API key")
+        
+        st.divider()
+        
+        fitness_level = st.selectbox("Fitness Level", ["beginner", "intermediate", "advanced"])
+        duration = st.slider("⏱️ Workout Duration (minutes)", min_value=10, max_value=120, value=30, step=5)
+        
+        st.subheader("Workout Types")
+        workout_types = {
+            "strength": st.checkbox("Strength", value=True),
+            "cardio": st.checkbox("Cardio", value=True),
+            "bodyweight": st.checkbox("Bodyweight", value=True),
+            "flexibility": st.checkbox("Flexibility", value=True)
+        }
+        
+        st.divider()
+        
+        if st.button("🗑️ Clear All & Start Over"):
             st.session_state.photos = []
             st.session_state.workout_plan = None
+            st.session_state.detected_equipment = []
             st.rerun()
     
-    # Create tabs
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏋️ Create Workout", "⏱️ Rest Timer", "📊 History", "🤝 Shared", "⚙️ Settings"])
+    # Main content
+    col1, col2 = st.columns([1, 1])
     
-    with tab1:
-        # Sidebar
-        with st.sidebar:
-            st.header("⚙️ Your Preferences")
-            
-            if not api_key:
-                api_key = st.text_input("Anthropic API Key", type="password", help="Enter your Anthropic API key")
-            
-            st.divider()
-            
-            fitness_level = st.selectbox("Fitness Level", ["beginner", "intermediate", "advanced"])
-            duration = st.slider("⏱️ Workout Duration (minutes)", min_value=10, max_value=120, value=30, step=5)
-            
-            st.subheader("Workout Types")
-            workout_types = {
-                "strength": st.checkbox("Strength", value=True),
-                "cardio": st.checkbox("Cardio", value=True),
-                "bodyweight": st.checkbox("Bodyweight", value=True),
-                "flexibility": st.checkbox("Flexibility", value=True)
-            }
-            
-            st.divider()
-            
-            if st.button("🗑️ Clear All & Start Over"):
-                st.session_state.photos = []
-                st.session_state.workout_plan = None
-                st.session_state.detected_equipment = []
-                st.rerun()
+    with col1:
+        st.header("📸 Capture Your Environment")
         
-        # Main content
-        col1, col2 = st.columns([1, 1])
+        uploaded_files = st.file_uploader(
+            "Upload photos of your workout space",
+            type=["jpg", "jpeg", "png"],
+            accept_multiple_files=True,
+            help="You can upload multiple photos"
+        )
         
-        with col1:
-            st.header("📸 Capture Your Environment")
-            
-            uploaded_files = st.file_uploader(
-                "Upload photos of your workout space",
-                type=["jpg", "jpeg", "png"],
-                accept_multiple_files=True,
-                help="You can upload multiple photos"
-            )
-            
-            if uploaded_files:
-                for uploaded_file in uploaded_files:
-                    if not any(p.filename == uploaded_file.name for p in st.session_state.photos if hasattr(p, 'filename')):
-                        image = Image.open(uploaded_file)
-                        image.filename = uploaded_file.name
-                        st.session_state.photos.append(image)
-                st.success(f"✅ {len(st.session_state.photos)} photo(s) uploaded")
-            
-            if st.session_state.photos:
-                st.subheader("Your Photos")
-                cols = st.columns(3)
-                for idx, photo in enumerate(st.session_state.photos):
-                    with cols[idx % 3]:
-                        st.image(photo, use_container_width=True)
-                        if st.button(f"❌ Remove", key=f"remove_{idx}"):
-                            st.session_state.photos.pop(idx)
+        if uploaded_files:
+            for uploaded_file in uploaded_files:
+                if not any(p.filename == uploaded_file.name for p in st.session_state.photos if hasattr(p, 'filename')):
+                    image = Image.open(uploaded_file)
+                    image.filename = uploaded_file.name
+                    st.session_state.photos.append(image)
+            st.success(f"✅ {len(st.session_state.photos)} photo(s) uploaded")
+        
+        if st.session_state.photos:
+            st.subheader("Your Photos")
+            cols = st.columns(3)
+            for idx, photo in enumerate(st.session_state.photos):
+                with cols[idx % 3]:
+                    st.image(photo, use_container_width=True)
+                    if st.button(f"❌ Remove", key=f"remove_{idx}"):
+                        st.session_state.photos.pop(idx)
+                        st.rerun()
+    
+    with col2:
+        st.header("🎯 Generate Workout")
+        
+        if not api_key:
+            st.warning("⚠️ Please enter your Anthropic API key in the sidebar")
+        elif not st.session_state.photos:
+            st.info("📷 Upload at least one photo to get started")
+        else:
+            if st.button("🚀 Generate Workout Plan", type="primary"):
+                if not any(workout_types.values()):
+                    st.error("Please select at least one workout type")
+                else:
+                    with st.spinner("🔍 Analyzing your environment..."):
+                        try:
+                            result = analyze_environment(
+                                st.session_state.photos,
+                                fitness_level,
+                                duration,
+                                workout_types,
+                                api_key
+                            )
+                            st.session_state.workout_plan = result
+                            st.session_state.detected_equipment = result.get('equipment', [])
+                            st.success("✅ Workout plan generated!")
                             st.rerun()
+                        except Exception as e:
+                            st.error(f"❌ Error: {str(e)}")
+    
+    # Display Results
+    if st.session_state.workout_plan:
+        st.divider()
         
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            pdf_buffer = generate_pdf(st.session_state.workout_plan, duration, fitness_level)
+            st.download_button(
+                label="📄 Download PDF",
+                data=pdf_buffer,
+                file_name=f"workout_{datetime.now().strftime('%Y%m%d')}.pdf",
+                mime="application/pdf",
+                use_container_width=True
+            )
         with col2:
-            st.header("🎯 Generate Workout")
-            
-            if not api_key:
-                st.warning("⚠️ Please enter your Anthropic API key in the sidebar or configure it in secrets")
-            elif not st.session_state.photos:
-                st.info("📷 Upload at least one photo to get started")
-            else:
-                if st.button("🚀 Generate Workout Plan", type="primary"):
-                    if not any(workout_types.values()):
-                        st.error("Please select at least one workout type")
-                    else:
-                        with st.spinner("🔍 Analyzing your environment..."):
-                            try:
-                                result = analyze_environment(
-                                    st.session_state.photos,
-                                    fitness_level,
-                                    duration,
-                                    workout_types,
-                                    api_key
-                                )
-                                st.session_state.workout_plan = result
-                                st.session_state.detected_equipment = result.get('equipment', [])
-                                st.success("✅ Workout plan generated!")
-                                st.rerun()
-                            except Exception as e:
-                                st.error(f"❌ Error: {str(e)}")
-        
-        # Display Results
-        if st.session_state.workout_plan:
-            st.divider()
-            
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                pdf_buffer = generate_pdf(st.session_state.workout_plan, duration, fitness_level)
-                st.download_button(
-                    label="📄 Download PDF",
-                    data=pdf_buffer,
-                    file_name=f"workout_{datetime.now().strftime('%Y%m%d')}.pdf",
-                    mime="application/pdf",
-                    use_container_width=True
-                )
-            with col2:
+            if st.session_state.logged_in:
                 make_public = st.checkbox("Make Public", value=False)
                 if st.button("✅ Save Workout", use_container_width=True):
                     workout_id, share_code = save_workout_to_db(
@@ -713,121 +759,126 @@ else:
                         st.success(f"Saved! Share code: {share_code}")
                     else:
                         st.success("Workout saved to history!")
-            with col3:
-                if st.button("⏱️ Start Timer", use_container_width=True):
-                    st.info("Switch to Rest Timer tab!")
-            with col4:
-                if st.button("🤝 Share", use_container_width=True):
-                    st.info("Save workout first to get share options!")
-            
-            st.divider()
-            
-            st.header("🎯 Detected Equipment")
-            equipment_html = " ".join([f'<span class="equipment-tag">{item}</span>' 
-                                       for item in st.session_state.detected_equipment])
-            st.markdown(equipment_html, unsafe_allow_html=True)
-            
-            st.divider()
-            
-            st.header(f"Your {duration}-Minute Workout Plan")
-            
-            workout = st.session_state.workout_plan['workout']
-            
-            with st.expander("🔥 WARM-UP", expanded=True):
-                for ex in workout['warmup']:
-                    st.markdown(f"""
-                    <div class="exercise-card">
-                        <strong>{ex['name']}</strong> - <span style="color: #F97316;">{ex['duration']}</span><br>
-                        <small>{ex['description']}</small>
-                    </div>
-                    """, unsafe_allow_html=True)
-            
-            with st.expander("💪 MAIN WORKOUT", expanded=True):
-                for ex in workout['main']:
-                    st.markdown(f"""
-                    <div class="exercise-card">
-                        <strong>{ex['name']}</strong> - <span style="color: #6366F1;">{ex['sets']} sets × {ex['reps']}</span><br>
-                        <strong>Equipment:</strong> {ex['equipment']}<br>
-                        <strong>Tips:</strong> {ex['tips']}
-                    </div>
-                    """, unsafe_allow_html=True)
-            
-            with st.expander("🧘 COOL-DOWN & STRETCH", expanded=True):
-                for ex in workout['cooldown']:
-                    st.markdown(f"""
-                    <div class="exercise-card">
-                        <strong>{ex['name']}</strong> - <span style="color: #10B981;">{ex['duration']}</span><br>
-                        <small>{ex['description']}</small>
-                    </div>
-                    """, unsafe_allow_html=True)
-            
-            if st.session_state.workout_plan.get('notes'):
-                st.warning(f"⚠️ **Important:** {st.session_state.workout_plan['notes']}")
+            else:
+                if st.button("✅ Save Workout", use_container_width=True):
+                    st.info("💾 Create an account to save your workouts!")
+                    st.session_state.show_login_modal = True
+                    st.rerun()
+        with col3:
+            if st.button("⏱️ Start Timer", use_container_width=True):
+                st.info("Switch to Rest Timer tab!")
+        
+        st.divider()
+        
+        st.header("🎯 Detected Equipment")
+        equipment_html = " ".join([f'<span class="equipment-tag">{item}</span>' 
+                                   for item in st.session_state.detected_equipment])
+        st.markdown(equipment_html, unsafe_allow_html=True)
+        
+        st.divider()
+        
+        st.header(f"Your {duration}-Minute Workout Plan")
+        
+        workout = st.session_state.workout_plan['workout']
+        
+        with st.expander("🔥 WARM-UP", expanded=True):
+            for ex in workout['warmup']:
+                st.markdown(f"""
+                <div class="exercise-card">
+                    <strong>{ex['name']}</strong> - <span style="color: #F97316;">{ex['duration']}</span><br>
+                    <small>{ex['description']}</small>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with st.expander("💪 MAIN WORKOUT", expanded=True):
+            for ex in workout['main']:
+                st.markdown(f"""
+                <div class="exercise-card">
+                    <strong>{ex['name']}</strong> - <span style="color: #6366F1;">{ex['sets']} sets × {ex['reps']}</span><br>
+                    <strong>Equipment:</strong> {ex['equipment']}<br>
+                    <strong>Tips:</strong> {ex['tips']}
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with st.expander("🧘 COOL-DOWN & STRETCH", expanded=True):
+            for ex in workout['cooldown']:
+                st.markdown(f"""
+                <div class="exercise-card">
+                    <strong>{ex['name']}</strong> - <span style="color: #10B981;">{ex['duration']}</span><br>
+                    <small>{ex['description']}</small>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        if st.session_state.workout_plan.get('notes'):
+            st.warning(f"⚠️ **Important:** {st.session_state.workout_plan['notes']}")
+
+with tab2:
+    st.header("⏱️ Rest Timer")
+    st.markdown("Track rest periods between sets")
     
-    with tab2:
-        st.header("⏱️ Rest Timer")
-        st.markdown("Track rest periods between sets")
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.subheader("Quick Presets")
+        preset_col1, preset_col2, preset_col3 = st.columns(3)
+        with preset_col1:
+            if st.button("30s", use_container_width=True):
+                st.session_state.timer_seconds = 30
+        with preset_col2:
+            if st.button("60s", use_container_width=True):
+                st.session_state.timer_seconds = 60
+        with preset_col3:
+            if st.button("90s", use_container_width=True):
+                st.session_state.timer_seconds = 90
         
-        col1, col2, col3 = st.columns([1, 2, 1])
+        custom_time = st.number_input("Custom (seconds)", min_value=5, max_value=300, value=st.session_state.timer_seconds, step=5)
+        st.session_state.timer_seconds = custom_time
         
-        with col2:
-            st.subheader("Quick Presets")
-            preset_col1, preset_col2, preset_col3 = st.columns(3)
-            with preset_col1:
-                if st.button("30s", use_container_width=True):
-                    st.session_state.timer_seconds = 30
-            with preset_col2:
-                if st.button("60s", use_container_width=True):
-                    st.session_state.timer_seconds = 60
-            with preset_col3:
-                if st.button("90s", use_container_width=True):
-                    st.session_state.timer_seconds = 90
+        if st.session_state.timer_running:
+            elapsed = time.time() - st.session_state.timer_start_time
+            remaining = max(0, st.session_state.timer_seconds - int(elapsed))
             
-            custom_time = st.number_input("Custom (seconds)", min_value=5, max_value=300, value=st.session_state.timer_seconds, step=5)
-            st.session_state.timer_seconds = custom_time
+            minutes = remaining // 60
+            seconds = remaining % 60
             
-            if st.session_state.timer_running:
-                elapsed = time.time() - st.session_state.timer_start_time
-                remaining = max(0, st.session_state.timer_seconds - int(elapsed))
-                
-                minutes = remaining // 60
-                seconds = remaining % 60
-                
-                st.markdown(f'<div class="timer-display">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
-                
-                progress = (st.session_state.timer_seconds - remaining) / st.session_state.timer_seconds
-                st.progress(progress)
-                
-                if remaining == 0:
-                    st.balloons()
-                    st.success("🎉 Rest complete!")
-                    st.session_state.timer_running = False
-                else:
-                    time.sleep(0.1)
+            st.markdown(f'<div class="timer-display">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
+            
+            progress = (st.session_state.timer_seconds - remaining) / st.session_state.timer_seconds
+            st.progress(progress)
+            
+            if remaining == 0:
+                st.balloons()
+                st.success("🎉 Rest complete!")
+                st.session_state.timer_running = False
+            else:
+                time.sleep(0.1)
+                st.rerun()
+        else:
+            minutes = st.session_state.timer_seconds // 60
+            seconds = st.session_state.timer_seconds % 60
+            st.markdown(f'<div class="timer-display">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
+        
+        btn_col1, btn_col2 = st.columns(2)
+        with btn_col1:
+            if not st.session_state.timer_running:
+                if st.button("▶️ Start", type="primary", use_container_width=True):
+                    st.session_state.timer_running = True
+                    st.session_state.timer_start_time = time.time()
                     st.rerun()
             else:
-                minutes = st.session_state.timer_seconds // 60
-                seconds = st.session_state.timer_seconds % 60
-                st.markdown(f'<div class="timer-display">{minutes:02d}:{seconds:02d}</div>', unsafe_allow_html=True)
-            
-            btn_col1, btn_col2 = st.columns(2)
-            with btn_col1:
-                if not st.session_state.timer_running:
-                    if st.button("▶️ Start", type="primary", use_container_width=True):
-                        st.session_state.timer_running = True
-                        st.session_state.timer_start_time = time.time()
-                        st.rerun()
-                else:
-                    if st.button("⏸️ Stop", use_container_width=True):
-                        st.session_state.timer_running = False
-                        st.rerun()
-            with btn_col2:
-                if st.button("🔄 Reset", use_container_width=True):
+                if st.button("⏸️ Stop", use_container_width=True):
                     st.session_state.timer_running = False
-                    st.session_state.timer_start_time = None
                     st.rerun()
-    
-    with tab3:
+        with btn_col2:
+            if st.button("🔄 Reset", use_container_width=True):
+                st.session_state.timer_running = False
+                st.session_state.timer_start_time = None
+                st.rerun()
+
+with tab3:
+    if not st.session_state.logged_in:
+        show_login_prompt("Login to View Your Workout History")
+    else:
         st.header("📊 Workout History")
         
         workouts = get_user_workouts(st.session_state.user_id)
@@ -879,8 +930,11 @@ else:
                         if st.button("🗑️ Delete", key=f"del_{workout['id']}"):
                             delete_workout(workout['id'], st.session_state.user_id)
                             st.rerun()
-    
-    with tab4:
+
+with tab4:
+    if not st.session_state.logged_in:
+        show_login_prompt("Login to View Shared Workouts")
+    else:
         st.header("🤝 Shared Workouts")
         
         col1, col2 = st.columns([2, 1])
@@ -920,8 +974,11 @@ else:
                         )
                     else:
                         st.error("Invalid share code")
-    
-    with tab5:
+
+with tab5:
+    if not st.session_state.logged_in:
+        show_login_prompt("Login to Access Settings")
+    else:
         st.header("⚙️ Account Settings")
         
         st.subheader("Profile Information")
