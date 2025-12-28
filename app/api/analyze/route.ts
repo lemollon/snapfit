@@ -3,10 +3,11 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { apiKey, images, fitnessLevel, duration, workoutTypes } = await request.json();
+    const { images, fitnessLevel, duration, workoutTypes } = await request.json();
 
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: 'API key is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Server API key not configured' }, { status: 500 });
     }
 
     if (!images || images.length === 0) {

@@ -105,7 +105,6 @@ export default function SnapFit() {
   const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('workout');
   const [photos, setPhotos] = useState<{ id: string; url: string; file: File }[]>([]);
-  const [apiKey, setApiKey] = useState('');
   const [fitnessLevel, setFitnessLevel] = useState('intermediate');
   const [duration, setDuration] = useState(30);
   const [workoutTypes, setWorkoutTypes] = useState({
@@ -171,9 +170,7 @@ export default function SnapFit() {
 
   // Load preferences from localStorage
   useEffect(() => {
-    const savedApiKey = localStorage.getItem('snapfit_api_key');
     const savedDarkMode = localStorage.getItem('snapfit_dark_mode');
-    if (savedApiKey) setApiKey(savedApiKey);
     if (savedDarkMode) setDarkMode(savedDarkMode === 'true');
   }, []);
 
@@ -181,11 +178,6 @@ export default function SnapFit() {
   useEffect(() => {
     localStorage.setItem('snapfit_dark_mode', String(darkMode));
   }, [darkMode]);
-
-  // Save API key to localStorage
-  useEffect(() => {
-    if (apiKey) localStorage.setItem('snapfit_api_key', apiKey);
-  }, [apiKey]);
 
   // Load workouts from database
   useEffect(() => {
@@ -304,7 +296,7 @@ export default function SnapFit() {
   };
 
   const generateWorkout = async () => {
-    if (!apiKey || photos.length === 0) return;
+    if (photos.length === 0) return;
 
     setIsLoading(true);
     setError(null);
@@ -334,7 +326,6 @@ export default function SnapFit() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          apiKey,
           images,
           fitnessLevel,
           duration,
@@ -426,7 +417,7 @@ export default function SnapFit() {
       const res = await fetch('/api/food/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ imageBase64: base64, apiKey }),
+        body: JSON.stringify({ imageBase64: base64 }),
       });
 
       if (res.ok) {
@@ -737,7 +728,7 @@ export default function SnapFit() {
 
               <button
                 onClick={generateWorkout}
-                disabled={!apiKey || photos.length === 0 || isLoading}
+                disabled={photos.length === 0 || isLoading}
                 className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
@@ -752,10 +743,6 @@ export default function SnapFit() {
                   </>
                 )}
               </button>
-
-              {!apiKey && (
-                <p className="text-amber-500 text-sm text-center">Add your Anthropic API key in Settings</p>
-              )}
 
               {error && <div className="p-4 bg-red-100 text-red-700 rounded-lg">{error}</div>}
 
@@ -958,7 +945,7 @@ export default function SnapFit() {
                     {!foodAnalysis ? (
                       <button
                         onClick={analyzeFood}
-                        disabled={analyzingFood || !apiKey}
+                        disabled={analyzingFood}
                         className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"
                       >
                         {analyzingFood ? <Loader2 className="animate-spin" size={18} /> : <UtensilsCrossed size={18} />}
@@ -1223,22 +1210,6 @@ export default function SnapFit() {
                     <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
                   </button>
                 </div>
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                  Anthropic API Key
-                </label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder="sk-ant-..."
-                  className={`w-full px-4 py-3 rounded-lg ${darkMode ? 'bg-gray-700 text-white' : 'border'}`}
-                />
-                <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Stored locally, never sent to our servers.
-                </p>
               </div>
 
               <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>

@@ -3,19 +3,18 @@ import Anthropic from '@anthropic-ai/sdk';
 
 export async function POST(req: Request) {
   try {
-    const { imageBase64, apiKey } = await req.json();
+    const { imageBase64 } = await req.json();
 
     if (!imageBase64) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
     }
 
-    const anthropicKey = apiKey || process.env.ANTHROPIC_API_KEY;
-
-    if (!anthropicKey) {
-      return NextResponse.json({ error: 'API key required' }, { status: 400 });
+    const apiKey = process.env.ANTHROPIC_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Server API key not configured' }, { status: 500 });
     }
 
-    const client = new Anthropic({ apiKey: anthropicKey });
+    const client = new Anthropic({ apiKey });
 
     const message = await client.messages.create({
       model: 'claude-sonnet-4-20250514',
