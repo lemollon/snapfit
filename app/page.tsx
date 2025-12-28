@@ -17,6 +17,8 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  Sun,
+  Moon,
 } from 'lucide-react';
 
 interface Exercise {
@@ -51,6 +53,7 @@ type Tab = 'workout' | 'timer' | 'history' | 'settings';
 
 export default function SnapFit() {
   // State
+  const [darkMode, setDarkMode] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('workout');
   const [photos, setPhotos] = useState<{ id: string; url: string; file: File }[]>([]);
   const [apiKey, setApiKey] = useState('');
@@ -86,9 +89,16 @@ export default function SnapFit() {
   useEffect(() => {
     const savedApiKey = localStorage.getItem('snapfit_api_key');
     const savedWorkoutsData = localStorage.getItem('snapfit_workouts');
+    const savedDarkMode = localStorage.getItem('snapfit_dark_mode');
     if (savedApiKey) setApiKey(savedApiKey);
     if (savedWorkoutsData) setSavedWorkouts(JSON.parse(savedWorkoutsData));
+    if (savedDarkMode) setDarkMode(savedDarkMode === 'true');
   }, []);
+
+  // Save dark mode preference
+  useEffect(() => {
+    localStorage.setItem('snapfit_dark_mode', String(darkMode));
+  }, [darkMode]);
 
   // Save API key to localStorage
   useEffect(() => {
@@ -237,6 +247,8 @@ export default function SnapFit() {
       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
         activeTab === tab
           ? 'bg-indigo-600 text-white shadow-lg'
+          : darkMode
+          ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
           : 'bg-white/60 text-gray-600 hover:bg-white'
       }`}
     >
@@ -246,15 +258,27 @@ export default function SnapFit() {
   );
 
   return (
-    <div className="min-h-screen p-4 sm:p-6">
+    <div className={`min-h-screen p-4 sm:p-6 transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
       <div className="max-w-6xl mx-auto">
         {/* Header */}
-        <header className="text-center mb-6">
-          <h1 className="text-4xl font-bold text-gray-800 flex items-center justify-center gap-2">
-            <Camera className="text-indigo-600" size={36} />
+        <header className="text-center mb-6 relative">
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`absolute right-0 top-0 p-2 rounded-full transition-colors ${
+              darkMode
+                ? 'bg-gray-700 text-yellow-400 hover:bg-gray-600'
+                : 'bg-white/80 text-gray-600 hover:bg-white'
+            }`}
+            aria-label="Toggle dark mode"
+          >
+            {darkMode ? <Sun size={24} /> : <Moon size={24} />}
+          </button>
+          <h1 className={`text-4xl font-bold flex items-center justify-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+            <Camera className="text-indigo-500" size={36} />
             SnapFit
           </h1>
-          <p className="text-gray-600 mt-1">Snap. Train. Transform.</p>
+          <p className={`mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>Snap. Train. Transform.</p>
         </header>
 
         {/* Tabs */}
@@ -266,14 +290,14 @@ export default function SnapFit() {
         </nav>
 
         {/* Main Content */}
-        <main className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-6">
+        <main className={`backdrop-blur-sm rounded-2xl shadow-xl p-6 transition-colors ${darkMode ? 'bg-gray-800' : 'bg-white/80'}`}>
           {/* Workout Tab */}
           {activeTab === 'workout' && (
             <div className="space-y-6">
               {/* Photos Section */}
               <section>
-                <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <Camera className="text-indigo-600" />
+                <h2 className={`text-xl font-semibold mb-4 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                  <Camera className="text-indigo-500" />
                   Capture Your Environment
                 </h2>
 
@@ -287,7 +311,7 @@ export default function SnapFit() {
                   </button>
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${darkMode ? 'bg-gray-700 text-gray-200 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                   >
                     <Upload size={18} />
                     Upload Photos
@@ -295,7 +319,7 @@ export default function SnapFit() {
                   {photos.length > 0 && (
                     <button
                       onClick={clearAll}
-                      className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${darkMode ? 'bg-red-900/50 text-red-400 hover:bg-red-900' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
                     >
                       <Trash2 size={18} />
                       Clear All
@@ -339,8 +363,8 @@ export default function SnapFit() {
                     ))}
                   </div>
                 ) : (
-                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center text-gray-500">
-                    <Camera className="mx-auto mb-2 text-gray-400" size={48} />
+                  <div className={`border-2 border-dashed rounded-xl p-8 text-center ${darkMode ? 'border-gray-600 text-gray-400' : 'border-gray-300 text-gray-500'}`}>
+                    <Camera className={`mx-auto mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={48} />
                     <p>Take or upload photos of your workout space</p>
                   </div>
                 )}
@@ -349,13 +373,13 @@ export default function SnapFit() {
               {/* Preferences */}
               <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Fitness Level
                   </label>
                   <select
                     value={fitnessLevel}
                     onChange={(e) => setFitnessLevel(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                   >
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
@@ -363,7 +387,7 @@ export default function SnapFit() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className={`block text-sm font-medium mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     Duration: {duration} minutes
                   </label>
                   <input
@@ -379,7 +403,7 @@ export default function SnapFit() {
               </section>
 
               <section>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Workout Types
                 </label>
                 <div className="flex flex-wrap gap-2">
@@ -388,7 +412,9 @@ export default function SnapFit() {
                       key={type}
                       className={`flex items-center gap-2 px-3 py-2 rounded-full cursor-pointer transition-colors ${
                         checked
-                          ? 'bg-indigo-100 text-indigo-700 border-2 border-indigo-300'
+                          ? 'bg-indigo-600 text-white border-2 border-indigo-500'
+                          : darkMode
+                          ? 'bg-gray-700 text-gray-300 border-2 border-transparent'
                           : 'bg-gray-100 text-gray-600 border-2 border-transparent'
                       }`}
                     >
@@ -442,7 +468,7 @@ export default function SnapFit() {
               {workoutPlan && (
                 <div className="space-y-4 mt-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold text-gray-800">
+                    <h2 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                       Your {duration}-Minute Workout
                     </h2>
                     <button
@@ -459,7 +485,7 @@ export default function SnapFit() {
                     {workoutPlan.equipment.map((item, i) => (
                       <span
                         key={i}
-                        className="px-3 py-1 bg-indigo-100 text-indigo-700 rounded-full text-sm font-medium"
+                        className={`px-3 py-1 rounded-full text-sm font-medium ${darkMode ? 'bg-indigo-900 text-indigo-300' : 'bg-indigo-100 text-indigo-700'}`}
                       >
                         {item}
                       </span>
@@ -467,18 +493,18 @@ export default function SnapFit() {
                   </div>
 
                   {/* Warmup */}
-                  <div className="bg-gradient-to-r from-orange-50 to-yellow-50 rounded-xl overflow-hidden">
+                  <div className={`rounded-xl overflow-hidden ${darkMode ? 'bg-orange-900/30' : 'bg-gradient-to-r from-orange-50 to-yellow-50'}`}>
                     <button
                       onClick={() => toggleSection('warmup')}
                       className="w-full p-4 flex items-center justify-between text-left"
                     >
-                      <span className="text-lg font-semibold text-orange-700">
+                      <span className={`text-lg font-semibold ${darkMode ? 'text-orange-400' : 'text-orange-700'}`}>
                         Warm-up
                       </span>
                       {expandedSections.warmup ? (
-                        <ChevronUp className="text-orange-600" />
+                        <ChevronUp className={darkMode ? 'text-orange-400' : 'text-orange-600'} />
                       ) : (
-                        <ChevronDown className="text-orange-600" />
+                        <ChevronDown className={darkMode ? 'text-orange-400' : 'text-orange-600'} />
                       )}
                     </button>
                     {expandedSections.warmup && (
@@ -486,15 +512,15 @@ export default function SnapFit() {
                         {workoutPlan.workout.warmup.map((ex, i) => (
                           <div
                             key={i}
-                            className="p-3 bg-white rounded-lg shadow-sm"
+                            className={`p-3 rounded-lg shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
                           >
-                            <div className="font-medium text-gray-800">
+                            <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                               {ex.name}
                             </div>
-                            <div className="text-sm text-orange-600">
+                            <div className={`text-sm ${darkMode ? 'text-orange-400' : 'text-orange-600'}`}>
                               {ex.duration}
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                               {ex.description}
                             </div>
                           </div>
@@ -504,18 +530,18 @@ export default function SnapFit() {
                   </div>
 
                   {/* Main Workout */}
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl overflow-hidden">
+                  <div className={`rounded-xl overflow-hidden ${darkMode ? 'bg-indigo-900/30' : 'bg-gradient-to-r from-indigo-50 to-purple-50'}`}>
                     <button
                       onClick={() => toggleSection('main')}
                       className="w-full p-4 flex items-center justify-between text-left"
                     >
-                      <span className="text-lg font-semibold text-indigo-700">
+                      <span className={`text-lg font-semibold ${darkMode ? 'text-indigo-400' : 'text-indigo-700'}`}>
                         Main Workout
                       </span>
                       {expandedSections.main ? (
-                        <ChevronUp className="text-indigo-600" />
+                        <ChevronUp className={darkMode ? 'text-indigo-400' : 'text-indigo-600'} />
                       ) : (
-                        <ChevronDown className="text-indigo-600" />
+                        <ChevronDown className={darkMode ? 'text-indigo-400' : 'text-indigo-600'} />
                       )}
                     </button>
                     {expandedSections.main && (
@@ -523,20 +549,20 @@ export default function SnapFit() {
                         {workoutPlan.workout.main.map((ex, i) => (
                           <div
                             key={i}
-                            className="p-3 bg-white rounded-lg shadow-sm"
+                            className={`p-3 rounded-lg shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
                           >
                             <div className="flex justify-between items-start">
-                              <div className="font-medium text-gray-800">
+                              <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                                 {ex.name}
                               </div>
-                              <div className="text-sm font-semibold text-indigo-600">
+                              <div className={`text-sm font-semibold ${darkMode ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                 {ex.sets} x {ex.reps}
                               </div>
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className={`text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
                               Equipment: {ex.equipment}
                             </div>
-                            <div className="text-sm text-gray-600 mt-1">
+                            <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                               {ex.tips}
                             </div>
                           </div>
@@ -546,18 +572,18 @@ export default function SnapFit() {
                   </div>
 
                   {/* Cooldown */}
-                  <div className="bg-gradient-to-r from-green-50 to-teal-50 rounded-xl overflow-hidden">
+                  <div className={`rounded-xl overflow-hidden ${darkMode ? 'bg-green-900/30' : 'bg-gradient-to-r from-green-50 to-teal-50'}`}>
                     <button
                       onClick={() => toggleSection('cooldown')}
                       className="w-full p-4 flex items-center justify-between text-left"
                     >
-                      <span className="text-lg font-semibold text-green-700">
+                      <span className={`text-lg font-semibold ${darkMode ? 'text-green-400' : 'text-green-700'}`}>
                         Cool-down & Stretch
                       </span>
                       {expandedSections.cooldown ? (
-                        <ChevronUp className="text-green-600" />
+                        <ChevronUp className={darkMode ? 'text-green-400' : 'text-green-600'} />
                       ) : (
-                        <ChevronDown className="text-green-600" />
+                        <ChevronDown className={darkMode ? 'text-green-400' : 'text-green-600'} />
                       )}
                     </button>
                     {expandedSections.cooldown && (
@@ -565,15 +591,15 @@ export default function SnapFit() {
                         {workoutPlan.workout.cooldown.map((ex, i) => (
                           <div
                             key={i}
-                            className="p-3 bg-white rounded-lg shadow-sm"
+                            className={`p-3 rounded-lg shadow-sm ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
                           >
-                            <div className="font-medium text-gray-800">
+                            <div className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                               {ex.name}
                             </div>
-                            <div className="text-sm text-green-600">
+                            <div className={`text-sm ${darkMode ? 'text-green-400' : 'text-green-600'}`}>
                               {ex.duration}
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                               {ex.description}
                             </div>
                           </div>
@@ -583,7 +609,7 @@ export default function SnapFit() {
                   </div>
 
                   {workoutPlan.notes && (
-                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800">
+                    <div className={`p-4 rounded-xl ${darkMode ? 'bg-amber-900/30 border border-amber-700 text-amber-300' : 'bg-amber-50 border border-amber-200 text-amber-800'}`}>
                       <strong>Important:</strong> {workoutPlan.notes}
                     </div>
                   )}
@@ -595,7 +621,7 @@ export default function SnapFit() {
           {/* Timer Tab */}
           {activeTab === 'timer' && (
             <div className="max-w-md mx-auto text-center space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Rest Timer</h2>
+              <h2 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Rest Timer</h2>
 
               {/* Presets */}
               <div className="flex justify-center gap-2">
@@ -610,6 +636,8 @@ export default function SnapFit() {
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                       timerSeconds === sec
                         ? 'bg-indigo-600 text-white'
+                        : darkMode
+                        ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
@@ -620,15 +648,15 @@ export default function SnapFit() {
 
               {/* Timer Display */}
               <div
-                className={`timer-display py-8 rounded-2xl bg-white shadow-inner ${
+                className={`timer-display py-8 rounded-2xl shadow-inner ${
                   timerRunning ? 'timer-running' : ''
-                }`}
+                } ${darkMode ? 'bg-gray-700 text-indigo-400' : 'bg-white'}`}
               >
                 {formatTime(timerRemaining)}
               </div>
 
               {/* Progress */}
-              <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className={`h-2 rounded-full overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
                 <div
                   className="h-full bg-indigo-600 transition-all duration-1000"
                   style={{
@@ -661,7 +689,7 @@ export default function SnapFit() {
                     setTimerRunning(false);
                     setTimerRemaining(timerSeconds);
                   }}
-                  className="flex items-center gap-2 px-6 py-3 bg-gray-100 text-gray-700 rounded-xl hover:bg-gray-200 transition-colors text-lg"
+                  className={`flex items-center gap-2 px-6 py-3 rounded-xl transition-colors text-lg ${darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
                 >
                   <RotateCcw size={24} /> Reset
                 </button>
@@ -669,7 +697,7 @@ export default function SnapFit() {
 
               {/* Custom Time */}
               <div className="pt-4">
-                <label className="block text-sm text-gray-600 mb-2">
+                <label className={`block text-sm mb-2 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   Custom duration (seconds)
                 </label>
                 <input
@@ -682,7 +710,7 @@ export default function SnapFit() {
                     setTimerSeconds(val);
                     if (!timerRunning) setTimerRemaining(val);
                   }}
-                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-center"
+                  className={`w-24 px-3 py-2 border rounded-lg text-center ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'border-gray-300'}`}
                 />
               </div>
             </div>
@@ -691,13 +719,13 @@ export default function SnapFit() {
           {/* History Tab */}
           {activeTab === 'history' && (
             <div className="space-y-4">
-              <h2 className="text-2xl font-semibold text-gray-800">
+              <h2 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                 Workout History
               </h2>
 
               {savedWorkouts.length === 0 ? (
-                <div className="text-center py-12 text-gray-500">
-                  <History className="mx-auto mb-4 text-gray-400" size={48} />
+                <div className={`text-center py-12 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                  <History className={`mx-auto mb-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} size={48} />
                   <p>No saved workouts yet.</p>
                   <p className="text-sm">Generate and save a workout to see it here!</p>
                 </div>
@@ -706,17 +734,17 @@ export default function SnapFit() {
                   {savedWorkouts.map((workout) => (
                     <div
                       key={workout.id}
-                      className="p-4 bg-gray-50 rounded-xl border border-gray-200"
+                      className={`p-4 rounded-xl border ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-gray-50 border-gray-200'}`}
                     >
                       <div className="flex justify-between items-start">
                         <div>
-                          <div className="font-semibold text-gray-800">
+                          <div className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                             {workout.duration}-min {workout.fitnessLevel} workout
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                             {workout.date}
                           </div>
-                          <div className="text-sm text-gray-600 mt-1">
+                          <div className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                             {workout.plan.workout.main.length} exercises |{' '}
                             {workout.plan.equipment.slice(0, 3).join(', ')}
                             {workout.plan.equipment.length > 3 && '...'}
@@ -724,7 +752,7 @@ export default function SnapFit() {
                         </div>
                         <button
                           onClick={() => deleteWorkout(workout.id)}
-                          className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                          className={`p-2 rounded-lg transition-colors ${darkMode ? 'text-red-400 hover:bg-red-900/50' : 'text-red-500 hover:bg-red-100'}`}
                         >
                           <Trash2 size={18} />
                         </button>
@@ -734,7 +762,7 @@ export default function SnapFit() {
                           setWorkoutPlan(workout.plan);
                           setActiveTab('workout');
                         }}
-                        className="mt-3 w-full py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium"
+                        className={`mt-3 w-full py-2 rounded-lg transition-colors text-sm font-medium ${darkMode ? 'bg-indigo-900/50 text-indigo-300 hover:bg-indigo-900' : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'}`}
                       >
                         View Workout
                       </button>
@@ -748,10 +776,28 @@ export default function SnapFit() {
           {/* Settings Tab */}
           {activeTab === 'settings' && (
             <div className="max-w-md mx-auto space-y-6">
-              <h2 className="text-2xl font-semibold text-gray-800">Settings</h2>
+              <h2 className={`text-2xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Settings</h2>
+
+              {/* Theme Toggle */}
+              <div className={`p-4 rounded-xl ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>Dark Mode</h3>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Toggle dark/light theme</p>
+                  </div>
+                  <button
+                    onClick={() => setDarkMode(!darkMode)}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-gray-300'}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'}`}
+                    />
+                  </button>
+                </div>
+              </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                   Anthropic API Key
                 </label>
                 <input
@@ -759,29 +805,29 @@ export default function SnapFit() {
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   placeholder="sk-ant-..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'border-gray-300'}`}
                 />
-                <p className="text-sm text-gray-500 mt-2">
+                <p className={`text-sm mt-2 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                   Your API key is stored locally and never sent to our servers.
                 </p>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="font-medium text-gray-800 mb-3">Data Management</h3>
+              <div className={`pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h3 className={`font-medium mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Data Management</h3>
                 <button
                   onClick={() => {
                     localStorage.removeItem('snapfit_workouts');
                     setSavedWorkouts([]);
                   }}
-                  className="px-4 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                  className={`px-4 py-2 rounded-lg transition-colors ${darkMode ? 'bg-red-900/50 text-red-400 hover:bg-red-900' : 'bg-red-100 text-red-600 hover:bg-red-200'}`}
                 >
                   Clear All Saved Workouts
                 </button>
               </div>
 
-              <div className="pt-4 border-t border-gray-200">
-                <h3 className="font-medium text-gray-800 mb-2">About</h3>
-                <p className="text-sm text-gray-600">
+              <div className={`pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+                <h3 className={`font-medium mb-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>About</h3>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                   SnapFit uses Claude AI to analyze your workout environment and
                   create personalized exercise routines based on available
                   equipment and space.
@@ -792,7 +838,7 @@ export default function SnapFit() {
         </main>
 
         {/* Footer */}
-        <footer className="text-center mt-6 text-sm text-gray-500">
+        <footer className={`text-center mt-6 text-sm ${darkMode ? 'text-gray-500' : 'text-gray-500'}`}>
           Made with React + Claude AI
         </footer>
       </div>
