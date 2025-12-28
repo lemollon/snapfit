@@ -341,7 +341,7 @@ export default function LoginPage() {
               No gym? No problem. No guesswork. Just results.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+            <div className="flex flex-col sm:flex-row gap-4 mb-8">
               <button
                 onClick={() => { setShowAuth(true); setIsLogin(false); }}
                 className="group flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-lg px-8 py-4 rounded-full hover:shadow-2xl hover:shadow-orange-500/30 transition-all"
@@ -355,6 +355,24 @@ export default function LoginPage() {
               >
                 <Play className="w-5 h-5" />
                 Try Demo Mode
+              </button>
+            </div>
+
+            {/* Demo Links */}
+            <div className="flex flex-wrap gap-3 mb-8">
+              <button
+                onClick={() => router.push('/demo/user')}
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-full hover:bg-white/20 transition-all text-sm"
+              >
+                <User className="w-4 h-4" />
+                See User Experience
+              </button>
+              <button
+                onClick={() => router.push('/demo/trainer')}
+                className="flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-full hover:bg-white/20 transition-all text-sm"
+              >
+                <Users className="w-4 h-4" />
+                See Trainer Experience
               </button>
             </div>
 
