@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Camera,
   Upload,
@@ -162,6 +162,8 @@ type Tab = 'home' | 'workout' | 'timer' | 'history' | 'food' | 'friends' | 'chal
 export default function SnapFit() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isGuestMode = searchParams.get('guest') === 'true';
 
   // State
   const [darkMode, setDarkMode] = useState(false);
@@ -233,12 +235,12 @@ export default function SnapFit() {
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const foodInputRef = useRef<HTMLInputElement>(null);
 
-  // Auth redirect
+  // Auth redirect - skip if guest mode
   useEffect(() => {
-    if (status === 'unauthenticated') {
+    if (status === 'unauthenticated' && !isGuestMode) {
       router.push('/login');
     }
-  }, [status, router]);
+  }, [status, router, isGuestMode]);
 
   // Load preferences and set random quote
   useEffect(() => {
@@ -682,12 +684,30 @@ export default function SnapFit() {
     );
   }
 
-  if (!session) {
+  // Allow guest mode or authenticated users
+  if (!session && !isGuestMode) {
     return null;
   }
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50'}`}>
+      {/* Guest Mode Banner */}
+      {isGuestMode && (
+        <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <p className="text-sm sm:text-base font-medium text-center sm:text-left">
+              🎉 You&apos;re exploring SnapFit! Sign up to save your workouts and track progress.
+            </p>
+            <button
+              onClick={() => router.push('/login')}
+              className="bg-white text-orange-600 font-semibold px-4 py-1.5 rounded-full text-sm hover:bg-orange-50 transition-colors whitespace-nowrap"
+            >
+              Create Free Account
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className={`sticky top-0 z-50 backdrop-blur-lg ${darkMode ? 'bg-gray-900/80 border-gray-800' : 'bg-white/80 border-gray-200'} border-b`}>
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -699,6 +719,9 @@ export default function SnapFit() {
             <h1 className={`text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent`}>
               SnapFit
             </h1>
+            {isGuestMode && (
+              <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">Demo</span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             {/* Streak Badge */}
@@ -714,12 +737,21 @@ export default function SnapFit() {
             >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button
-              onClick={() => signOut()}
-              className={`p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
-            >
-              <LogOut size={20} />
-            </button>
+            {session ? (
+              <button
+                onClick={() => signOut()}
+                className={`p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
+              >
+                <LogOut size={20} />
+              </button>
+            ) : (
+              <button
+                onClick={() => router.push('/login')}
+                className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold px-4 py-1.5 rounded-full text-sm hover:shadow-lg transition-all"
+              >
+                Sign Up
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -734,8 +766,8 @@ export default function SnapFit() {
                 <img src={HERO_IMAGES[0]} alt="" className="w-full h-full object-cover" />
               </div>
               <div className="relative z-10">
-                <p className="text-indigo-200 text-sm">Welcome back,</p>
-                <h2 className="text-2xl font-bold mb-4">{session.user?.name || 'Athlete'} 💪</h2>
+                <p className="text-indigo-200 text-sm">{isGuestMode ? 'Welcome to SnapFit!' : 'Welcome back,'}</p>
+                <h2 className="text-2xl font-bold mb-4">{isGuestMode ? 'Try out our features 🎯' : `${session?.user?.name || 'Athlete'} 💪`}</h2>
                 <blockquote className="italic text-indigo-100 border-l-2 border-indigo-300 pl-4">
                   "{todayQuote.quote}"
                   <footer className="text-indigo-200 text-sm mt-1">— {todayQuote.author}</footer>
@@ -1658,19 +1690,35 @@ export default function SnapFit() {
 
             <div className={`p-5 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
               <h3 className={`font-medium mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Account</h3>
-              <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${darkMode ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white' : 'bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600'}`}>
-                  {session.user?.name?.charAt(0) || session.user?.email?.charAt(0) || '?'}
+              {isGuestMode ? (
+                <div className="space-y-3">
+                  <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    You&apos;re in demo mode. Create an account to save your data.
+                  </p>
+                  <button
+                    onClick={() => router.push('/login')}
+                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                  >
+                    Create Free Account
+                  </button>
                 </div>
-                <div>
-                  <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{session.user?.name || 'User'}</p>
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{session.user?.email}</p>
-                </div>
-              </div>
-              {(session.user as any)?.isTrainer && (
-                <span className="inline-block mt-3 px-3 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs rounded-full font-medium">
-                  Trainer Account
-                </span>
+              ) : session && (
+                <>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${darkMode ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white' : 'bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600'}`}>
+                      {session.user?.name?.charAt(0) || session.user?.email?.charAt(0) || '?'}
+                    </div>
+                    <div>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{session.user?.name || 'User'}</p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{session.user?.email}</p>
+                    </div>
+                  </div>
+                  {(session.user as any)?.isTrainer && (
+                    <span className="inline-block mt-3 px-3 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs rounded-full font-medium">
+                      Trainer Account
+                    </span>
+                  )}
+                </>
               )}
             </div>
           </div>
