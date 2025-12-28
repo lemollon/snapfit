@@ -1,5 +1,27 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
+import { findExerciseByName, EXERCISE_LIBRARY } from '@/lib/data/exercise-library';
+
+// Add video URLs to exercises by matching with our library
+function enrichExercisesWithVideos(exercises: any[]): any[] {
+  return exercises.map(exercise => {
+    const libraryMatch = findExerciseByName(exercise.name);
+    if (libraryMatch) {
+      return {
+        ...exercise,
+        videoUrl: libraryMatch.videoUrl,
+        muscleGroup: libraryMatch.muscleGroup,
+      };
+    }
+    // If no match found, provide a YouTube search link as fallback
+    const searchQuery = encodeURIComponent(`${exercise.name} exercise how to`);
+    return {
+      ...exercise,
+      videoUrl: `https://www.youtube.com/results?search_query=${searchQuery}`,
+      videoUrlType: 'search', // Indicates this is a search link, not a direct video
+    };
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +38,9 @@ export async function POST(request: Request) {
 
     const client = new Anthropic({ apiKey });
 
+    // Include exercise library names to help AI use exercises we have videos for
+    const exerciseNames = EXERCISE_LIBRARY.map(ex => ex.name).join(', ');
+
     const prompt = `You are an expert personal trainer. Analyze these ${images.length} photo(s) of a workout environment.
 
 TASK 1 - EQUIPMENT DETECTION:
@@ -28,6 +53,9 @@ Identify ALL workout equipment, furniture, or environmental features that could 
 TASK 2 - WORKOUT ROUTINE:
 Create a detailed ${duration}-minute workout routine for a ${fitnessLevel} level fitness enthusiast.
 Focus on: ${workoutTypes}
+
+IMPORTANT: When possible, use exercises from this list (we have demo videos for these):
+${exerciseNames}
 
 Include:
 - Warm-up (3-5 minutes)
@@ -69,6 +97,19 @@ CRITICAL: Respond ONLY with valid JSON. No markdown, no code blocks, no explanat
     const cleanedResponse = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
     const workoutPlan = JSON.parse(cleanedResponse);
+
+    // Enrich all exercises with video URLs from our library
+    if (workoutPlan.workout) {
+      if (workoutPlan.workout.warmup) {
+        workoutPlan.workout.warmup = enrichExercisesWithVideos(workoutPlan.workout.warmup);
+      }
+      if (workoutPlan.workout.main) {
+        workoutPlan.workout.main = enrichExercisesWithVideos(workoutPlan.workout.main);
+      }
+      if (workoutPlan.workout.cooldown) {
+        workoutPlan.workout.cooldown = enrichExercisesWithVideos(workoutPlan.workout.cooldown);
+      }
+    }
 
     return NextResponse.json(workoutPlan);
   } catch (error) {
