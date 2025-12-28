@@ -8,11 +8,15 @@ CREATE TABLE "users" (
 	"password" text NOT NULL,
 	"avatar_url" text,
 	"is_trainer" boolean DEFAULT false,
+	"is_admin" boolean DEFAULT false,
 	"bio" text,
 	"created_at" timestamp DEFAULT now(),
 	"updated_at" timestamp DEFAULT now(),
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
+
+-- Run this to add admin column to existing table:
+-- ALTER TABLE "users" ADD COLUMN "is_admin" boolean DEFAULT false;
 
 CREATE TABLE "workouts" (
 	"id" text PRIMARY KEY NOT NULL,
