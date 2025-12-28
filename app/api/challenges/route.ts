@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { challenges, challengeParticipants, users } from '@/lib/db/schema';
+import { challenges, challengeParticipants, users, Challenge } from '@/lib/db/schema';
 import { eq, desc, or, gte } from 'drizzle-orm';
 
 export async function GET(req: Request) {
@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
     const now = new Date();
 
-    let allChallenges;
+    let allChallenges: Challenge[] = [];
 
     if (type === 'my') {
       // Challenges created by user
