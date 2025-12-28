@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import {
   Dumbbell, Mail, Lock, User, Eye, EyeOff, Camera, Zap, Users, Trophy,
   ChevronRight, Star, Play, Check, ArrowRight, Sparkles, Target, Heart,
-  Clock, TrendingUp, Apple, Utensils
+  Clock, TrendingUp, Apple, Utensils, Smartphone, Scan, ImageIcon
 } from 'lucide-react';
 
 // Hero images for the landing page
@@ -21,6 +21,7 @@ const FEATURE_IMAGES = {
   food: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=600&q=80',
   social: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=600&q=80',
   progress: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=600&q=80',
+  camera: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&q=80',
 };
 
 const TESTIMONIALS = [
@@ -29,10 +30,14 @@ const TESTIMONIALS = [
   { name: 'Maria L.', role: 'Fitness Enthusiast', quote: 'The challenges keep me motivated. I love competing with friends!', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80' },
 ];
 
-const FEATURES = [
-  { icon: Camera, title: 'Snap Your Space', desc: 'Take a photo of any room and our AI finds all usable equipment' },
-  { icon: Zap, title: 'Instant Workouts', desc: 'Get personalized routines in seconds, tailored to your level' },
-  { icon: Utensils, title: 'Smart Food Tracking', desc: 'Photo your meals for instant nutrition analysis' },
+// Emphasize the SNAP concept - photo-first AI features
+const SNAP_FEATURES = [
+  { icon: Camera, title: 'Snap Your Space', desc: 'Point your camera at any room—gym, living room, hotel, outdoors—and AI detects every piece of equipment you can use', color: 'from-orange-500 to-red-500' },
+  { icon: Utensils, title: 'Snap Your Food', desc: 'Take a photo of your meal and get instant calorie counts, macros, and nutrition insights powered by AI', color: 'from-green-500 to-emerald-500' },
+  { icon: Zap, title: 'Instant AI Workouts', desc: 'Get a complete personalized workout routine in seconds based on what the AI sees in your photos', color: 'from-blue-500 to-indigo-500' },
+];
+
+const MORE_FEATURES = [
   { icon: Trophy, title: 'Challenges & Goals', desc: 'Compete with friends and unlock achievements' },
   { icon: TrendingUp, title: 'Track Progress', desc: 'Visualize your fitness journey with detailed stats' },
   { icon: Users, title: 'Social Motivation', desc: 'Connect with friends and share your wins' },
@@ -314,21 +319,26 @@ export default function LoginPage() {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/90 text-sm mb-6">
-              <Sparkles className="w-4 h-4 text-yellow-400" />
-              <span>AI-Powered Fitness Revolution</span>
+              <Camera className="w-4 h-4 text-orange-400" />
+              <span>Snap. Train. Transform.</span>
             </div>
 
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-white leading-tight mb-6">
-              Snap Your Space.
+              📸 Snap Your Space.
               <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-400">
-                Transform Your Body.
+                🍽️ Snap Your Food.
+              </span>
+              <br />
+              <span className="text-white/90 text-4xl sm:text-5xl">
+                💪 Get AI-Powered Results.
               </span>
             </h1>
 
             <p className="text-xl text-white/80 mb-8 leading-relaxed">
-              Point your camera at any room and get an instant, personalized workout.
-              Our AI spots equipment you never knew you had and creates routines that actually work.
+              <strong className="text-white">Take a photo of any room</strong> and our AI finds every piece of equipment you can use.
+              <strong className="text-white"> Snap your meals</strong> for instant nutrition tracking.
+              No gym? No problem. No guesswork. Just results.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mb-12">
@@ -380,29 +390,54 @@ export default function LoginPage() {
         </div>
       </section>
 
-      {/* Features Grid */}
+      {/* Why "Snap" Fit - Core Concept */}
       <section id="features" className="py-24 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange-100 rounded-full text-orange-600 text-sm font-medium mb-4">
+              <Camera className="w-4 h-4" />
+              <span>Why &quot;Snap&quot; Fit?</span>
+            </div>
             <h2 className="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">
-              Everything You Need to Get Fit
+              Your Camera is Your Personal Trainer
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Powerful features that make achieving your fitness goals easier than ever
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Just snap a photo—of your space, your food, your environment—and our AI does the rest.
+              No manual logging, no guesswork, just results.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {FEATURES.map((feature, i) => (
+          {/* Main SNAP features - larger cards */}
+          <div className="grid lg:grid-cols-3 gap-8 mb-12">
+            {SNAP_FEATURES.map((feature, i) => (
               <div
                 key={i}
-                className="group bg-white rounded-2xl p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
+                className="group relative bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden"
               >
-                <div className="w-14 h-14 bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                  <feature.icon className="w-7 h-7 text-white" />
+                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${feature.color} opacity-10 rounded-full -translate-y-1/2 translate-x-1/2`} />
+                <div className={`w-16 h-16 bg-gradient-to-br ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform shadow-lg`}>
+                  <feature.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{feature.title}</h3>
-                <p className="text-gray-600">{feature.desc}</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">{feature.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Secondary features - smaller cards */}
+          <div className="grid md:grid-cols-3 gap-6">
+            {MORE_FEATURES.map((feature, i) => (
+              <div
+                key={i}
+                className="flex items-start gap-4 bg-white rounded-xl p-5 shadow-sm border border-gray-100"
+              >
+                <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
+                  <feature.icon className="w-5 h-5 text-gray-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-1">{feature.title}</h3>
+                  <p className="text-sm text-gray-600">{feature.desc}</p>
+                </div>
               </div>
             ))}
           </div>
