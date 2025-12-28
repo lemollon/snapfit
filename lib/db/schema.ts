@@ -1,4 +1,5 @@
 import { pgTable, text, timestamp, boolean, integer, real, json, unique } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 
 // Users - supports both regular users and trainers
 export const users = pgTable('users', {
@@ -131,6 +132,78 @@ export const dailyStats = pgTable('daily_stats', {
   createdAt: timestamp('created_at').defaultNow(),
 }, (table) => ({
   uniqueUserDate: unique().on(table.userId, table.date),
+}));
+
+// Relations
+export const usersRelations = relations(users, ({ many }) => ({
+  workouts: many(workouts),
+  foodLogs: many(foodLogs),
+  dailyStats: many(dailyStats),
+  sentFriendships: many(friendships, { relationName: 'sender' }),
+  receivedFriendships: many(friendships, { relationName: 'receiver' }),
+  createdChallenges: many(challenges),
+  challengeParticipations: many(challengeParticipants),
+}));
+
+export const workoutsRelations = relations(workouts, ({ one, many }) => ({
+  user: one(users, {
+    fields: [workouts.userId],
+    references: [users.id],
+  }),
+  exercises: many(exercises),
+}));
+
+export const exercisesRelations = relations(exercises, ({ one }) => ({
+  workout: one(workouts, {
+    fields: [exercises.workoutId],
+    references: [workouts.id],
+  }),
+}));
+
+export const foodLogsRelations = relations(foodLogs, ({ one }) => ({
+  user: one(users, {
+    fields: [foodLogs.userId],
+    references: [users.id],
+  }),
+}));
+
+export const friendshipsRelations = relations(friendships, ({ one }) => ({
+  sender: one(users, {
+    fields: [friendships.senderId],
+    references: [users.id],
+    relationName: 'sender',
+  }),
+  receiver: one(users, {
+    fields: [friendships.receiverId],
+    references: [users.id],
+    relationName: 'receiver',
+  }),
+}));
+
+export const challengesRelations = relations(challenges, ({ one, many }) => ({
+  creator: one(users, {
+    fields: [challenges.creatorId],
+    references: [users.id],
+  }),
+  participants: many(challengeParticipants),
+}));
+
+export const challengeParticipantsRelations = relations(challengeParticipants, ({ one }) => ({
+  challenge: one(challenges, {
+    fields: [challengeParticipants.challengeId],
+    references: [challenges.id],
+  }),
+  user: one(users, {
+    fields: [challengeParticipants.userId],
+    references: [users.id],
+  }),
+}));
+
+export const dailyStatsRelations = relations(dailyStats, ({ one }) => ({
+  user: one(users, {
+    fields: [dailyStats.userId],
+    references: [users.id],
+  }),
 }));
 
 // Types for TypeScript
