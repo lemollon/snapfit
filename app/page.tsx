@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -159,7 +159,7 @@ interface Challenge {
 
 type Tab = 'home' | 'workout' | 'timer' | 'history' | 'food' | 'friends' | 'challenges' | 'settings';
 
-export default function SnapFit() {
+function SnapFitContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1736,5 +1736,28 @@ export default function SnapFit() {
         </div>
       </nav>
     </div>
+  );
+}
+
+// Loading component for Suspense fallback
+function SnapFitLoading() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <Dumbbell className="w-8 h-8 text-white" />
+        </div>
+        <p className="text-gray-500">Loading SnapFit...</p>
+      </div>
+    </div>
+  );
+}
+
+// Wrap in Suspense for useSearchParams
+export default function SnapFit() {
+  return (
+    <Suspense fallback={<SnapFitLoading />}>
+      <SnapFitContent />
+    </Suspense>
   );
 }
