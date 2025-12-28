@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User accounts - supports both regular users and trainers
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  avatarUrl     String?
+  isTrainer     Boolean   @default(false)
+  bio           String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  workouts          Workout[]
+  foodLogs          FoodLog[]
+  sentRequests      Friendship[]  @relation("SentRequests")
+  receivedRequests  Friendship[]  @relation("ReceivedRequests")
+  createdChallenges Challenge[]   @relation("ChallengeCreator")
+  challengeEntries  ChallengeParticipant[]
+  clients           TrainerClient[] @relation("Trainer")
+  trainers          TrainerClient[] @relation("Client")
+}
+
+// Trainer-Client relationship
+model TrainerClient {
+  id        String   @id @default(cuid())
+  trainerId String
+  clientId  String
+  status    String   @default("pending") // pending, active, ended
+  createdAt DateTime @default(now())
+
+  trainer User @relation("Trainer", fields: [trainerId], references: [id])
+  client  User @relation("Client", fields: [clientId], references: [id])
+
+  @@unique([trainerId, clientId])
+}
+
+// Workouts with exercises
+model Workout {
+  id           String   @id @default(cuid())
+  userId       String
+  title        String?
+  duration     Int      // in minutes
+  fitnessLevel String
+  equipment    String[] // array of equipment used
+  notes        String?
+  isPublic     Boolean  @default(false)
+  shareCode    String?  @unique
+  createdAt    DateTime @default(now())
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercises Exercise[]
+}
+
+// Individual exercises with YouTube video support
+model Exercise {
+  id          String  @id @default(cuid())
+  workoutId   String
+  name        String
+  sets        Int?
+  reps        String?
+  duration    String?
+  equipment   String?
+  tips        String?
+  description String?
+  videoUrl    String? // YouTube video URL for demonstration
+  category    String  // warmup, main, cooldown
+  orderIndex  Int
+
+  workout Workout @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+}
+
+// Exercise library with video demonstrations
+model ExerciseLibrary {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  videoUrl    String?  // YouTube video URL
+  muscleGroup String[]
+  equipment   String[]
+  difficulty  String   // beginner, intermediate, advanced
+  createdAt   DateTime @default(now())
+}
+
+// Food logging with photo analysis
+model FoodLog {
+  id        String   @id @default(cuid())
+  userId    String
+  photoUrl  String?
+  mealType  String   // breakfast, lunch, dinner, snack
+  foodName  String?
+  calories  Int?
+  protein   Float?
+  carbs     Float?
+  fat       Float?
+  fiber     Float?
+  analysis  Json?    // Full AI analysis response
+  notes     String?
+  loggedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// Friendships between users
+model Friendship {
+  id        String   @id @default(cuid())
+  senderId  String
+  receiverId String
+  status    String   @default("pending") // pending, accepted, rejected
+  createdAt DateTime @default(now())
+
+  sender   User @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+}
+
+// Fitness challenges
+model Challenge {
+  id          String   @id @default(cuid())
+  creatorId   String
+  name        String
+  description String?
+  type        String   // workout_count, total_minutes, streak, custom
+  goal        Int?     // target number
+  startDate   DateTime
+  endDate     DateTime
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  creator      User                   @relation("ChallengeCreator", fields: [creatorId], references: [id])
+  participants ChallengeParticipant[]
+}
+
+// Challenge participation tracking
+model ChallengeParticipant {
+  id          String   @id @default(cuid())
+  challengeId String
+  userId      String
+  progress    Int      @default(0)
+  joinedAt    DateTime @default(now())
+
+  challenge Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([challengeId, userId])
+}
+
+// Daily stats for tracking
+model DailyStats {
+  id            String   @id @default(cuid())
+  userId        String
+  date          DateTime @db.Date
+  workoutCount  Int      @default(0)
+  totalMinutes  Int      @default(0)
+  caloriesIn    Int?
+  proteinTotal  Float?
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, date])
+}
