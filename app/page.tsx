@@ -1781,6 +1781,22 @@ function SnapFitContent() {
                     <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>View badges</p>
                   </div>
                 </Link>
+
+                {session && (session.user as any)?.isTrainer && (
+                  <Link
+                    href="/trainer"
+                    className={`flex items-center gap-3 p-3 rounded-xl transition-all col-span-2 ${darkMode ? 'bg-gradient-to-r from-indigo-900/50 to-purple-900/50 hover:from-indigo-800/50 hover:to-purple-800/50 border border-indigo-700/30' : 'bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 border border-indigo-200'}`}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+                      <Users className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Trainer Dashboard</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Manage clients, templates, products</p>
+                    </div>
+                    <ChevronRight className={`w-5 h-5 ml-auto ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
+                  </Link>
+                )}
               </div>
             </div>
 
