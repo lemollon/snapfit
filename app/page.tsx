@@ -1782,6 +1782,45 @@ function SnapFitContent() {
                   </div>
                 </Link>
 
+                <Link
+                  href="/recovery"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Recovery</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Readiness score</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/form-check"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Form Check</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI analysis</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/programs"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
+                    <Dumbbell className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Programs</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Marketplace</p>
+                  </div>
+                </Link>
+
                 {session && (session.user as any)?.isTrainer && (
                   <Link
                     href="/trainer"
