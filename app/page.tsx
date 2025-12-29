@@ -246,6 +246,20 @@ function SnapFitContent() {
     }
   }, [status, router, isGuestMode]);
 
+  // Check onboarding status for authenticated users
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user && !isGuestMode) {
+      fetch('/api/profile')
+        .then(res => res.json())
+        .then(data => {
+          if (data.user && !data.user.onboardingCompleted) {
+            router.push('/onboarding');
+          }
+        })
+        .catch(err => console.error('Failed to check onboarding status:', err));
+    }
+  }, [status, session, router, isGuestMode]);
+
   // Load preferences and set random quote
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('snapfit_dark_mode');
@@ -1855,12 +1869,13 @@ function SnapFitContent() {
 
       {/* Bottom Navigation */}
       <nav className={`fixed bottom-0 left-0 right-0 ${darkMode ? 'bg-gray-900/95 border-gray-800' : 'bg-white/95 border-gray-200'} border-t backdrop-blur-lg safe-area-pb`}>
-        <div className="max-w-md mx-auto px-2 py-2 flex justify-around">
+        <div className="max-w-lg mx-auto px-1 py-2 flex justify-around">
           <TabButton tab="home" icon={Activity} label="Home" />
-          <TabButton tab="workout" icon={Dumbbell} label="Workout" />
+          <TabButton tab="workout" icon={Dumbbell} label="Train" />
           <TabButton tab="food" icon={UtensilsCrossed} label="Food" />
+          <TabButton tab="friends" icon={Users} label="Friends" />
           <TabButton tab="challenges" icon={Trophy} label="Compete" />
-          <TabButton tab="settings" icon={Settings} label="Settings" />
+          <TabButton tab="settings" icon={Settings} label="More" />
         </div>
       </nav>
     </div>

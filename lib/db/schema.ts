@@ -18,8 +18,12 @@ export const users = pgTable('users', {
   youtubeUrl: text('youtube_url'),
   twitterUrl: text('twitter_url'),
   websiteUrl: text('website_url'),
+  // Onboarding
+  onboardingCompleted: boolean('onboarding_completed').default(false),
   // Fitness profile
   fitnessGoal: text('fitness_goal'), // lose_weight, build_muscle, maintain, improve_endurance
+  experienceLevel: text('experience_level'), // beginner, intermediate, advanced
+  activityLevel: text('activity_level'), // sedentary, light, moderate, very, extra
   targetWeight: real('target_weight'),
   currentWeight: real('current_weight'),
   height: real('height'), // in cm

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -21,6 +21,7 @@ import {
   Target,
   Flame,
   BarChart3,
+  LogOut,
 } from 'lucide-react';
 
 interface WeightLog {
@@ -219,6 +220,13 @@ export default function BodyTrackingPage() {
             <Link href="/" className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
             <h1 className="text-xl font-bold">Body Tracking</h1>
           </div>
         </div>
