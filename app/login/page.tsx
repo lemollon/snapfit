@@ -278,7 +278,7 @@ export default function LoginPage() {
 
               {!isLogin && (
                 <div className="relative p-4 rounded-xl bg-gradient-to-r from-orange-500/5 to-pink-500/5 border border-orange-500/20 overflow-hidden">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
                   <label className="flex items-center cursor-pointer relative">
                     <input
                       type="checkbox"
@@ -315,7 +315,7 @@ export default function LoginPage() {
                 disabled={loading}
                 className="relative w-full group"
               >
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity" />
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none" />
                 <div className="relative flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold py-4 rounded-xl text-lg">
                   {loading ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -354,7 +354,7 @@ export default function LoginPage() {
       {showDemoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4">
           <div className="relative w-full max-w-lg">
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl blur-lg opacity-30" />
+            <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 rounded-3xl blur-lg opacity-30 pointer-events-none" />
             <div className="relative bg-zinc-950 rounded-3xl border border-zinc-800 p-8">
               <button
                 onClick={() => setShowDemoModal(false)}
@@ -378,7 +378,7 @@ export default function LoginPage() {
                   onClick={() => { setShowDemoModal(false); router.push('/demo/user'); }}
                   className="group relative p-6 rounded-2xl bg-gradient-to-br from-blue-500/5 to-purple-500/5 border border-blue-500/20 hover:border-blue-500/40 transition-all text-left overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500 pointer-events-none" />
                   <div className="relative flex items-start gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                       <User className="w-7 h-7" />
@@ -400,7 +400,7 @@ export default function LoginPage() {
                   onClick={() => { setShowDemoModal(false); router.push('/demo/trainer'); }}
                   className="group relative p-6 rounded-2xl bg-gradient-to-br from-orange-500/5 to-pink-500/5 border border-orange-500/20 hover:border-orange-500/40 transition-all text-left overflow-hidden"
                 >
-                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500" />
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 group-hover:scale-150 transition-transform duration-500 pointer-events-none" />
                   <div className="relative flex items-start gap-4">
                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                       <Users className="w-7 h-7" />
