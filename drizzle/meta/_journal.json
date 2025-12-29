@@ -15,6 +15,13 @@
       "when": 1766958670865,
       "tag": "0001_lazy_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766966434204,
+      "tag": "0002_next_callisto",
+      "breakpoints": true
     }
   ]
 }

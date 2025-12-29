@@ -29,6 +29,11 @@ export const users = pgTable('users', {
   certifications: text('certifications').array(),
   specializations: text('specializations').array(),
   hourlyRate: real('hourly_rate'),
+  // Trainer store links
+  shopUrl: text('shop_url'), // Main store URL
+  amazonStorefront: text('amazon_storefront'),
+  supplementStoreUrl: text('supplement_store_url'),
+  apparelStoreUrl: text('apparel_store_url'),
   // Gamification
   xp: integer('xp').default(0),
   level: integer('level').default(1),
@@ -413,6 +418,23 @@ export const trainerNotes = pgTable('trainer_notes', {
   createdAt: timestamp('created_at').defaultNow(),
 });
 
+// Trainer products/store items
+export const trainerProducts = pgTable('trainer_products', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  trainerId: text('trainer_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  imageUrl: text('image_url'),
+  productUrl: text('product_url').notNull(), // Link to purchase
+  category: text('category').notNull(), // supplements, apparel, equipment, programs, ebooks, other
+  price: real('price'),
+  currency: text('currency').default('USD'),
+  isFeatured: boolean('is_featured').default(false),
+  isActive: boolean('is_active').default(true),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // ============================================
 // RELATIONS
 // ============================================
@@ -440,6 +462,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   activityFeed: many(activityFeed),
   workoutTemplates: many(workoutTemplates),
   trainerNotes: many(trainerNotes),
+  trainerProducts: many(trainerProducts),
 }));
 
 export const workoutsRelations = relations(workouts, ({ one, many }) => ({
@@ -645,6 +668,13 @@ export const trainerNotesRelations = relations(trainerNotes, ({ one }) => ({
   }),
 }));
 
+export const trainerProductsRelations = relations(trainerProducts, ({ one }) => ({
+  trainer: one(users, {
+    fields: [trainerProducts.trainerId],
+    references: [users.id],
+  }),
+}));
+
 // ============================================
 // TYPES FOR TYPESCRIPT
 // ============================================
@@ -670,3 +700,4 @@ export type Notification = typeof notifications.$inferSelect;
 export type ActivityFeedItem = typeof activityFeed.$inferSelect;
 export type WorkoutTemplate = typeof workoutTemplates.$inferSelect;
 export type TrainerNote = typeof trainerNotes.$inferSelect;
+export type TrainerProduct = typeof trainerProducts.$inferSelect;

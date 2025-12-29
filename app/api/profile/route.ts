@@ -135,6 +135,11 @@ export async function PATCH(req: Request) {
       certifications,
       specializations,
       hourlyRate,
+      // Trainer store links
+      shopUrl,
+      amazonStorefront,
+      supplementStoreUrl,
+      apparelStoreUrl,
     } = body;
 
     // Build update object with only provided fields
@@ -158,6 +163,10 @@ export async function PATCH(req: Request) {
     if (certifications !== undefined) updateData.certifications = certifications;
     if (specializations !== undefined) updateData.specializations = specializations;
     if (hourlyRate !== undefined) updateData.hourlyRate = hourlyRate;
+    if (shopUrl !== undefined) updateData.shopUrl = shopUrl;
+    if (amazonStorefront !== undefined) updateData.amazonStorefront = amazonStorefront;
+    if (supplementStoreUrl !== undefined) updateData.supplementStoreUrl = supplementStoreUrl;
+    if (apparelStoreUrl !== undefined) updateData.apparelStoreUrl = apparelStoreUrl;
 
     updateData.updatedAt = new Date();
 
