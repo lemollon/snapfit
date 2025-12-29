@@ -9,11 +9,11 @@ import {
   Clock, TrendingUp, Apple, Utensils, Flame, Award, Crown, ChevronDown
 } from 'lucide-react';
 
-// Premium fitness imagery - aspirational bodies & results
+// Premium fitness imagery - wide shots showing full context
 const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=1920&q=85', // Athletic woman with defined abs
-  'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=1920&q=85', // Intense workout
-  'https://images.unsplash.com/photo-1550345332-09e3ac987658?w=1920&q=85', // Strong woman training
+  'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=85', // Gym wide shot
+  'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1920&q=85', // Gym interior wide
+  'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1920&q=85', // Weights wide shot
 ];
 
 // Transformation & results focused imagery
