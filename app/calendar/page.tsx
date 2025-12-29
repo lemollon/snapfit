@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -32,6 +32,7 @@ import {
   Edit2,
   CheckCircle,
   XCircle,
+  LogOut,
 } from 'lucide-react';
 
 interface CalendarData {
@@ -329,6 +330,13 @@ export default function CalendarPage() {
               <Link href="/" className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
+              <button
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
               <h1 className="text-xl font-bold">Daily Tracker</h1>
             </div>
             <div className="flex items-center gap-2">

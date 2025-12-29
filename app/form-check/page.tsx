@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Camera, Video, Upload, ArrowLeft, Play, CheckCircle, AlertCircle,
-  Star, TrendingUp, Target, Loader2, X, ChevronRight
+  Star, TrendingUp, Target, Loader2, X, ChevronRight, LogOut
 } from 'lucide-react';
 
 interface FormCheck {
@@ -122,6 +122,13 @@ export default function FormCheckPage() {
             <Link href="/" className="p-2 hover:bg-zinc-800 rounded-xl transition-colors">
               <ArrowLeft className="w-5 h-5" />
             </Link>
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-5 h-5" />
+            </button>
             <div>
               <h1 className="text-xl font-bold">Form Check AI</h1>
               <p className="text-sm text-zinc-400">Get instant feedback on your form</p>

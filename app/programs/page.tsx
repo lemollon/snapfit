@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft, Search, Filter, Star, Clock, Users, Dumbbell,
-  ShoppingCart, Play, ChevronRight, Loader2, Check, Crown
+  ShoppingCart, Play, ChevronRight, Loader2, Check, Crown, LogOut
 } from 'lucide-react';
 
 interface Program {
@@ -104,6 +104,13 @@ export default function ProgramsPage() {
               <Link href="/" className="p-2 hover:bg-zinc-800 rounded-xl transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
+              <button
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="w-5 h-5" />
+              </button>
               <div>
                 <h1 className="text-xl font-bold">Program Marketplace</h1>
                 <p className="text-sm text-zinc-400">Expert-designed training programs</p>

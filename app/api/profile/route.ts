@@ -155,6 +155,9 @@ export async function PATCH(req: Request) {
     if (twitterUrl !== undefined) updateData.twitterUrl = twitterUrl;
     if (websiteUrl !== undefined) updateData.websiteUrl = websiteUrl;
     if (fitnessGoal !== undefined) updateData.fitnessGoal = fitnessGoal;
+    if (body.experienceLevel !== undefined) updateData.experienceLevel = body.experienceLevel;
+    if (body.activityLevel !== undefined) updateData.activityLevel = body.activityLevel;
+    if (body.onboardingCompleted !== undefined) updateData.onboardingCompleted = body.onboardingCompleted;
     if (targetWeight !== undefined) updateData.targetWeight = targetWeight;
     if (currentWeight !== undefined) updateData.currentWeight = currentWeight;
     if (height !== undefined) updateData.height = height;

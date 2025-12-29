@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Users, Dumbbell, UtensilsCrossed, ArrowLeft, Plus, Mail, RefreshCw,
   Clock, TrendingUp, ChevronRight, X, Check, User, Activity, Calendar,
   BarChart3, Eye, UserMinus, UserCheck, Loader2, ShoppingBag, FileText,
-  MessageSquare, Settings
+  MessageSquare, Settings, LogOut
 } from 'lucide-react';
 
 interface Client {
@@ -244,6 +244,13 @@ export default function TrainerDashboard() {
               className="p-2 hover:bg-white/10 rounded-lg transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+              title="Sign Out"
+            >
+              <LogOut className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">

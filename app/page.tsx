@@ -246,6 +246,20 @@ function SnapFitContent() {
     }
   }, [status, router, isGuestMode]);
 
+  // Check onboarding status for authenticated users
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user && !isGuestMode) {
+      fetch('/api/profile')
+        .then(res => res.json())
+        .then(data => {
+          if (data.user && !data.user.onboardingCompleted) {
+            router.push('/onboarding');
+          }
+        })
+        .catch(err => console.error('Failed to check onboarding status:', err));
+    }
+  }, [status, session, router, isGuestMode]);
+
   // Load preferences and set random quote
   useEffect(() => {
     const savedDarkMode = localStorage.getItem('snapfit_dark_mode');
