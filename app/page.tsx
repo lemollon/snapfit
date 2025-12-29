@@ -708,7 +708,15 @@ function SnapFitContent() {
   }
 
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-br from-indigo-50 via-white to-purple-50'}`}>
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Premium animated background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 -left-1/4 w-[800px] h-[800px] bg-gradient-to-r from-orange-500/15 to-pink-500/15 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 -right-1/4 w-[800px] h-[800px] bg-gradient-to-r from-violet-500/15 to-purple-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-pink-500/10 to-orange-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        {/* Noise texture */}
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMiI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMSIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+      </div>
       {/* Guest Mode Banner */}
       {isGuestMode && (
         <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white py-3 px-4">
@@ -726,48 +734,52 @@ function SnapFitContent() {
         </div>
       )}
 
-      {/* Header */}
-      <header className={`sticky top-0 z-50 backdrop-blur-lg ${darkMode ? 'bg-gray-900/80 border-gray-800' : 'bg-white/80 border-gray-200'} border-b`}>
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <Dumbbell className="text-indigo-500" size={28} />
-              <Sparkles className="absolute -top-1 -right-1 text-yellow-400" size={12} />
+      {/* Premium Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-black/50 border-b border-white/10">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between relative">
+          <div className="flex items-center gap-4">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600 rounded-xl blur-lg opacity-50 group-hover:opacity-75 transition-opacity" />
+              <div className="relative w-11 h-11 bg-gradient-to-br from-orange-500 to-pink-600 rounded-xl flex items-center justify-center">
+                <Dumbbell className="text-white" size={24} />
+              </div>
             </div>
-            <h1 className={`text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent`}>
-              SnapFit
-            </h1>
-            {isGuestMode && (
-              <span className="text-xs bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full font-medium">Demo</span>
-            )}
+            <div>
+              <h1 className="text-xl font-black bg-gradient-to-r from-white via-orange-200 to-pink-200 bg-clip-text text-transparent">
+                SnapFit
+              </h1>
+              {isGuestMode && (
+                <span className="text-xs text-orange-400 font-medium">Demo Mode</span>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* Streak Badge */}
+          <div className="flex items-center gap-3">
+            {/* Premium Streak Badge */}
             {streak > 0 && (
-              <div className={`flex items-center gap-1 px-3 py-1 rounded-full ${darkMode ? 'bg-orange-900/50 text-orange-400' : 'bg-orange-100 text-orange-600'}`}>
-                <Flame size={16} />
-                <span className="font-bold text-sm">{streak}</span>
+              <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full blur opacity-50" />
+                <div className="relative flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-orange-500/20 to-pink-500/20 border border-orange-500/30 rounded-full">
+                  <Flame className="text-orange-400" size={18} />
+                  <span className="font-bold text-orange-400">{streak}</span>
+                </div>
               </div>
             )}
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-gray-700 text-yellow-400' : 'hover:bg-gray-100 text-gray-600'}`}
-            >
-              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
             {session ? (
               <button
                 onClick={() => signOut()}
-                className={`p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-gray-700 text-gray-400' : 'hover:bg-gray-100 text-gray-600'}`}
+                className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
               >
-                <LogOut size={20} />
+                <LogOut size={20} className="text-zinc-400" />
               </button>
             ) : (
               <button
                 onClick={() => router.push('/login')}
-                className="bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold px-4 py-1.5 rounded-full text-sm hover:shadow-lg transition-all"
+                className="relative group"
               >
-                Sign Up
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600 rounded-full blur opacity-50 group-hover:opacity-75 transition-opacity" />
+                <div className="relative bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold px-5 py-2 rounded-full text-sm">
+                  Sign Up Free
+                </div>
               </button>
             )}
           </div>
@@ -777,122 +789,167 @@ function SnapFitContent() {
       <main className="max-w-6xl mx-auto px-4 pb-24">
         {/* Home Tab - Dashboard */}
         {activeTab === 'home' && (
-          <div className="py-6 space-y-6">
-            {/* Welcome Section with Quote */}
-            <div className={`relative overflow-hidden rounded-2xl ${darkMode ? 'bg-gradient-to-r from-indigo-900 to-purple-900' : 'bg-gradient-to-r from-indigo-500 to-purple-600'} p-6 text-white`}>
-              <div className="absolute inset-0 opacity-10">
+          <div className="py-6 space-y-6 relative">
+            {/* Premium Welcome Section */}
+            <div className="relative overflow-hidden rounded-3xl">
+              {/* Background image with overlay */}
+              <div className="absolute inset-0">
                 <img src={HERO_IMAGES[0]} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-black/60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
               </div>
-              <div className="relative z-10">
-                <p className="text-indigo-200 text-sm">{isGuestMode ? 'Welcome to SnapFit!' : 'Welcome back,'}</p>
-                <h2 className="text-2xl font-bold mb-4">{isGuestMode ? 'Try out our features 🎯' : `${session?.user?.name || 'Athlete'} 💪`}</h2>
-                <blockquote className="italic text-indigo-100 border-l-2 border-indigo-300 pl-4">
-                  "{todayQuote.quote}"
-                  <footer className="text-indigo-200 text-sm mt-1">— {todayQuote.author}</footer>
+              {/* Animated gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-pink-500/10 to-violet-500/20 animate-pulse" />
+
+              <div className="relative z-10 p-8">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="w-4 h-4 text-orange-400" />
+                  <span className="text-orange-400 text-sm font-medium">{isGuestMode ? 'Welcome to SnapFit!' : 'Welcome back,'}</span>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-black mb-4 bg-gradient-to-r from-white via-orange-100 to-pink-100 bg-clip-text text-transparent">
+                  {isGuestMode ? 'Try out our features' : session?.user?.name || 'Athlete'}
+                </h2>
+                <blockquote className="max-w-lg">
+                  <p className="text-zinc-300 italic border-l-2 border-orange-500 pl-4">
+                    "{todayQuote.quote}"
+                  </p>
+                  <footer className="text-zinc-500 text-sm mt-2 pl-4">— {todayQuote.author}</footer>
                 </blockquote>
               </div>
             </div>
 
-            {/* Stats Grid */}
+            {/* Premium Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className={`p-4 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${darkMode ? 'bg-orange-900/50' : 'bg-orange-100'}`}>
-                  <Flame className="text-orange-500" size={20} />
+              {/* Streak Card */}
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
+                <div className="relative p-5 bg-zinc-900/80 backdrop-blur-sm border border-white/10 rounded-2xl">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-pink-500/20 flex items-center justify-center mb-3">
+                    <Flame className="text-orange-500" size={24} />
+                  </div>
+                  <p className="text-3xl font-black bg-gradient-to-r from-orange-400 to-pink-400 bg-clip-text text-transparent">{streak}</p>
+                  <p className="text-sm text-zinc-400">Day Streak</p>
                 </div>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{streak}</p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Day Streak</p>
               </div>
-              <div className={`p-4 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${darkMode ? 'bg-indigo-900/50' : 'bg-indigo-100'}`}>
-                  <Dumbbell className="text-indigo-500" size={20} />
+
+              {/* Workouts Card */}
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
+                <div className="relative p-5 bg-zinc-900/80 backdrop-blur-sm border border-white/10 rounded-2xl">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center mb-3">
+                    <Dumbbell className="text-blue-500" size={24} />
+                  </div>
+                  <p className="text-3xl font-black bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">{totalWorkouts}</p>
+                  <p className="text-sm text-zinc-400">Workouts</p>
                 </div>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{totalWorkouts}</p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Workouts</p>
               </div>
-              <div className={`p-4 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${darkMode ? 'bg-green-900/50' : 'bg-green-100'}`}>
-                  <Clock className="text-green-500" size={20} />
+
+              {/* Minutes Card */}
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-green-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
+                <div className="relative p-5 bg-zinc-900/80 backdrop-blur-sm border border-white/10 rounded-2xl">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-green-500/20 flex items-center justify-center mb-3">
+                    <Clock className="text-emerald-500" size={24} />
+                  </div>
+                  <p className="text-3xl font-black bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">{totalMinutes}</p>
+                  <p className="text-sm text-zinc-400">Minutes</p>
                 </div>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{totalMinutes}</p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Minutes</p>
               </div>
-              <div className={`p-4 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${darkMode ? 'bg-purple-900/50' : 'bg-purple-100'}`}>
-                  <Zap className="text-purple-500" size={20} />
+
+              {/* Calories Card */}
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-violet-500 to-purple-500 rounded-2xl blur opacity-30 group-hover:opacity-50 transition-opacity" />
+                <div className="relative p-5 bg-zinc-900/80 backdrop-blur-sm border border-white/10 rounded-2xl">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-500/20 to-purple-500/20 flex items-center justify-center mb-3">
+                    <Zap className="text-violet-500" size={24} />
+                  </div>
+                  <p className="text-3xl font-black bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">{dailyCalories}</p>
+                  <p className="text-sm text-zinc-400">Calories Today</p>
                 </div>
-                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{dailyCalories}</p>
-                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Calories Today</p>
               </div>
             </div>
 
-            {/* Weekly Goal Progress */}
-            <div className={`p-5 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <Target className={`${darkMode ? 'text-indigo-400' : 'text-indigo-500'}`} size={24} />
-                  <div>
-                    <h3 className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Weekly Goal</h3>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{weeklyProgress} of {weeklyGoal} workouts</p>
+            {/* Premium Weekly Goal Progress */}
+            <div className="relative group">
+              <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 via-pink-500 to-violet-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition-opacity" />
+              <div className="relative p-6 bg-zinc-900/80 backdrop-blur-sm border border-white/10 rounded-2xl">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-pink-500 flex items-center justify-center">
+                      <Target className="text-white" size={24} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white">Weekly Goal</h3>
+                      <p className="text-sm text-zinc-400">{weeklyProgress} of {weeklyGoal} workouts</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className={`text-3xl font-black ${weeklyProgress >= weeklyGoal ? 'bg-gradient-to-r from-green-400 to-emerald-400' : 'bg-gradient-to-r from-orange-400 to-pink-400'} bg-clip-text text-transparent`}>
+                      {Math.round((weeklyProgress / weeklyGoal) * 100)}%
+                    </span>
                   </div>
                 </div>
-                <span className={`text-2xl font-bold ${weeklyProgress >= weeklyGoal ? 'text-green-500' : darkMode ? 'text-white' : 'text-gray-800'}`}>
-                  {Math.round((weeklyProgress / weeklyGoal) * 100)}%
-                </span>
-              </div>
-              <div className={`h-3 rounded-full overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                <div
-                  className={`h-full rounded-full transition-all duration-500 ${weeklyProgress >= weeklyGoal ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-indigo-500 to-purple-500'}`}
-                  style={{ width: `${Math.min((weeklyProgress / weeklyGoal) * 100, 100)}%` }}
-                />
-              </div>
-              {weeklyProgress >= weeklyGoal && (
-                <div className="mt-3 flex items-center gap-2 text-green-500">
-                  <Award size={16} />
-                  <span className="text-sm font-medium">Goal achieved! You're crushing it! 🎉</span>
+                <div className="h-4 rounded-full overflow-hidden bg-zinc-800">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${weeklyProgress >= weeklyGoal ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-gradient-to-r from-orange-500 via-pink-500 to-violet-500'}`}
+                    style={{ width: `${Math.min((weeklyProgress / weeklyGoal) * 100, 100)}%` }}
+                  />
                 </div>
-              )}
+                {weeklyProgress >= weeklyGoal && (
+                  <div className="mt-4 flex items-center gap-2 text-green-400">
+                    <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <Award size={18} />
+                    </div>
+                    <span className="font-medium">Goal achieved! You're crushing it!</span>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Quick Start Workouts */}
+            {/* Premium Quick Start Workouts */}
             <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Quick Start</h3>
+              <div className="flex items-center justify-between mb-5">
+                <h3 className="text-xl font-bold text-white">Quick Start</h3>
                 <button
                   onClick={() => setActiveTab('workout')}
-                  className="text-indigo-500 text-sm font-medium flex items-center gap-1 hover:gap-2 transition-all"
+                  className="flex items-center gap-1 text-orange-400 hover:text-orange-300 text-sm font-medium group"
                 >
-                  Create Custom <ChevronRight size={16} />
+                  Create Custom <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {QUICK_WORKOUTS.slice(0, 6).map((workout) => (
                   <div
                     key={workout.id}
-                    className={`group relative overflow-hidden rounded-2xl cursor-pointer transform hover:scale-105 transition-all duration-300 ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}
+                    className="group relative overflow-hidden rounded-2xl cursor-pointer transform hover:scale-[1.02] transition-all duration-300"
                     onClick={() => setActiveTab('workout')}
                   >
-                    <div className="absolute inset-0">
-                      <img src={workout.image} alt={workout.name} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
-                      <div className={`absolute inset-0 ${darkMode ? 'bg-gradient-to-t from-gray-900 via-gray-900/60 to-transparent' : 'bg-gradient-to-t from-black/70 via-black/30 to-transparent'}`} />
-                    </div>
-                    <div className="relative p-4 h-36 flex flex-col justify-end">
-                      <h4 className="font-bold text-white">{workout.name}</h4>
-                      <div className="flex items-center gap-3 text-white/80 text-sm mt-1">
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} />
-                          {workout.duration}m
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Flame size={12} />
-                          {workout.calories} cal
+                    {/* Glow effect on hover */}
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-2xl blur opacity-0 group-hover:opacity-50 transition-opacity" />
+                    <div className="relative overflow-hidden rounded-2xl">
+                      <div className="absolute inset-0">
+                        <img src={workout.image} alt={workout.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+                      </div>
+                      <div className="relative p-5 h-40 flex flex-col justify-end">
+                        <h4 className="font-bold text-white text-lg">{workout.name}</h4>
+                        <div className="flex items-center gap-3 text-white/80 text-sm mt-2">
+                          <span className="flex items-center gap-1">
+                            <Clock size={14} />
+                            {workout.duration}m
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Flame size={14} />
+                            {workout.calories} cal
+                          </span>
+                        </div>
+                        <span className={`inline-block mt-3 px-3 py-1 rounded-full text-xs font-semibold backdrop-blur-sm ${
+                          workout.level === 'beginner' ? 'bg-emerald-500/80 text-emerald-100' :
+                          workout.level === 'intermediate' ? 'bg-amber-500/80 text-amber-100' : 'bg-rose-500/80 text-rose-100'
+                        }`}>
+                          {workout.level.charAt(0).toUpperCase() + workout.level.slice(1)}
                         </span>
                       </div>
-                      <span className={`inline-block mt-2 px-2 py-0.5 rounded-full text-xs font-medium ${
-                        workout.level === 'beginner' ? 'bg-green-500/80' :
-                        workout.level === 'intermediate' ? 'bg-yellow-500/80' : 'bg-red-500/80'
-                      } text-white`}>
-                        {workout.level}
-                      </span>
                     </div>
                   </div>
                 ))}

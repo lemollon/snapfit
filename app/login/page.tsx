@@ -257,7 +257,18 @@ export default function LoginPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-zinc-300">Password</label>
+                      {isLogin && (
+                        <button
+                          type="button"
+                          onClick={() => router.push('/forgot-password')}
+                          className="text-sm text-orange-400 hover:text-orange-300 transition-colors"
+                        >
+                          Forgot password?
+                        </button>
+                      )}
+                    </div>
                     <div className="relative group">
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
                       <div className="relative flex items-center">
