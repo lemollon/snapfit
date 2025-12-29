@@ -18,18 +18,23 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Please enter email and password');
         }
 
+        // Normalize email
+        const normalizedEmail = credentials.email.toLowerCase().trim();
+
         const user = await db.query.users.findFirst({
-          where: eq(users.email, credentials.email),
+          where: eq(users.email, normalizedEmail),
         });
 
         if (!user || !user.password) {
-          throw new Error('No user found with this email');
+          // Generic message to prevent user enumeration
+          throw new Error('Invalid email or password');
         }
 
         const passwordMatch = await bcrypt.compare(credentials.password, user.password);
 
         if (!passwordMatch) {
-          throw new Error('Incorrect password');
+          // Same generic message
+          throw new Error('Invalid email or password');
         }
 
         return {
