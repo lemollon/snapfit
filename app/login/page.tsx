@@ -180,11 +180,11 @@ export default function LoginPage() {
     <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-50 flex items-center justify-center p-4">
       <div className="relative w-full max-w-md">
         {/* Animated gradient border */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-pink-500 to-violet-500 rounded-3xl blur-lg opacity-50 animate-pulse" />
+        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-pink-500 to-violet-500 rounded-3xl blur-lg opacity-50 animate-pulse pointer-events-none" />
 
         <div className="relative bg-zinc-950 rounded-3xl border border-zinc-800 overflow-hidden">
           {/* Header gradient */}
-          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-orange-500/20 via-pink-500/10 to-transparent" />
+          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-orange-500/20 via-pink-500/10 to-transparent pointer-events-none" />
 
           <div className="relative p-8">
             <button
