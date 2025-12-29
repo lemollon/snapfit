@@ -185,6 +185,31 @@ export async function POST(request: NextRequest) {
       ))
       .limit(1);
 
+    // Calculate churned clients (clients who were active last month but not this month)
+    const prevMonthStart = new Date(monthDate.getFullYear(), monthDate.getMonth() - 1, 1);
+    const prevMonthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth(), 0);
+
+    const prevMonthClients = await db.select()
+      .from(trainerClients)
+      .where(and(
+        eq(trainerClients.trainerId, session.user.id),
+        eq(trainerClients.status, 'active'),
+        lte(trainerClients.createdAt, prevMonthEnd)
+      ));
+
+    // Find clients that ended during this month
+    const endedClients = await db.select()
+      .from(trainerClients)
+      .where(and(
+        eq(trainerClients.trainerId, session.user.id),
+        eq(trainerClients.status, 'ended'),
+        gte(trainerClients.createdAt, monthStart),
+        lte(trainerClients.createdAt, monthEnd)
+      ));
+
+    // Churned = clients who were active before but relationship ended this month
+    const churnedCount = endedClients.length;
+
     const snapshotData = {
       trainerId: session.user.id,
       month: monthKey,
@@ -196,7 +221,7 @@ export async function POST(request: NextRequest) {
       netRevenue,
       totalClients: activeClients.length,
       newClients: newClients.length,
-      churnedClients: 0, // TODO: Calculate
+      churnedClients: churnedCount,
       programsSold: programsSold.length,
       averageOrderValue: programsSold.length > 0
         ? programsSold.reduce((sum, p) => sum + p.pricePaid, 0) / programsSold.length
