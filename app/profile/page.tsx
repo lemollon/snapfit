@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useTheme } from '@/lib/theme-context';
+import { AchievementIcon, AvatarPlaceholder } from '@/components/achievement-icon';
 
 interface UserProfile {
   id: string;
@@ -350,9 +351,7 @@ export default function ProfilePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-orange-500 to-pink-600">
-                  <User className="w-16 h-16 text-white" />
-                </div>
+                <AvatarPlaceholder name={profile.name || 'User'} size="xl" className="w-full h-full" />
               )}
             </div>
             <button
@@ -656,7 +655,13 @@ export default function ProfilePage() {
                         key={achievement.id}
                         className={`relative p-3 rounded-xl border ${RARITY_BG[achievement.rarity]} flex flex-col items-center text-center`}
                       >
-                        <div className="text-2xl mb-1">{achievement.iconEmoji || '🏆'}</div>
+                        <AchievementIcon
+                          category={achievement.category}
+                          rarity={achievement.rarity}
+                          isComplete={achievement.isComplete}
+                          size="sm"
+                          className="mb-1"
+                        />
                         <p className="text-xs font-medium truncate w-full">{achievement.name}</p>
                       </div>
                     ))
@@ -724,9 +729,12 @@ export default function ProfilePage() {
                     }`}
                   >
                     <div className="flex items-start gap-3">
-                      <div className={`text-3xl ${!achievement.isComplete && 'grayscale'}`}>
-                        {achievement.iconEmoji || '🏆'}
-                      </div>
+                      <AchievementIcon
+                        category={achievement.category}
+                        rarity={achievement.rarity}
+                        isComplete={achievement.isComplete}
+                        size="lg"
+                      />
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           <h4 className="font-semibold">{achievement.name}</h4>

@@ -18,7 +18,12 @@ import {
   TrendingUp,
   Filter,
   Sparkles,
+  Dumbbell,
+  Heart,
+  Users,
+  Calendar,
 } from 'lucide-react';
+import { AchievementIcon } from '@/components/achievement-icon';
 
 interface Achievement {
   id: string;
@@ -298,14 +303,13 @@ export default function AchievementsPage() {
 
                 <div className="flex items-start gap-4">
                   {/* Icon */}
-                  <div className={`relative ${!achievement.isComplete ? 'grayscale opacity-50' : ''}`}>
-                    <div className={`w-14 h-14 rounded-xl flex items-center justify-center text-3xl ${
-                      achievement.isComplete
-                        ? `bg-gradient-to-br ${rarityStyle.gradient}`
-                        : 'bg-zinc-200 dark:bg-zinc-800'
-                    }`}>
-                      {achievement.iconEmoji || '🏆'}
-                    </div>
+                  <div className="relative">
+                    <AchievementIcon
+                      category={achievement.category}
+                      rarity={achievement.rarity}
+                      isComplete={achievement.isComplete}
+                      size="lg"
+                    />
                     {achievement.isComplete && (
                       <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
                         <CheckCircle2 className="w-3 h-3 text-white" />
