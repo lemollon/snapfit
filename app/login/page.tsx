@@ -218,9 +218,9 @@ export default function LoginPage() {
                 <div>
                   <label className="block text-sm font-medium text-zinc-300 mb-2">Name</label>
                   <div className="relative group">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity" />
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
                     <div className="relative flex items-center">
-                      <User className="absolute left-4 w-5 h-5 text-zinc-500" />
+                      <User className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
                       <input
                         type="text"
                         value={name}
@@ -236,9 +236,9 @@ export default function LoginPage() {
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity" />
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
                   <div className="relative flex items-center">
-                    <Mail className="absolute left-4 w-5 h-5 text-zinc-500" />
+                    <Mail className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
                     <input
                       type="email"
                       value={email}
@@ -254,9 +254,9 @@ export default function LoginPage() {
               <div>
                 <label className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
                 <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity" />
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
                   <div className="relative flex items-center">
-                    <Lock className="absolute left-4 w-5 h-5 text-zinc-500" />
+                    <Lock className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
