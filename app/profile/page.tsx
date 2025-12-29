@@ -269,10 +269,15 @@ export default function ProfilePage() {
 
   if (loading || status === 'loading') {
     return (
-      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
+      <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-orange-500/20 to-pink-500/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-purple-500/20 to-violet-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        <div className="flex flex-col items-center gap-4 relative z-10">
           <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
-          <p className="text-zinc-500 dark:text-zinc-400">Loading profile...</p>
+          <p className="text-zinc-400">Loading profile...</p>
         </div>
       </div>
     );
@@ -280,8 +285,11 @@ export default function ProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
-        <p className="text-zinc-500 dark:text-zinc-400">Profile not found</p>
+      <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-orange-500/20 to-pink-500/20 rounded-full blur-3xl" />
+        </div>
+        <p className="text-zinc-400 relative z-10">Profile not found</p>
       </div>
     );
   }
@@ -292,7 +300,14 @@ export default function ProfilePage() {
   const recentAchievements = completedAchievements.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white">
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 -left-1/4 w-[800px] h-[800px] bg-gradient-to-r from-orange-500/15 to-pink-500/15 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/2 -right-1/4 w-[600px] h-[600px] bg-gradient-to-r from-purple-500/15 to-violet-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute -bottom-1/4 left-1/3 w-[700px] h-[700px] bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
       {/* Hidden file inputs */}
       <input
         ref={avatarInputRef}
@@ -522,46 +537,35 @@ export default function ProfilePage() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8">
-          <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
-            <div className="flex items-center gap-2 text-zinc-400 text-sm mb-1">
-              <Dumbbell className="w-4 h-4" />
-              Workouts
+          {[
+            { icon: Dumbbell, label: 'Workouts', value: profile.totalWorkouts, suffix: '', color: 'from-blue-500 to-cyan-500', iconColor: 'text-blue-400' },
+            { icon: Clock, label: 'Minutes', value: profile.totalMinutes.toLocaleString(), suffix: '', color: 'from-green-500 to-emerald-500', iconColor: 'text-green-400' },
+            { icon: Flame, label: 'Current Streak', value: profile.currentStreak, suffix: 'days', color: 'from-orange-500 to-pink-500', iconColor: 'text-orange-400' },
+            { icon: Trophy, label: 'Best Streak', value: profile.longestStreak, suffix: 'days', color: 'from-amber-500 to-yellow-500', iconColor: 'text-amber-400' },
+          ].map((stat, idx) => (
+            <div key={idx} className="relative group">
+              <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity`} />
+              <div className="relative p-4 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:border-white/20 transition-all">
+                <div className="flex items-center gap-2 text-zinc-400 text-sm mb-1">
+                  <stat.icon className={`w-4 h-4 ${stat.iconColor}`} />
+                  {stat.label}
+                </div>
+                <p className="text-2xl font-bold">{stat.value} {stat.suffix && <span className="text-sm text-zinc-400">{stat.suffix}</span>}</p>
+              </div>
             </div>
-            <p className="text-2xl font-bold">{profile.totalWorkouts}</p>
-          </div>
-          <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
-            <div className="flex items-center gap-2 text-zinc-400 text-sm mb-1">
-              <Clock className="w-4 h-4" />
-              Minutes
-            </div>
-            <p className="text-2xl font-bold">{profile.totalMinutes.toLocaleString()}</p>
-          </div>
-          <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
-            <div className="flex items-center gap-2 text-zinc-400 text-sm mb-1">
-              <Flame className="w-4 h-4 text-orange-400" />
-              Current Streak
-            </div>
-            <p className="text-2xl font-bold">{profile.currentStreak} <span className="text-sm text-zinc-400">days</span></p>
-          </div>
-          <div className="p-4 bg-zinc-900/50 rounded-xl border border-zinc-800">
-            <div className="flex items-center gap-2 text-zinc-400 text-sm mb-1">
-              <Trophy className="w-4 h-4 text-amber-400" />
-              Best Streak
-            </div>
-            <p className="text-2xl font-bold">{profile.longestStreak} <span className="text-sm text-zinc-400">days</span></p>
-          </div>
+          ))}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mt-8 p-1 bg-zinc-900 rounded-lg overflow-x-auto">
+        <div className="flex gap-1 mt-8 p-1 bg-white/5 backdrop-blur-sm rounded-xl overflow-x-auto border border-white/10">
           {(['overview', 'achievements', 'progress', 'settings'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+              className={`flex-1 px-4 py-2.5 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 activeTab === tab
-                  ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white'
-                  : 'text-zinc-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg'
+                  : 'text-zinc-400 hover:text-white hover:bg-white/5'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -574,7 +578,7 @@ export default function ProfilePage() {
           {activeTab === 'overview' && (
             <div className="space-y-6">
               {/* Fitness Goals */}
-              <div className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+              <div className="p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                 <h3 className="text-lg font-semibold flex items-center gap-2 mb-4">
                   <Target className="w-5 h-5 text-orange-400" />
                   Fitness Goals
@@ -635,7 +639,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Recent Achievements */}
-              <div className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+              <div className="p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Award className="w-5 h-5 text-amber-400" />
@@ -673,7 +677,7 @@ export default function ProfilePage() {
 
               {/* Weight Progress */}
               {weightLogs.length > 0 && (
-                <div className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+                <div className="p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold flex items-center gap-2">
                       <Scale className="w-5 h-5 text-blue-400" />
@@ -770,45 +774,34 @@ export default function ProfilePage() {
           {activeTab === 'progress' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Link
-                  href="/body"
-                  className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-colors group"
-                >
-                  <Scale className="w-8 h-8 text-blue-400 mb-3" />
-                  <h3 className="text-lg font-semibold group-hover:text-orange-400 transition-colors">Weight Tracking</h3>
-                  <p className="text-sm text-zinc-400 mt-1">Log and track your weight over time</p>
-                </Link>
-                <Link
-                  href="/body/measurements"
-                  className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-colors group"
-                >
-                  <Ruler className="w-8 h-8 text-green-400 mb-3" />
-                  <h3 className="text-lg font-semibold group-hover:text-orange-400 transition-colors">Body Measurements</h3>
-                  <p className="text-sm text-zinc-400 mt-1">Track chest, waist, arms, and more</p>
-                </Link>
-                <Link
-                  href="/body/photos"
-                  className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-colors group"
-                >
-                  <Camera className="w-8 h-8 text-pink-400 mb-3" />
-                  <h3 className="text-lg font-semibold group-hover:text-orange-400 transition-colors">Progress Photos</h3>
-                  <p className="text-sm text-zinc-400 mt-1">Visualize your transformation</p>
-                </Link>
-                <Link
-                  href="/reports"
-                  className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800 hover:border-zinc-700 transition-colors group"
-                >
-                  <BarChart3 className="w-8 h-8 text-purple-400 mb-3" />
-                  <h3 className="text-lg font-semibold group-hover:text-orange-400 transition-colors">Weekly Reports</h3>
-                  <p className="text-sm text-zinc-400 mt-1">AI-generated progress analysis</p>
-                </Link>
+                {[
+                  { href: '/body', icon: Scale, iconColor: 'text-blue-400', gradient: 'from-blue-500 to-cyan-500', title: 'Weight Tracking', desc: 'Log and track your weight over time' },
+                  { href: '/body/measurements', icon: Ruler, iconColor: 'text-green-400', gradient: 'from-green-500 to-emerald-500', title: 'Body Measurements', desc: 'Track chest, waist, arms, and more' },
+                  { href: '/body/photos', icon: Camera, iconColor: 'text-pink-400', gradient: 'from-pink-500 to-rose-500', title: 'Progress Photos', desc: 'Visualize your transformation' },
+                  { href: '/reports', icon: BarChart3, iconColor: 'text-purple-400', gradient: 'from-purple-500 to-violet-500', title: 'Weekly Reports', desc: 'AI-generated progress analysis' },
+                ].map((item, idx) => (
+                  <Link
+                    key={idx}
+                    href={item.href}
+                    className="group relative p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 hover:border-white/20 transition-all"
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-r ${item.gradient} rounded-2xl blur-xl opacity-0 group-hover:opacity-20 transition-opacity`} />
+                    <div className="relative">
+                      <div className={`w-12 h-12 bg-gradient-to-br ${item.gradient} rounded-xl flex items-center justify-center mb-3 shadow-lg`}>
+                        <item.icon className="w-6 h-6 text-white" />
+                      </div>
+                      <h3 className="text-lg font-semibold group-hover:text-orange-400 transition-colors">{item.title}</h3>
+                      <p className="text-sm text-zinc-400 mt-1">{item.desc}</p>
+                    </div>
+                  </Link>
+                ))}
               </div>
             </div>
           )}
 
           {activeTab === 'settings' && (
             <div className="space-y-6">
-              <div className="p-6 bg-zinc-900/50 rounded-xl border border-zinc-800">
+              <div className="p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                 <h3 className="text-lg font-semibold mb-4">Account Settings</h3>
                 <div className="space-y-4">
                   <div>
@@ -822,7 +815,7 @@ export default function ProfilePage() {
                         type="text"
                         value={editForm.name}
                         onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                        className="w-full p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-orange-500"
+                        className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                       />
                     </div>
                   )}
@@ -834,7 +827,7 @@ export default function ProfilePage() {
                         value={editForm.location}
                         onChange={(e) => setEditForm({ ...editForm, location: e.target.value })}
                         placeholder="City, Country"
-                        className="w-full p-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:border-orange-500"
+                        className="w-full p-3 bg-white/5 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
                       />
                     </div>
                   )}
@@ -842,24 +835,24 @@ export default function ProfilePage() {
               </div>
 
               {/* Theme Preferences */}
-              <div className="p-6 bg-zinc-100 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
+              <div className="p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                   <Sun className="w-5 h-5 text-amber-500" />
                   Appearance
                 </h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm text-zinc-500 dark:text-zinc-400 mb-2">Theme</label>
+                    <label className="block text-sm text-zinc-400 mb-2">Theme</label>
                     <ThemeToggle variant="full" />
                   </div>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm text-zinc-400">
                     Choose between light and dark mode for your preferred viewing experience.
                   </p>
                 </div>
               </div>
 
               {profile.isTrainer && (
-                <div className="p-6 bg-zinc-100 dark:bg-zinc-900/50 rounded-xl border border-zinc-200 dark:border-zinc-800">
+                <div className="p-6 bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10">
                   <h3 className="text-lg font-semibold mb-4">Trainer Settings</h3>
                   <div className="space-y-4">
                     <div>
@@ -867,7 +860,7 @@ export default function ProfilePage() {
                       <div className="flex flex-wrap gap-2 mt-1">
                         {profile.certifications?.length ? (
                           profile.certifications.map((cert, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-zinc-800 rounded text-sm">{cert}</span>
+                            <span key={idx} className="px-3 py-1.5 bg-white/10 rounded-lg text-sm border border-white/10">{cert}</span>
                           ))
                         ) : (
                           <span className="text-zinc-500">No certifications added</span>
@@ -879,7 +872,7 @@ export default function ProfilePage() {
                       <div className="flex flex-wrap gap-2 mt-1">
                         {profile.specializations?.length ? (
                           profile.specializations.map((spec, idx) => (
-                            <span key={idx} className="px-2 py-1 bg-zinc-800 rounded text-sm">{spec}</span>
+                            <span key={idx} className="px-3 py-1.5 bg-white/10 rounded-lg text-sm border border-white/10">{spec}</span>
                           ))
                         ) : (
                           <span className="text-zinc-500">No specializations added</span>

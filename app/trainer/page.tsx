@@ -8,7 +8,7 @@ import {
   Users, Dumbbell, UtensilsCrossed, ArrowLeft, Plus, Mail, RefreshCw,
   Clock, TrendingUp, ChevronRight, X, Check, User, Activity, Calendar,
   BarChart3, Eye, UserMinus, UserCheck, Loader2, ShoppingBag, FileText,
-  MessageSquare, Settings, LogOut
+  MessageSquare, Settings, LogOut, Sparkles
 } from 'lucide-react';
 
 interface Client {
@@ -206,9 +206,14 @@ export default function TrainerDashboard() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center">
-          <RefreshCw className="w-8 h-8 text-white animate-spin mx-auto mb-4" />
+      <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-r from-indigo-500/20 to-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        <div className="text-center relative z-10">
+          <RefreshCw className="w-8 h-8 text-violet-400 animate-spin mx-auto mb-4" />
           <p className="text-white/70">Loading trainer dashboard...</p>
         </div>
       </div>
@@ -217,14 +222,20 @@ export default function TrainerDashboard() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 flex items-center justify-center">
-        <div className="text-center">
-          <Users className="w-16 h-16 text-red-400 mx-auto mb-4" />
+      <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
+        {/* Animated Background */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-full blur-3xl" />
+        </div>
+        <div className="text-center relative z-10">
+          <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-500/25">
+            <Users className="w-10 h-10 text-white" />
+          </div>
           <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
-          <p className="text-white/70 mb-6">{error}</p>
+          <p className="text-white/70 mb-8">{error}</p>
           <button
             onClick={() => router.push('/')}
-            className="px-6 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20"
+            className="px-8 py-3 bg-gradient-to-r from-violet-500 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all"
           >
             Go Back
           </button>
@@ -234,44 +245,54 @@ export default function TrainerDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 text-white">
+    <div className="min-h-screen bg-black text-white relative overflow-hidden">
+      {/* Animated Background */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 -left-1/4 w-[800px] h-[800px] bg-gradient-to-r from-violet-500/15 to-purple-500/15 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-1/2 -right-1/4 w-[600px] h-[600px] bg-gradient-to-r from-indigo-500/15 to-blue-500/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute -bottom-1/4 left-1/3 w-[700px] h-[700px] bg-gradient-to-r from-purple-500/10 to-violet-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
       {/* Header */}
-      <header className="bg-black/20 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
+      <header className="bg-black/40 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/')}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2 hover:bg-white/10 rounded-xl transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <button
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors"
+              className="p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
               title="Sign Out"
             >
               <LogOut className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                <Users className="w-5 h-5" />
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl blur-lg opacity-50" />
+                <div className="relative w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Users className="w-6 h-6" />
+                </div>
               </div>
               <div>
-                <h1 className="text-xl font-bold">Trainer Dashboard</h1>
-                <p className="text-sm text-white/60">Manage your clients</p>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">Trainer Dashboard</h1>
+                <p className="text-sm text-white/50">Manage your clients</p>
               </div>
             </div>
           </div>
           <div className="flex items-center gap-3">
             <button
               onClick={fetchClients}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-2.5 hover:bg-white/10 rounded-xl border border-white/10 transition-colors"
             >
               <RefreshCw className="w-5 h-5" />
             </button>
             <button
               onClick={() => setShowAddClient(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg font-medium hover:shadow-lg transition-all"
+              className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all"
             >
               <Plus className="w-4 h-4" />
               Add Client
@@ -280,135 +301,61 @@ export default function TrainerDashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8 relative z-10">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-            <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center mb-3">
-              <Users className="w-5 h-5 text-blue-400" />
+          {[
+            { icon: Users, value: clients.length, label: 'Active Clients', color: 'from-blue-500 to-cyan-500', iconColor: 'text-blue-400' },
+            { icon: Clock, value: pendingClients.length, label: 'Pending', color: 'from-amber-500 to-orange-500', iconColor: 'text-amber-400' },
+            { icon: Dumbbell, value: clients.reduce((sum, c) => sum + c.workoutCount, 0), label: 'Total Workouts', color: 'from-orange-500 to-pink-500', iconColor: 'text-orange-400' },
+            { icon: UtensilsCrossed, value: clients.reduce((sum, c) => sum + c.foodLogCount, 0), label: 'Meals Logged', color: 'from-green-500 to-emerald-500', iconColor: 'text-green-400' },
+          ].map((stat, idx) => (
+            <div key={idx} className="relative group">
+              <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} rounded-2xl blur-xl opacity-0 group-hover:opacity-30 transition-opacity`} />
+              <div className="relative bg-white/5 backdrop-blur-sm rounded-2xl p-5 border border-white/10 hover:border-white/20 transition-all">
+                <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-3 shadow-lg`}>
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
+                <p className="text-3xl font-bold">{stat.value}</p>
+                <p className="text-white/50 text-sm">{stat.label}</p>
+              </div>
             </div>
-            <p className="text-3xl font-bold">{clients.length}</p>
-            <p className="text-white/60 text-sm">Active Clients</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-            <div className="w-10 h-10 bg-yellow-500/20 rounded-xl flex items-center justify-center mb-3">
-              <Clock className="w-5 h-5 text-yellow-400" />
-            </div>
-            <p className="text-3xl font-bold">{pendingClients.length}</p>
-            <p className="text-white/60 text-sm">Pending</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-            <div className="w-10 h-10 bg-orange-500/20 rounded-xl flex items-center justify-center mb-3">
-              <Dumbbell className="w-5 h-5 text-orange-400" />
-            </div>
-            <p className="text-3xl font-bold">
-              {clients.reduce((sum, c) => sum + c.workoutCount, 0)}
-            </p>
-            <p className="text-white/60 text-sm">Total Workouts</p>
-          </div>
-          <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
-            <div className="w-10 h-10 bg-green-500/20 rounded-xl flex items-center justify-center mb-3">
-              <UtensilsCrossed className="w-5 h-5 text-green-400" />
-            </div>
-            <p className="text-3xl font-bold">
-              {clients.reduce((sum, c) => sum + c.foodLogCount, 0)}
-            </p>
-            <p className="text-white/60 text-sm">Total Meals Logged</p>
-          </div>
+          ))}
         </div>
 
         {/* Trainer Tools */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
-          <Link
-            href="/profile"
-            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
-          >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <User className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-sm">Profile</p>
-              <p className="text-xs text-white/50">Edit info</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/calendar"
-            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
-          >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-sm">Calendar</p>
-              <p className="text-xs text-white/50">Schedule</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/trainer/products"
-            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
-          >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center">
-              <ShoppingBag className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-sm">Products</p>
-              <p className="text-xs text-white/50">Sell items</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/trainer/templates"
-            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
-          >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-sm">Templates</p>
-              <p className="text-xs text-white/50">Workouts</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/trainer/revenue"
-            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
-          >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
-              <BarChart3 className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-sm">Revenue</p>
-              <p className="text-xs text-white/50">Earnings</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/trainer/check-ins"
-            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
-          >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-sm">Check-ins</p>
-              <p className="text-xs text-white/50">Progress</p>
-            </div>
-          </Link>
-
-          <Link
-            href="/programs"
-            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
-          >
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-              <Dumbbell className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="font-medium text-sm">Programs</p>
-              <p className="text-xs text-white/50">Marketplace</p>
-            </div>
-          </Link>
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-violet-400" />
+            Quick Actions
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {[
+              { href: '/profile', icon: User, label: 'Profile', desc: 'Edit info', gradient: 'from-blue-500 to-purple-600' },
+              { href: '/calendar', icon: Calendar, label: 'Calendar', desc: 'Schedule', gradient: 'from-orange-500 to-red-600' },
+              { href: '/trainer/products', icon: ShoppingBag, label: 'Products', desc: 'Sell items', gradient: 'from-green-500 to-teal-600' },
+              { href: '/trainer/templates', icon: FileText, label: 'Templates', desc: 'Workouts', gradient: 'from-purple-500 to-pink-600' },
+              { href: '/trainer/revenue', icon: BarChart3, label: 'Revenue', desc: 'Earnings', gradient: 'from-emerald-500 to-green-600' },
+              { href: '/trainer/check-ins', icon: Activity, label: 'Check-ins', desc: 'Progress', gradient: 'from-blue-500 to-cyan-600' },
+              { href: '/programs', icon: Dumbbell, label: 'Programs', desc: 'Marketplace', gradient: 'from-amber-500 to-orange-600' },
+            ].map((item, idx) => (
+              <Link
+                key={idx}
+                href={item.href}
+                className="group relative bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl p-4 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${item.gradient} flex items-center justify-center shadow-lg group-hover:shadow-xl transition-shadow`}>
+                    <item.icon className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{item.label}</p>
+                    <p className="text-xs text-white/40">{item.desc}</p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
@@ -418,35 +365,35 @@ export default function TrainerDashboard() {
             {pendingClients.length > 0 && (
               <div>
                 <h2 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-yellow-400" />
+                  <Clock className="w-5 h-5 text-amber-400" />
                   Pending Invitations
                 </h2>
                 <div className="space-y-2">
                   {pendingClients.map((client) => (
                     <div
                       key={client.id}
-                      className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 flex items-center justify-between"
+                      className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex items-center justify-between backdrop-blur-sm"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-yellow-500/20 rounded-full flex items-center justify-center font-bold">
+                        <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-orange-600 rounded-full flex items-center justify-center font-bold shadow-lg">
                           {client.name?.charAt(0) || client.email.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <p className="font-medium">{client.name || 'No name'}</p>
-                          <p className="text-sm text-white/60">{client.email}</p>
+                          <p className="text-sm text-white/50">{client.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => updateClientStatus(client.clientId, 'active')}
-                          className="p-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30"
+                          className="p-2.5 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-colors"
                           title="Activate"
                         >
                           <UserCheck className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => removeClient(client.clientId)}
-                          className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30"
+                          className="p-2.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
                           title="Remove"
                         >
                           <X className="w-4 h-4" />
@@ -465,50 +412,55 @@ export default function TrainerDashboard() {
                 Your Clients
               </h2>
               {clients.length === 0 ? (
-                <div className="bg-white/5 border border-white/10 rounded-2xl p-12 text-center">
-                  <Users className="w-16 h-16 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/60 mb-4">No clients yet</p>
-                  <button
-                    onClick={() => setShowAddClient(true)}
-                    className="px-6 py-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-lg font-medium"
-                  >
-                    Add Your First Client
-                  </button>
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 to-purple-500/10 rounded-2xl blur-xl" />
+                  <div className="relative bg-white/5 border border-white/10 rounded-2xl p-12 text-center backdrop-blur-sm">
+                    <div className="w-20 h-20 bg-gradient-to-br from-violet-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-10 h-10 text-white/30" />
+                    </div>
+                    <p className="text-white/50 mb-6">No clients yet</p>
+                    <button
+                      onClick={() => setShowAddClient(true)}
+                      className="px-8 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl font-medium hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+                    >
+                      Add Your First Client
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {clients.map((client) => (
                     <div
                       key={client.id}
-                      className={`bg-white/5 border rounded-xl p-4 cursor-pointer hover:bg-white/10 transition-all ${
+                      className={`group relative bg-white/5 border rounded-xl p-4 cursor-pointer hover:bg-white/10 transition-all ${
                         selectedClient?.client.id === client.clientId
-                          ? 'border-indigo-500'
-                          : 'border-white/10'
+                          ? 'border-violet-500 shadow-lg shadow-violet-500/10'
+                          : 'border-white/10 hover:border-white/20'
                       }`}
                       onClick={() => viewClientDetail(client.clientId)}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-lg">
+                          <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-full flex items-center justify-center font-bold text-lg shadow-lg">
                             {client.name?.charAt(0) || client.email.charAt(0).toUpperCase()}
                           </div>
                           <div>
                             <p className="font-semibold">{client.name || 'No name'}</p>
-                            <p className="text-sm text-white/60">{client.email}</p>
+                            <p className="text-sm text-white/50">{client.email}</p>
                           </div>
                         </div>
-                        <ChevronRight className="w-5 h-5 text-white/40" />
+                        <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-white/60 transition-colors" />
                       </div>
                       <div className="flex items-center gap-4 mt-3 pt-3 border-t border-white/10">
-                        <div className="flex items-center gap-1.5 text-sm text-white/70">
+                        <div className="flex items-center gap-1.5 text-sm text-white/60">
                           <Dumbbell className="w-4 h-4 text-orange-400" />
                           <span>{client.workoutCount} workouts</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-sm text-white/70">
+                        <div className="flex items-center gap-1.5 text-sm text-white/60">
                           <UtensilsCrossed className="w-4 h-4 text-green-400" />
                           <span>{client.foodLogCount} meals</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-sm text-white/50 ml-auto">
+                        <div className="flex items-center gap-1.5 text-sm text-white/40 ml-auto">
                           <Activity className="w-4 h-4" />
                           <span>{formatRelativeTime(client.lastActivity)}</span>
                         </div>
@@ -523,60 +475,62 @@ export default function TrainerDashboard() {
           {/* Client Detail Panel */}
           <div className="lg:col-span-1">
             {loadingClient ? (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto text-indigo-400" />
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center backdrop-blur-sm">
+                <Loader2 className="w-8 h-8 animate-spin mx-auto text-violet-400" />
               </div>
             ) : selectedClient ? (
-              <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden sticky top-24">
+              <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden sticky top-24 backdrop-blur-sm">
                 {/* Client Header */}
-                <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center font-bold text-2xl">
-                      {selectedClient.client.name?.charAt(0) || '?'}
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-600 to-purple-600" />
+                  <div className="absolute inset-0 bg-[url('/images/pattern.svg')] opacity-10" />
+                  <div className="relative p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center font-bold text-2xl shadow-lg">
+                        {selectedClient.client.name?.charAt(0) || '?'}
+                      </div>
+                      <button
+                        onClick={() => setSelectedClient(null)}
+                        className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                      >
+                        <X className="w-5 h-5" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setSelectedClient(null)}
-                      className="p-2 hover:bg-white/10 rounded-lg"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
+                    <h3 className="text-xl font-bold">{selectedClient.client.name || 'No name'}</h3>
+                    <p className="text-white/70">{selectedClient.client.email}</p>
                   </div>
-                  <h3 className="text-xl font-bold">{selectedClient.client.name || 'No name'}</h3>
-                  <p className="text-white/70">{selectedClient.client.email}</p>
                 </div>
 
                 {/* Stats */}
                 <div className="p-4 grid grid-cols-2 gap-3">
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold">{selectedClient.stats.totalWorkouts}</p>
-                    <p className="text-xs text-white/60">Workouts</p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold">{selectedClient.stats.totalMinutes}</p>
-                    <p className="text-xs text-white/60">Minutes</p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold">{selectedClient.stats.totalFoodLogs}</p>
-                    <p className="text-xs text-white/60">Meals Logged</p>
-                  </div>
-                  <div className="bg-white/5 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold">{selectedClient.stats.avgCaloriesPerMeal}</p>
-                    <p className="text-xs text-white/60">Avg Cal/Meal</p>
-                  </div>
+                  {[
+                    { label: 'Workouts', value: selectedClient.stats.totalWorkouts },
+                    { label: 'Minutes', value: selectedClient.stats.totalMinutes },
+                    { label: 'Meals Logged', value: selectedClient.stats.totalFoodLogs },
+                    { label: 'Avg Cal/Meal', value: selectedClient.stats.avgCaloriesPerMeal },
+                  ].map((stat, idx) => (
+                    <div key={idx} className="bg-white/5 rounded-xl p-3 text-center border border-white/5">
+                      <p className="text-2xl font-bold">{stat.value}</p>
+                      <p className="text-xs text-white/50">{stat.label}</p>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Recent Activity */}
                 <div className="p-4 border-t border-white/10">
-                  <h4 className="font-semibold mb-3 text-sm">Recent Workouts</h4>
+                  <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
+                    <Dumbbell className="w-4 h-4 text-orange-400" />
+                    Recent Workouts
+                  </h4>
                   {selectedClient.recentWorkouts.length === 0 ? (
-                    <p className="text-white/50 text-sm">No workouts yet</p>
+                    <p className="text-white/40 text-sm">No workouts yet</p>
                   ) : (
                     <div className="space-y-2">
                       {selectedClient.recentWorkouts.slice(0, 3).map((w) => (
-                        <div key={w.id} className="flex items-center gap-2 text-sm">
+                        <div key={w.id} className="flex items-center gap-2 text-sm p-2 bg-white/5 rounded-lg">
                           <Dumbbell className="w-4 h-4 text-orange-400" />
                           <span className="flex-1 truncate">{w.title || 'Workout'}</span>
-                          <span className="text-white/50">{w.duration}m</span>
+                          <span className="text-white/40">{w.duration}m</span>
                         </div>
                       ))}
                     </div>
@@ -584,16 +538,19 @@ export default function TrainerDashboard() {
                 </div>
 
                 <div className="p-4 border-t border-white/10">
-                  <h4 className="font-semibold mb-3 text-sm">Recent Meals</h4>
+                  <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
+                    <UtensilsCrossed className="w-4 h-4 text-green-400" />
+                    Recent Meals
+                  </h4>
                   {selectedClient.recentFoodLogs.length === 0 ? (
-                    <p className="text-white/50 text-sm">No meals logged yet</p>
+                    <p className="text-white/40 text-sm">No meals logged yet</p>
                   ) : (
                     <div className="space-y-2">
                       {selectedClient.recentFoodLogs.slice(0, 3).map((f) => (
-                        <div key={f.id} className="flex items-center gap-2 text-sm">
+                        <div key={f.id} className="flex items-center gap-2 text-sm p-2 bg-white/5 rounded-lg">
                           <UtensilsCrossed className="w-4 h-4 text-green-400" />
                           <span className="flex-1 truncate">{f.foodName || f.mealType}</span>
-                          <span className="text-white/50">{f.calories || 0} cal</span>
+                          <span className="text-white/40">{f.calories || 0} cal</span>
                         </div>
                       ))}
                     </div>
@@ -604,7 +561,7 @@ export default function TrainerDashboard() {
                 <div className="p-4 border-t border-white/10">
                   <button
                     onClick={() => removeClient(selectedClient.client.id)}
-                    className="w-full py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 flex items-center justify-center gap-2"
+                    className="w-full py-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 flex items-center justify-center gap-2 transition-colors border border-red-500/20"
                   >
                     <UserMinus className="w-4 h-4" />
                     Remove Client
@@ -612,9 +569,11 @@ export default function TrainerDashboard() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center">
-                <Eye className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                <p className="text-white/60">Select a client to view details</p>
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center backdrop-blur-sm">
+                <div className="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Eye className="w-8 h-8 text-white/20" />
+                </div>
+                <p className="text-white/50">Select a client to view details</p>
               </div>
             )}
           </div>
@@ -623,54 +582,59 @@ export default function TrainerDashboard() {
 
       {/* Add Client Modal */}
       {showAddClient && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-2xl max-w-md w-full p-6 border border-white/10">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-bold">Add New Client</h2>
-              <button
-                onClick={() => setShowAddClient(false)}
-                className="p-2 hover:bg-white/10 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="relative max-w-md w-full">
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-violet-500/20 to-purple-500/20 rounded-2xl blur-xl" />
 
-            <p className="text-white/60 text-sm mb-4">
-              Enter the email address of an existing SnapFit user to add them as your client.
-            </p>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Client Email</label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40 pointer-events-none" />
-                  <input
-                    type="email"
-                    value={clientEmail}
-                    onChange={(e) => setClientEmail(e.target.value)}
-                    placeholder="client@example.com"
-                    className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  />
-                </div>
+            <div className="relative bg-zinc-900 rounded-2xl p-6 border border-white/10">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-bold">Add New Client</h2>
+                <button
+                  onClick={() => setShowAddClient(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
 
-              <button
-                onClick={addClient}
-                disabled={addingClient || !clientEmail.trim()}
-                className="w-full py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {addingClient ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Adding...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="w-4 h-4" />
-                    Add Client
-                  </>
-                )}
-              </button>
+              <p className="text-white/50 text-sm mb-6">
+                Enter the email address of an existing SnapFit user to add them as your client.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Client Email</label>
+                  <div className="relative">
+                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/30 pointer-events-none" />
+                    <input
+                      type="email"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      placeholder="client@example.com"
+                      className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={addClient}
+                  disabled={addingClient || !clientEmail.trim()}
+                  className="w-full py-3.5 bg-gradient-to-r from-violet-500 to-purple-600 rounded-xl font-medium disabled:opacity-50 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-violet-500/25 transition-all"
+                >
+                  {addingClient ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Adding...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Add Client
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

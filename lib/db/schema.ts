@@ -50,6 +50,17 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').defaultNow(),
 });
 
+// Password Reset Tokens
+export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  code: text('code').notNull(), // 6-digit code
+  expiresAt: timestamp('expires_at').notNull(),
+  used: boolean('used').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
 // Trainer-Client relationships
 export const trainerClients = pgTable('trainer_clients', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),

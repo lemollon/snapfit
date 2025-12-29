@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { users, workouts, foodLogs, weightLogs, progressPhotos, userAchievements, achievements } from '@/lib/db/schema';
 import { eq, desc, count } from 'drizzle-orm';
+import { uploadAvatar, uploadCover, isCloudinaryConfigured } from '@/lib/cloudinary';
 
 // GET - Fetch current user's profile with stats
 export async function GET() {
@@ -114,6 +115,17 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get current user first
+    const [currentUser] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, session.user.email))
+      .limit(1);
+
+    if (!currentUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const body = await req.json();
     const {
       name,
@@ -147,8 +159,38 @@ export async function PATCH(req: Request) {
 
     if (name !== undefined) updateData.name = name;
     if (bio !== undefined) updateData.bio = bio;
-    if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
-    if (coverUrl !== undefined) updateData.coverUrl = coverUrl;
+
+    // Handle avatar upload to Cloudinary
+    if (avatarUrl !== undefined) {
+      if (avatarUrl.startsWith('data:') && isCloudinaryConfigured()) {
+        try {
+          const result = await uploadAvatar(avatarUrl, currentUser.id);
+          updateData.avatarUrl = result.url;
+        } catch (error) {
+          console.error('Avatar upload error:', error);
+          // Fall back to storing base64 if Cloudinary fails
+          updateData.avatarUrl = avatarUrl;
+        }
+      } else {
+        updateData.avatarUrl = avatarUrl;
+      }
+    }
+
+    // Handle cover upload to Cloudinary
+    if (coverUrl !== undefined) {
+      if (coverUrl.startsWith('data:') && isCloudinaryConfigured()) {
+        try {
+          const result = await uploadCover(coverUrl, currentUser.id);
+          updateData.coverUrl = result.url;
+        } catch (error) {
+          console.error('Cover upload error:', error);
+          // Fall back to storing base64 if Cloudinary fails
+          updateData.coverUrl = coverUrl;
+        }
+      } else {
+        updateData.coverUrl = coverUrl;
+      }
+    }
     if (instagramUrl !== undefined) updateData.instagramUrl = instagramUrl;
     if (tiktokUrl !== undefined) updateData.tiktokUrl = tiktokUrl;
     if (youtubeUrl !== undefined) updateData.youtubeUrl = youtubeUrl;

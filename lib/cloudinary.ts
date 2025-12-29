@@ -1,6 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 
-// Initialize Cloudinary configuration
+// Configure Cloudinary
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
@@ -19,10 +19,10 @@ export type UploadFolder =
 export interface UploadResult {
   url: string;
   publicId: string;
-  width: number;
-  height: number;
-  format: string;
-  bytes: number;
+  width?: number;
+  height?: number;
+  format?: string;
+  bytes?: number;
   thumbnailUrl?: string;
 }
 
@@ -51,16 +51,30 @@ export function getCloudinaryConfig(): CloudinaryConfig {
 }
 
 /**
+ * Check if Cloudinary is configured (simple boolean check)
+ */
+export function isCloudinaryConfigured(): boolean {
+  return !!(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
+  );
+}
+
+/**
  * Upload an image to Cloudinary
  */
 export async function uploadImage(
   base64Data: string,
-  folder: UploadFolder,
+  folder: string,
   options: {
     userId?: string;
+    transformation?: object;
     generateThumbnail?: boolean;
     maxWidth?: number;
     maxHeight?: number;
+    publicId?: string;
+    overwrite?: boolean;
   } = {}
 ): Promise<UploadResult> {
   const config = getCloudinaryConfig();
@@ -69,42 +83,45 @@ export async function uploadImage(
     throw new Error('Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.');
   }
 
-  const { userId, generateThumbnail = true, maxWidth = 2048, maxHeight = 2048 } = options;
+  const { userId, generateThumbnail = false, maxWidth = 2048, maxHeight = 2048 } = options;
 
-  // Generate a unique public ID
+  // Ensure the base64 data has the proper prefix
+  const dataUri = base64Data.startsWith('data:')
+    ? base64Data
+    : `data:image/jpeg;base64,${base64Data}`;
+
+  // Generate a unique public ID if not provided
   const timestamp = Date.now();
-  const uniqueId = userId ? `${userId}_${timestamp}` : `${timestamp}`;
-  const publicId = `snapfit/${folder}/${uniqueId}`;
+  const uniqueId = options.publicId || (userId ? `${userId}_${timestamp}` : `${timestamp}`);
 
   try {
-    // Upload with transformations
-    const result = await cloudinary.uploader.upload(base64Data, {
-      public_id: publicId,
-      folder: '', // Already included in public_id
+    const uploadOptions: Record<string, unknown> = {
+      folder: `snapfit/${folder}`,
       resource_type: 'image',
-      transformation: [
+      public_id: uniqueId,
+      overwrite: options.overwrite ?? false,
+      transformation: options.transformation || [
         { width: maxWidth, height: maxHeight, crop: 'limit' },
         { quality: 'auto:good' },
         { fetch_format: 'auto' },
       ],
-      // Add metadata
       context: {
         userId: userId || 'anonymous',
         folder,
         uploadedAt: new Date().toISOString(),
       },
-    });
+    };
+
+    const result = await cloudinary.uploader.upload(dataUri, uploadOptions);
 
     // Generate thumbnail URL if requested
     let thumbnailUrl: string | undefined;
     if (generateThumbnail) {
       thumbnailUrl = cloudinary.url(result.public_id, {
-        width: 300,
-        height: 300,
-        crop: 'fill',
-        gravity: 'auto',
-        quality: 'auto',
-        fetch_format: 'auto',
+        transformation: [
+          { width: 200, height: 200, crop: 'fill', gravity: 'face' },
+          { quality: 'auto', fetch_format: 'auto' },
+        ],
       });
     }
 
@@ -123,6 +140,74 @@ export async function uploadImage(
       error instanceof Error ? error.message : 'Failed to upload image to Cloudinary'
     );
   }
+}
+
+/**
+ * Upload an avatar image with optimized settings
+ */
+export async function uploadAvatar(base64Data: string, userId: string): Promise<UploadResult> {
+  return uploadImage(base64Data, 'avatars', {
+    userId,
+    transformation: [
+      { width: 400, height: 400, crop: 'fill', gravity: 'face' },
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+    publicId: `user-${userId}`,
+    overwrite: true,
+    generateThumbnail: true,
+  });
+}
+
+/**
+ * Upload a cover photo
+ */
+export async function uploadCover(base64Data: string, userId: string): Promise<UploadResult> {
+  return uploadImage(base64Data, 'covers', {
+    userId,
+    transformation: [
+      { width: 1200, height: 400, crop: 'fill' },
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+    publicId: `cover-${userId}`,
+    overwrite: true,
+  });
+}
+
+/**
+ * Upload a progress photo
+ */
+export async function uploadProgressPhoto(
+  base64Data: string,
+  userId: string,
+  photoId: string
+): Promise<UploadResult> {
+  return uploadImage(base64Data, `progress/${userId}`, {
+    userId,
+    transformation: [
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+    publicId: photoId,
+    generateThumbnail: true,
+  });
+}
+
+/**
+ * Upload a food photo
+ */
+export async function uploadFoodPhoto(
+  base64Data: string,
+  userId: string,
+  logId: string
+): Promise<UploadResult> {
+  return uploadImage(base64Data, `food/${userId}`, {
+    userId,
+    transformation: [
+      { width: 800, height: 800, crop: 'limit' },
+      { quality: 'auto', fetch_format: 'auto' },
+    ],
+    publicId: logId,
+    generateThumbnail: true,
+  });
 }
 
 /**
@@ -224,3 +309,4 @@ export async function testCloudinaryConnection(): Promise<{
 }
 
 export { cloudinary };
+export default cloudinary;
