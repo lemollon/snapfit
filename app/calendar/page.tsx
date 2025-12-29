@@ -33,6 +33,10 @@ import {
   CheckCircle,
   XCircle,
   LogOut,
+  Search,
+  Video,
+  Filter,
+  List,
 } from 'lucide-react';
 
 interface CalendarData {
@@ -49,6 +53,42 @@ interface CalendarData {
     goals: { calories: number; protein: number };
   };
   summary: any;
+}
+
+interface TimelineItem {
+  id: string;
+  type: string;
+  title: string;
+  description?: string;
+  timestamp: string;
+  duration?: number;
+  calories?: number;
+  protein?: number;
+  photoUrl?: string;
+  thumbnailUrl?: string;
+  videoUrl?: string;
+  aiScore?: number;
+  mealType?: string;
+  status?: string;
+  icon: string;
+  color: string;
+  // Daily log fields
+  weight?: number;
+  mood?: number;
+  energyLevel?: number;
+  sleepHours?: number;
+  waterIntake?: number;
+  notes?: string;
+}
+
+interface SearchResult {
+  id: string;
+  type: string;
+  title: string;
+  subtitle?: string;
+  timestamp: string;
+  photoUrl?: string;
+  thumbnailUrl?: string;
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -70,12 +110,27 @@ export default function CalendarPage() {
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [view, setView] = useState<'day' | 'week' | 'month'>('month');
+  const [view, setView] = useState<'day' | 'week' | 'month' | 'timeline'>('month');
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [addType, setAddType] = useState<'workout' | 'meal' | 'food' | 'photo' | 'daily'>('workout');
   const [saving, setSaving] = useState(false);
+
+  // Timeline and Search states
+  const [timelineItems, setTimelineItems] = useState<TimelineItem[]>([]);
+  const [timelineGrouped, setTimelineGrouped] = useState<Record<string, TimelineItem[]>>({});
+  const [timelineFilter, setTimelineFilter] = useState<'all' | 'meals' | 'workouts' | 'photos' | 'form-checks'>('all');
+  const [timelinePage, setTimelinePage] = useState(1);
+  const [timelineHasMore, setTimelineHasMore] = useState(true);
+  const [timelineLoading, setTimelineLoading] = useState(false);
+
+  // Search states
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchType, setSearchType] = useState<'all' | 'meals' | 'workouts' | 'photos' | 'form-checks'>('all');
 
   // Form states
   const [workoutForm, setWorkoutForm] = useState({ title: '', description: '', duration: 45 });
@@ -87,9 +142,13 @@ export default function CalendarPage() {
     if (status === 'unauthenticated') {
       router.push('/login');
     } else if (status === 'authenticated') {
-      fetchCalendarData();
+      if (view === 'timeline') {
+        fetchTimeline(1, true);
+      } else {
+        fetchCalendarData();
+      }
     }
-  }, [status, router, currentDate, view]);
+  }, [status, router, currentDate, view, timelineFilter]);
 
   const fetchCalendarData = async () => {
     setLoading(true);
@@ -120,6 +179,72 @@ export default function CalendarPage() {
       setLoading(false);
     }
   };
+
+  const fetchTimeline = async (page: number = 1, reset: boolean = false) => {
+    setTimelineLoading(true);
+    try {
+      const res = await fetch(
+        `/api/calendar/timeline?page=${page}&limit=20&filter=${timelineFilter}`
+      );
+      const data = await res.json();
+
+      if (reset) {
+        setTimelineItems(data.items);
+        setTimelineGrouped(data.groupedByDate);
+      } else {
+        setTimelineItems(prev => [...prev, ...data.items]);
+        setTimelineGrouped(prev => {
+          const merged = { ...prev };
+          Object.entries(data.groupedByDate).forEach(([date, items]) => {
+            if (merged[date]) {
+              merged[date] = [...merged[date], ...(items as TimelineItem[])];
+            } else {
+              merged[date] = items as TimelineItem[];
+            }
+          });
+          return merged;
+        });
+      }
+
+      setTimelinePage(page);
+      setTimelineHasMore(data.pagination.hasMore);
+    } catch (error) {
+      console.error('Failed to fetch timeline:', error);
+    } finally {
+      setTimelineLoading(false);
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = async (query: string) => {
+    if (query.length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      const res = await fetch(
+        `/api/calendar/search?q=${encodeURIComponent(query)}&type=${searchType}`
+      );
+      const data = await res.json();
+      setSearchResults(data.results || []);
+    } catch (error) {
+      console.error('Search failed:', error);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchQuery) {
+        handleSearch(searchQuery);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery, searchType]);
 
   const handleSave = async () => {
     setSaving(true);
@@ -340,9 +465,16 @@ export default function CalendarPage() {
               <h1 className="text-xl font-bold">Daily Tracker</h1>
             </div>
             <div className="flex items-center gap-2">
+              {/* Search Button */}
+              <button
+                onClick={() => setShowSearch(true)}
+                className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+              >
+                <Search className="w-5 h-5" />
+              </button>
               {/* View Toggle */}
               <div className="flex bg-zinc-100 dark:bg-zinc-800 rounded-lg p-1">
-                {(['day', 'week', 'month'] as const).map((v) => (
+                {(['day', 'week', 'month', 'timeline'] as const).map((v) => (
                   <button
                     key={v}
                     onClick={() => setView(v)}
@@ -475,12 +607,13 @@ export default function CalendarPage() {
                   {calendarDays.map((day, idx) => {
                     const dayData = getDataForDate(day.date);
                     const hasData = dayData.workouts.length > 0 || dayData.meals.length > 0 || dayData.photos.length > 0;
+                    const firstPhoto = dayData.photos[0];
 
                     return (
                       <button
                         key={idx}
                         onClick={() => { setSelectedDate(day.date); setView('day'); }}
-                        className={`relative min-h-[80px] sm:min-h-[100px] p-2 border-b border-r border-zinc-200 dark:border-zinc-800 transition-colors ${
+                        className={`relative min-h-[80px] sm:min-h-[100px] p-2 border-b border-r border-zinc-200 dark:border-zinc-800 transition-colors overflow-hidden ${
                           !day.isCurrentMonth ? 'bg-zinc-50 dark:bg-zinc-950' : 'bg-white dark:bg-zinc-900'
                         } ${
                           isSameDay(day.date, selectedDate)
@@ -488,36 +621,57 @@ export default function CalendarPage() {
                             : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50'
                         }`}
                       >
-                        <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm ${
-                          day.isToday
-                            ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold'
-                            : !day.isCurrentMonth
-                              ? 'text-zinc-400 dark:text-zinc-600'
-                              : 'text-zinc-900 dark:text-zinc-100'
-                        }`}>
-                          {day.date.getDate()}
-                        </span>
+                        {/* Photo Background Thumbnail */}
+                        {firstPhoto && firstPhoto.photoUrl && (
+                          <div className="absolute inset-0 opacity-30">
+                            <img
+                              src={firstPhoto.thumbnailUrl || firstPhoto.photoUrl}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                          </div>
+                        )}
 
-                        {/* Indicators */}
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          {dayData.workouts.length > 0 && (
-                            <span className="w-2 h-2 rounded-full bg-blue-500" />
-                          )}
-                          {dayData.meals.length > 0 && (
-                            <span className="w-2 h-2 rounded-full bg-green-500" />
-                          )}
-                          {dayData.photos.length > 0 && (
-                            <span className="w-2 h-2 rounded-full bg-purple-500" />
-                          )}
-                          {dayData.macros && (
-                            <span className="w-2 h-2 rounded-full bg-orange-500" />
-                          )}
+                        <div className="relative z-10">
+                          <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-sm ${
+                            day.isToday
+                              ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white font-bold'
+                              : !day.isCurrentMonth
+                                ? 'text-zinc-400 dark:text-zinc-600'
+                                : firstPhoto
+                                  ? 'text-white font-medium bg-black/30'
+                                  : 'text-zinc-900 dark:text-zinc-100'
+                          }`}>
+                            {day.date.getDate()}
+                          </span>
+
+                          {/* Indicators */}
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {dayData.workouts.length > 0 && (
+                              <span className="w-2 h-2 rounded-full bg-blue-500 shadow-sm" />
+                            )}
+                            {dayData.meals.length > 0 && (
+                              <span className="w-2 h-2 rounded-full bg-green-500 shadow-sm" />
+                            )}
+                            {dayData.photos.length > 1 && (
+                              <span className="flex items-center justify-center w-4 h-4 rounded-full bg-purple-500 text-white text-[8px] font-bold shadow-sm">
+                                {dayData.photos.length}
+                              </span>
+                            )}
+                            {dayData.photos.length === 1 && !firstPhoto?.photoUrl && (
+                              <span className="w-2 h-2 rounded-full bg-purple-500 shadow-sm" />
+                            )}
+                            {dayData.macros && (
+                              <span className="w-2 h-2 rounded-full bg-orange-500 shadow-sm" />
+                            )}
+                          </div>
                         </div>
 
                         {/* Calorie indicator */}
                         {dayData.macros && (
-                          <div className="absolute bottom-1 left-1 right-1">
-                            <div className="h-1 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+                          <div className="absolute bottom-1 left-1 right-1 z-10">
+                            <div className="h-1 bg-zinc-200/50 dark:bg-zinc-700/50 rounded-full overflow-hidden backdrop-blur-sm">
                               <div
                                 className="h-full bg-gradient-to-r from-orange-500 to-pink-500 rounded-full"
                                 style={{ width: `${Math.min(100, (dayData.macros.calories / (calendarData?.macros.goals.calories || 2000)) * 100)}%` }}
@@ -797,10 +951,183 @@ export default function CalendarPage() {
                 </div>
               </div>
             )}
+
+            {/* Timeline View */}
+            {view === 'timeline' && (
+              <div className="lg:col-span-3 space-y-4">
+                {/* Timeline Filters */}
+                <div className="flex flex-wrap gap-2 mb-6">
+                  {(['all', 'meals', 'workouts', 'photos', 'form-checks'] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setTimelineFilter(f)}
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
+                        timelineFilter === f
+                          ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white'
+                          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                      }`}
+                    >
+                      {f === 'all' ? 'All Activity' : f.replace('-', ' ')}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Timeline Items Grouped by Date */}
+                {Object.keys(timelineGrouped).length === 0 && !timelineLoading ? (
+                  <div className="text-center py-16 bg-zinc-100 dark:bg-zinc-900/50 rounded-2xl">
+                    <List className="w-12 h-12 mx-auto mb-4 text-zinc-400" />
+                    <p className="text-zinc-500">No activity found</p>
+                    <p className="text-sm text-zinc-400 mt-1">Start logging meals, workouts, or photos to see your timeline</p>
+                  </div>
+                ) : (
+                  Object.entries(timelineGrouped)
+                    .sort(([a], [b]) => b.localeCompare(a))
+                    .map(([dateKey, items]) => (
+                      <div key={dateKey} className="space-y-3">
+                        {/* Date Header */}
+                        <div className="sticky top-20 z-10 bg-white/80 dark:bg-black/80 backdrop-blur-sm py-2">
+                          <h3 className="text-lg font-semibold">
+                            {new Date(dateKey).toLocaleDateString('en-US', {
+                              weekday: 'long',
+                              month: 'long',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </h3>
+                        </div>
+
+                        {/* Items for this date */}
+                        <div className="space-y-3 ml-4 border-l-2 border-zinc-200 dark:border-zinc-800 pl-4">
+                          {items.map((item) => (
+                            <div
+                              key={`${item.type}-${item.id}`}
+                              className="bg-zinc-100 dark:bg-zinc-900/50 rounded-xl p-4 border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors"
+                            >
+                              <div className="flex items-start gap-4">
+                                {/* Icon */}
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                                  item.color === 'blue' ? 'bg-blue-500/20 text-blue-500' :
+                                  item.color === 'green' ? 'bg-green-500/20 text-green-500' :
+                                  item.color === 'purple' ? 'bg-purple-500/20 text-purple-500' :
+                                  item.color === 'pink' ? 'bg-pink-500/20 text-pink-500' :
+                                  item.color === 'amber' ? 'bg-amber-500/20 text-amber-500' :
+                                  item.color === 'indigo' ? 'bg-indigo-500/20 text-indigo-500' :
+                                  item.color === 'red' ? 'bg-red-500/20 text-red-500' :
+                                  'bg-zinc-500/20 text-zinc-500'
+                                }`}>
+                                  {item.icon === 'dumbbell' && <Dumbbell className="w-5 h-5" />}
+                                  {item.icon === 'utensils' && <UtensilsCrossed className="w-5 h-5" />}
+                                  {item.icon === 'camera' && <Camera className="w-5 h-5" />}
+                                  {item.icon === 'video' && <Video className="w-5 h-5" />}
+                                  {item.icon === 'clipboard' && <ClipboardCheck className="w-5 h-5" />}
+                                  {item.icon === 'calendar' && <CalendarIcon className="w-5 h-5" />}
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-medium truncate">{item.title}</h4>
+                                    <span className="text-xs text-zinc-400">
+                                      {new Date(item.timestamp).toLocaleTimeString('en-US', {
+                                        hour: 'numeric',
+                                        minute: '2-digit',
+                                      })}
+                                    </span>
+                                  </div>
+
+                                  {/* Type-specific content */}
+                                  {item.type === 'meal' && (
+                                    <div className="flex items-center gap-3 mt-1 text-sm text-zinc-500">
+                                      {item.mealType && <span className="capitalize">{item.mealType}</span>}
+                                      {item.calories && <span>{item.calories} kcal</span>}
+                                      {item.protein && <span>{item.protein}g protein</span>}
+                                    </div>
+                                  )}
+
+                                  {item.type === 'workout' && (
+                                    <div className="flex items-center gap-3 mt-1 text-sm text-zinc-500">
+                                      {item.duration && <span>{item.duration} min</span>}
+                                      {item.calories && <span>{item.calories} kcal burned</span>}
+                                    </div>
+                                  )}
+
+                                  {item.type === 'scheduled_workout' && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                        item.status === 'completed' ? 'bg-green-500/20 text-green-600' :
+                                        item.status === 'skipped' ? 'bg-red-500/20 text-red-600' :
+                                        'bg-blue-500/20 text-blue-600'
+                                      }`}>
+                                        {item.status || 'scheduled'}
+                                      </span>
+                                      {item.duration && <span className="text-sm text-zinc-500">{item.duration} min</span>}
+                                    </div>
+                                  )}
+
+                                  {item.type === 'form-check' && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {item.aiScore && (
+                                        <span className={`text-sm font-medium ${
+                                          item.aiScore >= 80 ? 'text-green-500' :
+                                          item.aiScore >= 60 ? 'text-yellow-500' :
+                                          'text-red-500'
+                                        }`}>
+                                          Score: {item.aiScore}/100
+                                        </span>
+                                      )}
+                                      {item.status && <span className="text-xs text-zinc-400 capitalize">{item.status}</span>}
+                                    </div>
+                                  )}
+
+                                  {item.type === 'daily-log' && (
+                                    <div className="flex items-center gap-3 mt-1 text-sm text-zinc-500">
+                                      {item.weight && <span>{item.weight} kg</span>}
+                                      {item.mood && <span>Mood: {item.mood}/5</span>}
+                                      {item.sleepHours && <span>Sleep: {item.sleepHours}h</span>}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Photo/Video thumbnail */}
+                                {(item.photoUrl || item.thumbnailUrl) && (
+                                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-700 shrink-0">
+                                    <img
+                                      src={item.thumbnailUrl || item.photoUrl}
+                                      alt=""
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                )}
+
+                {/* Load More Button */}
+                {timelineHasMore && (
+                  <div className="text-center py-4">
+                    <button
+                      onClick={() => fetchTimeline(timelinePage + 1, false)}
+                      disabled={timelineLoading}
+                      className="px-6 py-2 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+                    >
+                      {timelineLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                      ) : (
+                        'Load More'
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Sidebar (visible in month/week view) */}
-          {view !== 'day' && (
+          {(view === 'month' || view === 'week') && (
             <div className="lg:col-span-1">
               <div className="sticky top-24 space-y-6">
                 {/* Selected Day Preview */}
@@ -899,6 +1226,134 @@ export default function CalendarPage() {
           )}
         </div>
       </div>
+
+      {/* Search Modal */}
+      {showSearch && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-sm p-4 pt-20">
+          <div className="w-full max-w-2xl bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+            {/* Search Header */}
+            <div className="p-4 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="flex items-center gap-3">
+                <Search className="w-5 h-5 text-zinc-400" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search meals, workouts, photos..."
+                  className="flex-1 bg-transparent text-lg focus:outline-none"
+                  autoFocus
+                />
+                <button
+                  onClick={() => { setShowSearch(false); setSearchQuery(''); setSearchResults([]); }}
+                  className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Type Filters */}
+              <div className="flex flex-wrap gap-2 mt-3">
+                {(['all', 'meals', 'workouts', 'photos', 'form-checks'] as const).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setSearchType(t)}
+                    className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors capitalize ${
+                      searchType === t
+                        ? 'bg-orange-500 text-white'
+                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                    }`}
+                  >
+                    {t === 'all' ? 'All' : t.replace('-', ' ')}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Search Results */}
+            <div className="max-h-[60vh] overflow-y-auto">
+              {searchLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
+                </div>
+              ) : searchQuery.length < 2 ? (
+                <div className="text-center py-12 text-zinc-500">
+                  <Search className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>Start typing to search your history</p>
+                  <p className="text-sm text-zinc-400 mt-1">Search for meals, workouts, photos, and more</p>
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="text-center py-12 text-zinc-500">
+                  <p>No results found for "{searchQuery}"</p>
+                  <p className="text-sm text-zinc-400 mt-1">Try different keywords or filters</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-zinc-200 dark:divide-zinc-800">
+                  {searchResults.map((result) => (
+                    <button
+                      key={`${result.type}-${result.id}`}
+                      onClick={() => {
+                        const date = new Date(result.timestamp);
+                        setSelectedDate(date);
+                        setCurrentDate(date);
+                        setView('day');
+                        setShowSearch(false);
+                        setSearchQuery('');
+                        setSearchResults([]);
+                      }}
+                      className="w-full p-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors text-left flex items-center gap-4"
+                    >
+                      {/* Thumbnail */}
+                      {result.thumbnailUrl || result.photoUrl ? (
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-zinc-200 dark:bg-zinc-700 shrink-0">
+                          <img
+                            src={result.thumbnailUrl || result.photoUrl}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
+                          result.type === 'workout' ? 'bg-blue-500/20 text-blue-500' :
+                          result.type === 'meal' ? 'bg-green-500/20 text-green-500' :
+                          result.type === 'photo' ? 'bg-purple-500/20 text-purple-500' :
+                          result.type === 'form-check' ? 'bg-pink-500/20 text-pink-500' :
+                          'bg-zinc-500/20 text-zinc-500'
+                        }`}>
+                          {result.type === 'workout' && <Dumbbell className="w-5 h-5" />}
+                          {result.type === 'meal' && <UtensilsCrossed className="w-5 h-5" />}
+                          {result.type === 'photo' && <Camera className="w-5 h-5" />}
+                          {result.type === 'form-check' && <Video className="w-5 h-5" />}
+                        </div>
+                      )}
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{result.title}</p>
+                        <div className="flex items-center gap-2 text-sm text-zinc-500">
+                          <span className="capitalize">{result.type.replace('-', ' ')}</span>
+                          <span>•</span>
+                          <span>
+                            {new Date(result.timestamp).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                        {result.subtitle && (
+                          <p className="text-sm text-zinc-400 truncate mt-0.5">{result.subtitle}</p>
+                        )}
+                      </div>
+
+                      <ChevronRight className="w-5 h-5 text-zinc-400" />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Modal */}
       {showAddModal && (
