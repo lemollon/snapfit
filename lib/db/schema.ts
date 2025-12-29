@@ -214,6 +214,41 @@ export const progressPhotos = pgTable('progress_photos', {
   takenAt: timestamp('taken_at').defaultNow(),
 });
 
+// Daily logs (daily check-in data)
+export const dailyLogs = pgTable('daily_logs', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  weight: real('weight'),
+  bodyFat: real('body_fat'),
+  mood: integer('mood'), // 1-5 scale
+  energyLevel: integer('energy_level'), // 1-5 scale
+  sleepHours: real('sleep_hours'),
+  sleepQuality: integer('sleep_quality'), // 1-5 scale
+  waterIntake: real('water_intake'), // liters
+  stepsCount: integer('steps_count'),
+  notes: text('notes'),
+  // Macro totals for the day (calculated from food logs)
+  totalCalories: integer('total_calories'),
+  totalProtein: real('total_protein'),
+  totalCarbs: real('total_carbs'),
+  totalFat: real('total_fat'),
+  totalFiber: real('total_fiber'),
+  // Goals for the day
+  calorieGoal: integer('calorie_goal'),
+  proteinGoal: real('protein_goal'),
+  carbGoal: real('carb_goal'),
+  fatGoal: real('fat_goal'),
+  // Progress
+  workoutsCompleted: integer('workouts_completed').default(0),
+  workoutsPlanned: integer('workouts_planned').default(0),
+  mealsLogged: integer('meals_logged').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  uniqueUserDate: unique().on(table.userId, table.date),
+}));
+
 // ============================================
 // CALENDAR & SCHEDULING
 // ============================================
@@ -1049,6 +1084,7 @@ export type Challenge = typeof challenges.$inferSelect;
 export type WeightLog = typeof weightLogs.$inferSelect;
 export type BodyMeasurement = typeof bodyMeasurements.$inferSelect;
 export type ProgressPhoto = typeof progressPhotos.$inferSelect;
+export type DailyLog = typeof dailyLogs.$inferSelect;
 export type ScheduledWorkout = typeof scheduledWorkouts.$inferSelect;
 export type MealPlan = typeof mealPlans.$inferSelect;
 export type Achievement = typeof achievements.$inferSelect;
