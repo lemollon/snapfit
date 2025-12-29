@@ -174,7 +174,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Receiver not found' }, { status: 404 });
     }
 
-    // TODO: Optionally verify sender and receiver are connected (friends or trainer-client)
+    // Verify sender and receiver are connected (friends or trainer-client)
+    const [friendship] = await db
+      .select()
+      .from(friendships)
+      .where(
+        and(
+          or(
+            and(eq(friendships.senderId, sender.id), eq(friendships.receiverId, receiverId)),
+            and(eq(friendships.senderId, receiverId), eq(friendships.receiverId, sender.id))
+          ),
+          eq(friendships.status, 'accepted')
+        )
+      )
+      .limit(1);
+
+    const [trainerClientRelation] = await db
+      .select()
+      .from(trainerClients)
+      .where(
+        and(
+          or(
+            and(eq(trainerClients.trainerId, sender.id), eq(trainerClients.clientId, receiverId)),
+            and(eq(trainerClients.trainerId, receiverId), eq(trainerClients.clientId, sender.id))
+          ),
+          eq(trainerClients.status, 'active')
+        )
+      )
+      .limit(1);
+
+    if (!friendship && !trainerClientRelation) {
+      return NextResponse.json({ error: 'You can only message friends or trainer/client connections' }, { status: 403 });
+    }
 
     const [message] = await db
       .insert(messages)

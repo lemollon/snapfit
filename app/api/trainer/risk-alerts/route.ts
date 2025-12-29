@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { clientEngagement, trainerClients, users, workouts, scheduledWorkouts, messages } from '@/lib/db/schema';
-import { eq, desc, and, gte, sql } from 'drizzle-orm';
+import { clientEngagement, trainerClients, users, workouts, scheduledWorkouts, messages, dailyLogs } from '@/lib/db/schema';
+import { eq, desc, and, gte, lte, sql } from 'drizzle-orm';
 
 // Calculate risk score for a client
 function calculateRiskScore(metrics: {
@@ -232,15 +232,61 @@ export async function POST(request: NextRequest) {
         ? Math.floor((now.getTime() - new Date(lastMessage[0].createdAt).getTime()) / (24 * 60 * 60 * 1000))
         : 999;
 
+      // Get last check-in from daily logs
+      const lastCheckIn = await db.select()
+        .from(dailyLogs)
+        .where(eq(dailyLogs.userId, client.clientId))
+        .orderBy(desc(dailyLogs.createdAt))
+        .limit(1);
+
+      const daysSinceLastCheckIn = lastCheckIn[0]?.createdAt
+        ? Math.floor((now.getTime() - new Date(lastCheckIn[0].createdAt).getTime()) / (24 * 60 * 60 * 1000))
+        : 999;
+
+      // Calculate missed scheduled workouts (past due and not completed)
+      const missedWorkouts = await db.select()
+        .from(scheduledWorkouts)
+        .where(and(
+          eq(scheduledWorkouts.userId, client.clientId),
+          lte(scheduledWorkouts.scheduledFor, now),
+          eq(scheduledWorkouts.status, 'scheduled') // Still scheduled but past due = missed
+        ));
+
+      // Also count explicitly skipped workouts
+      const skippedWorkouts = await db.select()
+        .from(scheduledWorkouts)
+        .where(and(
+          eq(scheduledWorkouts.userId, client.clientId),
+          eq(scheduledWorkouts.status, 'skipped'),
+          gte(scheduledWorkouts.scheduledFor, thirtyDaysAgo)
+        ));
+
+      const missedScheduledWorkouts = missedWorkouts.length + skippedWorkouts.length;
+
+      // Calculate average workout completion rate
+      const allScheduledWorkouts = await db.select()
+        .from(scheduledWorkouts)
+        .where(and(
+          eq(scheduledWorkouts.userId, client.clientId),
+          gte(scheduledWorkouts.scheduledFor, thirtyDaysAgo),
+          lte(scheduledWorkouts.scheduledFor, now)
+        ));
+
+      const completedScheduledWorkouts = allScheduledWorkouts.filter(w => w.status === 'completed').length;
+      const totalScheduledInPeriod = allScheduledWorkouts.length;
+      const averageWorkoutCompletion = totalScheduledInPeriod > 0
+        ? Math.round((completedScheduledWorkouts / totalScheduledInPeriod) * 100)
+        : 100; // Default to 100% if no scheduled workouts
+
       // Calculate risk
       const { score, level, factors } = calculateRiskScore({
         daysSinceLastWorkout,
-        daysSinceLastCheckIn: 999, // TODO: Integrate with check-ins
+        daysSinceLastCheckIn,
         daysSinceLastMessage,
         workoutsLast7Days,
         workoutsLast30Days,
-        missedScheduledWorkouts: 0, // TODO: Calculate from scheduled workouts
-        averageWorkoutCompletion: 100, // TODO: Calculate actual completion
+        missedScheduledWorkouts,
+        averageWorkoutCompletion,
       });
 
       // Upsert engagement record
@@ -256,9 +302,12 @@ export async function POST(request: NextRequest) {
         await db.update(clientEngagement)
           .set({
             lastWorkoutAt: lastWorkout?.createdAt,
+            lastCheckInAt: lastCheckIn[0]?.createdAt,
             lastMessageAt: lastMessage[0]?.createdAt,
             workoutsLast7Days,
             workoutsLast30Days,
+            missedScheduledWorkouts,
+            averageWorkoutCompletion,
             riskScore: score,
             riskLevel: level,
             riskFactors: factors,
@@ -270,9 +319,12 @@ export async function POST(request: NextRequest) {
           trainerId: session.user.id,
           clientId: client.clientId,
           lastWorkoutAt: lastWorkout?.createdAt,
+          lastCheckInAt: lastCheckIn[0]?.createdAt,
           lastMessageAt: lastMessage[0]?.createdAt,
           workoutsLast7Days,
           workoutsLast30Days,
+          missedScheduledWorkouts,
+          averageWorkoutCompletion,
           riskScore: score,
           riskLevel: level,
           riskFactors: factors,
