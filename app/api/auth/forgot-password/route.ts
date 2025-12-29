@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, passwordResetTokens } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { sendPasswordResetEmail, isEmailConfigured } from '@/lib/email';
 
 // Generate a 6-digit code
 function generateCode(): string {
@@ -42,22 +43,23 @@ export async function POST(req: NextRequest) {
       expiresAt,
     });
 
-    // In production, you would send an email here
-    // For now, we'll log it (in dev) or just acknowledge
-    console.log(`Password reset code for ${email}: ${code}`);
+    // Send password reset email
+    const emailResult = await sendPasswordResetEmail(
+      email.toLowerCase(),
+      code,
+      user[0].name || undefined
+    );
 
-    // TODO: Integrate with email service (SendGrid, Resend, etc.)
-    // await sendEmail({
-    //   to: email,
-    //   subject: 'SnapFit Password Reset',
-    //   html: `Your password reset code is: <strong>${code}</strong>. It expires in 15 minutes.`
-    // });
+    if (!emailResult.success && isEmailConfigured()) {
+      console.error('Failed to send reset email:', emailResult.error);
+      // Still return success to not reveal account existence
+    }
 
     return NextResponse.json({
       success: true,
       message: 'Reset code sent to your email',
-      // Remove this in production - only for demo/testing
-      ...(process.env.NODE_ENV === 'development' && { code })
+      // Only include code in dev mode when email is not configured
+      ...(!isEmailConfigured() && { code, devMode: true })
     });
   } catch (error) {
     console.error('Forgot password error:', error);
