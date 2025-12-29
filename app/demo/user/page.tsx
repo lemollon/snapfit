@@ -5,84 +5,170 @@ import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, ArrowRight, Camera, Dumbbell, UtensilsCrossed, Users, Trophy,
   Timer, Flame, Target, TrendingUp, Star, Check, Zap, Clock, Calendar,
-  ChevronRight, Play, Home
+  ChevronRight, Play, Home, Heart, Activity, Scale, Moon, Droplets,
+  ShoppingBag, Video, Brain, Image, Smile, BarChart3, Award
 } from 'lucide-react';
 
 const DEMO_SCREENS = [
   {
     id: 'home',
     title: 'Home Dashboard',
-    description: 'Your personalized fitness hub with stats, streaks, achievements, and quick workout access.',
+    description: 'Your personalized fitness hub with stats, streaks, achievements, and quick access to all features.',
     features: [
       'Daily streak tracking with fire badge',
-      'Total workouts and minutes logged',
+      'XP and leveling system',
       'Weekly goal progress bar',
-      'Motivational quotes that change daily',
-      'Quick-start workout cards',
-      'Achievement badges you can unlock',
+      'Quick access to all features',
+      'Achievement notifications',
+      'Personalized recommendations',
     ],
     image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80',
     color: 'from-indigo-500 to-purple-600',
+    icon: Home,
+  },
+  {
+    id: 'daily-tracker',
+    title: 'Daily Tracker',
+    description: 'Comprehensive daily tracking with meals, workouts, photos, and health metrics in one place.',
+    features: [
+      'Day/Week/Month calendar views',
+      'Log meals with full macro tracking',
+      'Daily check-in: weight, mood, sleep, water',
+      'Progress photo timeline',
+      'Calorie & protein goal progress bars',
+      'Weekly and monthly summaries',
+    ],
+    image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80',
+    color: 'from-orange-500 to-pink-500',
+    icon: Calendar,
   },
   {
     id: 'workout',
     title: 'AI Workout Generator',
-    description: 'Snap a photo of any space and get a personalized workout instantly.',
+    description: 'Snap a photo of any space and get a personalized workout instantly with video demonstrations.',
     features: [
-      'Take photo of gym, living room, hotel, outdoors',
-      'AI detects all usable equipment',
-      'Generates complete workout routine',
+      'Photo-based equipment detection',
+      'AI generates complete routine',
+      'YouTube exercise demonstrations',
       'Warm-up, main workout, cool-down',
-      'Sets, reps, and form tips included',
-      'Save workouts to your history',
+      'Sets, reps, and rest timing',
+      'Save and track workout history',
     ],
     image: 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=800&q=80',
-    color: 'from-orange-500 to-red-500',
+    color: 'from-blue-500 to-indigo-500',
+    icon: Camera,
+  },
+  {
+    id: 'recovery',
+    title: 'Recovery Score',
+    description: 'Daily recovery assessment to optimize your training intensity and prevent overtraining.',
+    features: [
+      'Morning recovery questionnaire',
+      'Sleep quality analysis',
+      'Muscle soreness tracking',
+      'Stress level assessment',
+      'AI-powered recommendations',
+      'Training intensity suggestions',
+    ],
+    image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&q=80',
+    color: 'from-green-500 to-teal-500',
+    icon: Heart,
+  },
+  {
+    id: 'form-check',
+    title: 'Form Check AI',
+    description: 'Upload exercise videos for AI-powered form analysis and personalized improvement tips.',
+    features: [
+      'Video upload for any exercise',
+      'AI analyzes your form',
+      'Score out of 100',
+      'Specific improvement cues',
+      'Safety warnings',
+      'Trainer can add feedback',
+    ],
+    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
+    color: 'from-purple-500 to-pink-500',
+    icon: Video,
   },
   {
     id: 'food',
     title: 'Smart Food Tracking',
-    description: 'Photo your meals for instant AI-powered nutrition analysis.',
+    description: 'Photo your meals for instant AI-powered nutrition analysis with full macro breakdown.',
     features: [
       'Snap a photo of any meal',
       'AI identifies food and portions',
       'Instant calorie count',
-      'Protein, carbs, fat breakdown',
-      'Daily intake tracking',
+      'Protein, carbs, fat, fiber breakdown',
+      'Daily/weekly macro summaries',
       'Meal history and patterns',
     ],
-    image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80',
+    image: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80',
     color: 'from-green-500 to-emerald-500',
+    icon: UtensilsCrossed,
+  },
+  {
+    id: 'body',
+    title: 'Body Tracking',
+    description: 'Track your body transformation with weight logs, measurements, and progress photos.',
+    features: [
+      'Daily weight logging with trends',
+      'Body measurements tracking',
+      'Progress photo comparisons',
+      'Visual transformation timeline',
+      'Goal tracking with projections',
+      'Share progress with trainer',
+    ],
+    image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80',
+    color: 'from-cyan-500 to-blue-500',
+    icon: Scale,
+  },
+  {
+    id: 'programs',
+    title: 'Program Marketplace',
+    description: 'Browse and purchase professional training programs from certified trainers.',
+    features: [
+      'Browse programs by category',
+      'Beginner to advanced levels',
+      'Reviews and ratings',
+      'One-time purchase, lifetime access',
+      'Weekly workout schedules',
+      'Nutrition guides included',
+    ],
+    image: 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?w=800&q=80',
+    color: 'from-amber-500 to-orange-500',
+    icon: ShoppingBag,
+  },
+  {
+    id: 'achievements',
+    title: 'Gamification & XP',
+    description: 'Earn XP, unlock achievements, and compete with friends on leaderboards.',
+    features: [
+      'XP for every action',
+      'Level up system',
+      'Unlock achievement badges',
+      'Daily and weekly challenges',
+      'Leaderboard rankings',
+      'Streak bonuses',
+    ],
+    image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=800&q=80',
+    color: 'from-yellow-500 to-amber-500',
+    icon: Trophy,
   },
   {
     id: 'social',
-    title: 'Friends & Challenges',
-    description: 'Connect with friends and compete in fitness challenges.',
+    title: 'Social & Challenges',
+    description: 'Connect with friends, join challenges, and stay motivated together.',
     features: [
       'Add friends by email',
       'See friends\' activity',
       'Join public challenges',
-      'Create your own challenges',
-      'Track challenge progress',
+      'Create private challenges',
       'Compete on leaderboards',
+      'Message friends and trainers',
     ],
     image: 'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&q=80',
-    color: 'from-blue-500 to-indigo-500',
-  },
-  {
-    id: 'timer',
-    title: 'Workout Timer',
-    description: 'Built-in timer for your exercises with haptic feedback.',
-    features: [
-      'Customizable countdown timer',
-      'Large, easy-to-read display',
-      'Vibration alert when done',
-      'Perfect for rest periods',
-      'Track workout duration',
-      'Hands-free operation',
-    ],
-    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
-    color: 'from-purple-500 to-pink-500',
+    color: 'from-rose-500 to-pink-500',
+    icon: Users,
   },
 ];
 
@@ -99,94 +185,85 @@ export default function UserDemoPage() {
   };
 
   const screen = DEMO_SCREENS[currentScreen];
+  const IconComponent = screen.icon;
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-zinc-900 text-white">
       {/* Header */}
-      <header className="bg-black/30 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-black/50 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
-            onClick={() => router.push('/login')}
-            className="flex items-center gap-2 text-white/70 hover:text-white"
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Home
+            Back
           </button>
           <div className="flex items-center gap-2">
             <Dumbbell className="w-6 h-6 text-orange-500" />
-            <span className="font-bold">User Experience Demo</span>
+            <span className="font-bold">SnapFit User Features</span>
           </div>
           <button
             onClick={() => router.push('/demo/trainer')}
-            className="text-sm text-white/70 hover:text-white"
+            className="text-sm text-orange-400 hover:text-orange-300 transition-colors"
           >
-            See Trainer Demo →
+            Trainer Demo →
           </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-12">
-        {/* Screen Navigation Dots */}
-        <div className="flex justify-center gap-2 mb-8">
-          {DEMO_SCREENS.map((s, i) => (
-            <button
-              key={s.id}
-              onClick={() => setCurrentScreen(i)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                i === currentScreen
-                  ? 'bg-orange-500 w-8'
-                  : 'bg-white/30 hover:bg-white/50'
-              }`}
-            />
-          ))}
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Feature Navigation */}
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
+          {DEMO_SCREENS.map((s, i) => {
+            const Icon = s.icon;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setCurrentScreen(i)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                  i === currentScreen
+                    ? `bg-gradient-to-r ${s.color} text-white shadow-lg`
+                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{s.title.split(' ')[0]}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Current Screen */}
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           {/* Image/Preview */}
-          <div className="relative">
-            <div className={`absolute inset-0 bg-gradient-to-br ${screen.color} rounded-3xl blur-3xl opacity-30`} />
-            <div className="relative bg-gray-800 rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
-              <div className="aspect-[9/16] max-h-[600px] relative">
+          <div className="relative order-2 lg:order-1">
+            <div className={`absolute inset-0 bg-gradient-to-br ${screen.color} rounded-3xl blur-3xl opacity-20`} />
+            <div className="relative bg-zinc-800/80 backdrop-blur rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+              <div className="aspect-[4/3] relative">
                 <img
                   src={screen.image}
                   alt={screen.title}
-                  className="w-full h-full object-cover opacity-60"
+                  className="w-full h-full object-cover"
                 />
-                <div className={`absolute inset-0 bg-gradient-to-t ${screen.color} opacity-40`} />
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent`} />
 
-                {/* Mock UI Overlay */}
-                <div className="absolute inset-0 p-6 flex flex-col">
-                  {/* Mock Header */}
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                      <Dumbbell className="w-6 h-6" />
-                      <span className="font-bold">SnapFit</span>
-                    </div>
-                    <div className="flex items-center gap-2 bg-orange-500/80 px-3 py-1 rounded-full">
-                      <Flame className="w-4 h-4" />
-                      <span className="font-bold text-sm">7</span>
-                    </div>
+                {/* Feature Icon Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className={`p-6 rounded-3xl bg-gradient-to-br ${screen.color} shadow-2xl`}>
+                    <IconComponent className="w-16 h-16 text-white" />
                   </div>
+                </div>
 
-                  {/* Mock Content */}
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="text-center">
-                      {screen.id === 'workout' && <Camera className="w-20 h-20 mx-auto mb-4 opacity-80" />}
-                      {screen.id === 'food' && <UtensilsCrossed className="w-20 h-20 mx-auto mb-4 opacity-80" />}
-                      {screen.id === 'home' && <TrendingUp className="w-20 h-20 mx-auto mb-4 opacity-80" />}
-                      {screen.id === 'social' && <Trophy className="w-20 h-20 mx-auto mb-4 opacity-80" />}
-                      {screen.id === 'timer' && <Timer className="w-20 h-20 mx-auto mb-4 opacity-80" />}
-                      <p className="text-2xl font-bold">{screen.title}</p>
+                {/* Bottom info */}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex -space-x-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-700 border-2 border-zinc-800" />
+                      ))}
                     </div>
-                  </div>
-
-                  {/* Mock Bottom Nav */}
-                  <div className="flex justify-around bg-black/30 backdrop-blur rounded-2xl p-3">
-                    <Home className="w-6 h-6 opacity-60" />
-                    <Dumbbell className="w-6 h-6 opacity-60" />
-                    <UtensilsCrossed className="w-6 h-6 opacity-60" />
-                    <Trophy className="w-6 h-6 opacity-60" />
+                    <p className="text-sm text-white/70">Join 10,000+ users</p>
                   </div>
                 </div>
               </div>
@@ -194,21 +271,22 @@ export default function UserDemoPage() {
           </div>
 
           {/* Description */}
-          <div>
+          <div className="order-1 lg:order-2">
             <div className={`inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${screen.color} rounded-full text-sm font-medium mb-4`}>
-              <span>Screen {currentScreen + 1} of {DEMO_SCREENS.length}</span>
+              <IconComponent className="w-4 h-4" />
+              <span>Feature {currentScreen + 1} of {DEMO_SCREENS.length}</span>
             </div>
 
-            <h1 className="text-4xl font-bold mb-4">{screen.title}</h1>
+            <h1 className="text-4xl lg:text-5xl font-bold mb-4">{screen.title}</h1>
             <p className="text-xl text-white/70 mb-8">{screen.description}</p>
 
-            <div className="space-y-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
               {screen.features.map((feature, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className={`w-6 h-6 rounded-full bg-gradient-to-r ${screen.color} flex items-center justify-center`}>
-                    <Check className="w-4 h-4" />
+                <div key={i} className="flex items-start gap-3 p-3 bg-white/5 rounded-xl">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${screen.color} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3" />
                   </div>
-                  <span className="text-white/90">{feature}</span>
+                  <span className="text-sm text-white/90">{feature}</span>
                 </div>
               ))}
             </div>
@@ -223,12 +301,36 @@ export default function UserDemoPage() {
               </button>
               <button
                 onClick={nextScreen}
-                className="flex-1 py-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-orange-500/30 transition-all"
+                className={`flex-1 py-4 bg-gradient-to-r ${screen.color} rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:shadow-lg transition-all`}
               >
-                Next Screen
+                Next Feature
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Feature Grid Preview */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-6 text-center">All User Features</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+            {DEMO_SCREENS.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setCurrentScreen(i)}
+                  className={`p-4 rounded-2xl transition-all ${
+                    i === currentScreen
+                      ? `bg-gradient-to-br ${s.color} shadow-lg scale-105`
+                      : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <Icon className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-xs font-medium text-center">{s.title.split(' ')[0]}</p>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -238,16 +340,16 @@ export default function UserDemoPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => router.push('/login')}
-              className="px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 rounded-full font-bold text-lg hover:shadow-lg transition-all"
+              className="px-8 py-4 bg-gradient-to-r from-orange-500 to-pink-500 rounded-full font-bold text-lg hover:shadow-lg hover:shadow-orange-500/30 transition-all"
             >
               Get Started Free
             </button>
             <button
-              onClick={() => router.push('/?guest=true')}
+              onClick={() => router.push('/demo/trainer')}
               className="px-8 py-4 bg-white/10 rounded-full font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2"
             >
-              <Play className="w-5 h-5" />
-              Try Demo Mode
+              <Users className="w-5 h-5" />
+              See Trainer Features
             </button>
           </div>
         </div>

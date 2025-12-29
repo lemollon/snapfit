@@ -4,95 +4,172 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ArrowLeft, ArrowRight, Users, Dumbbell, UtensilsCrossed, BarChart3,
-  UserPlus, Eye, TrendingUp, Calendar, MessageSquare, Check, Award,
-  Clock, Activity, Play, ChevronRight, Mail, Star
+  UserPlus, TrendingUp, Calendar, MessageSquare, Check, Award,
+  Clock, Activity, Star, DollarSign, AlertTriangle, Brain, Video,
+  ShoppingBag, FileText, Heart, Zap, Target, Bell, Send, Quote,
+  Sparkles, Shield, PieChart, Layout, ClipboardCheck
 } from 'lucide-react';
 
 const TRAINER_SCREENS = [
   {
     id: 'dashboard',
     title: 'Client Dashboard',
-    description: 'See all your clients at a glance with their activity stats and progress.',
+    description: 'See all your clients at a glance with their activity stats, risk alerts, and quick actions.',
     features: [
-      'View all active clients',
-      'See pending client invitations',
-      'Total workouts across all clients',
-      'Total meals logged by clients',
-      'Quick access to client details',
-      'Real-time activity updates',
+      'View all active clients with status',
+      'At-risk client alerts at the top',
+      'Weekly activity summaries',
+      'Client streak and engagement scores',
+      'One-click access to client details',
+      'Filter by status, engagement, goals',
     ],
-    mockData: {
-      activeClients: 12,
-      pending: 3,
-      totalWorkouts: 156,
-      totalMeals: 423,
-    },
+    image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=800&q=80',
     color: 'from-indigo-500 to-purple-600',
+    icon: Layout,
   },
   {
-    id: 'clients',
-    title: 'Client Management',
-    description: 'Add new clients by email and manage your client relationships.',
+    id: 'revenue',
+    title: 'Revenue Dashboard',
+    description: 'Track your earnings from programs, subscriptions, and client payments in real-time.',
     features: [
-      'Invite clients by email address',
-      'Clients must have SnapFit account',
-      'Accept or reject pending invites',
-      'Activate clients when ready',
-      'Remove clients if needed',
-      'Track client status',
+      'Total revenue overview',
+      'Monthly recurring revenue (MRR)',
+      'Revenue by source breakdown',
+      'Program sales analytics',
+      'Client subscription tracking',
+      'Payout history and schedule',
     ],
-    mockData: {
-      clients: [
-        { name: 'Sarah Johnson', email: 'sarah@email.com', workouts: 24, status: 'active' },
-        { name: 'Mike Chen', email: 'mike@email.com', workouts: 18, status: 'active' },
-        { name: 'Emma Wilson', email: 'emma@email.com', workouts: 0, status: 'pending' },
-      ],
-    },
-    color: 'from-blue-500 to-cyan-500',
-  },
-  {
-    id: 'progress',
-    title: 'Client Progress Tracking',
-    description: 'Monitor each client\'s workout history and nutrition habits.',
-    features: [
-      'View client workout history',
-      'See meals and calorie intake',
-      'Track total minutes trained',
-      'Average calories per meal',
-      'Recent activity feed',
-      'Identify inactive clients',
-    ],
-    mockData: {
-      client: 'Sarah Johnson',
-      stats: {
-        workouts: 24,
-        minutes: 720,
-        meals: 86,
-        avgCalories: 1850,
-      },
-    },
+    image: 'https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80',
     color: 'from-green-500 to-emerald-500',
+    icon: DollarSign,
   },
   {
-    id: 'insights',
-    title: 'Client Insights',
-    description: 'Get detailed analytics on your clients\' fitness journeys.',
+    id: 'risk-alerts',
+    title: 'Client Risk Alerts',
+    description: 'AI-powered detection of at-risk clients who may churn, with actionable intervention suggestions.',
     features: [
-      'Client activity trends',
-      'Workout frequency patterns',
-      'Nutrition consistency',
-      'Goal progress tracking',
-      'Compare client performance',
-      'Identify who needs attention',
+      'Automatic inactivity detection',
+      'Declining engagement patterns',
+      'Missed check-ins flagged',
+      'Goal progress stalls',
+      'One-click outreach actions',
+      'Risk score for each client',
     ],
-    mockData: {
-      insights: [
-        { client: 'Sarah', trend: 'up', message: '3 workouts this week' },
-        { client: 'Mike', trend: 'down', message: 'No activity in 5 days' },
-        { client: 'Emma', trend: 'new', message: 'Just joined, welcome!' },
-      ],
-    },
-    color: 'from-orange-500 to-red-500',
+    image: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&q=80',
+    color: 'from-red-500 to-orange-500',
+    icon: AlertTriangle,
+  },
+  {
+    id: 'check-ins',
+    title: 'Automated Check-ins',
+    description: 'Set up scheduled check-ins that automatically prompt clients for updates and photos.',
+    features: [
+      'Weekly/biweekly schedules',
+      'Custom question templates',
+      'Photo prompts for progress',
+      'Auto-reminder notifications',
+      'Review responses in-app',
+      'Client compliance tracking',
+    ],
+    image: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80',
+    color: 'from-blue-500 to-cyan-500',
+    icon: ClipboardCheck,
+  },
+  {
+    id: 'ai-programs',
+    title: 'AI Program Generator',
+    description: 'Use AI to create personalized training programs in minutes, not hours.',
+    features: [
+      'Input client goals and constraints',
+      'AI generates full periodized plan',
+      'Weekly workout breakdown',
+      'Exercise alternatives included',
+      'Edit and customize output',
+      'Save as template or assign to client',
+    ],
+    image: 'https://images.unsplash.com/photo-1676299081847-824916de030a?w=800&q=80',
+    color: 'from-purple-500 to-pink-500',
+    icon: Brain,
+  },
+  {
+    id: 'templates',
+    title: 'Workout Templates',
+    description: 'Build reusable workout templates to quickly assign to clients with personalization.',
+    features: [
+      'Create from scratch or AI',
+      'Organize by category/type',
+      'Include warmup/cooldown',
+      'Video links for exercises',
+      'Clone and modify easily',
+      'Track which clients use each',
+    ],
+    image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80',
+    color: 'from-orange-500 to-amber-500',
+    icon: Dumbbell,
+  },
+  {
+    id: 'marketplace',
+    title: 'Program Marketplace',
+    description: 'Sell your training programs to users worldwide and earn passive income.',
+    features: [
+      'List programs for sale',
+      'Set your own pricing',
+      'Program reviews and ratings',
+      'Analytics and sales data',
+      'Automatic delivery to buyers',
+      'Multiple programs allowed',
+    ],
+    image: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=800&q=80',
+    color: 'from-amber-500 to-yellow-500',
+    icon: ShoppingBag,
+  },
+  {
+    id: 'form-review',
+    title: 'Form Check Review',
+    description: 'Review client exercise videos, see AI analysis, and add your expert feedback.',
+    features: [
+      'Client video submissions',
+      'AI provides initial score',
+      'Add your expert commentary',
+      'Highlight specific issues',
+      'Suggest corrections',
+      'Track improvement over time',
+    ],
+    image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=800&q=80',
+    color: 'from-cyan-500 to-blue-500',
+    icon: Video,
+  },
+  {
+    id: 'testimonials',
+    title: 'Testimonial Collection',
+    description: 'Request and showcase client testimonials to build your reputation and attract new clients.',
+    features: [
+      'One-click testimonial requests',
+      'Before/after photo prompts',
+      'Video testimonial support',
+      'Approval workflow',
+      'Display on profile page',
+      'Share on social media',
+    ],
+    image: 'https://images.unsplash.com/photo-1531545514256-b1400bc00f31?w=800&q=80',
+    color: 'from-pink-500 to-rose-500',
+    icon: Quote,
+  },
+  {
+    id: 'messaging',
+    title: 'Client Messaging',
+    description: 'In-app messaging to stay connected with your clients and provide support.',
+    features: [
+      'Direct message any client',
+      'Attach photos and files',
+      'Quick response templates',
+      'Read receipts',
+      'Push notifications',
+      'Message history search',
+    ],
+    image: 'https://images.unsplash.com/photo-1577563908411-5077b6dc7624?w=800&q=80',
+    color: 'from-violet-500 to-purple-500',
+    icon: MessageSquare,
   },
 ];
 
@@ -109,201 +186,108 @@ export default function TrainerDemoPage() {
   };
 
   const screen = TRAINER_SCREENS[currentScreen];
+  const IconComponent = screen.icon;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-900 text-white">
+    <div className="min-h-screen bg-zinc-900 text-white">
       {/* Header */}
-      <header className="bg-black/30 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="bg-black/50 backdrop-blur-lg border-b border-white/10 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <button
-            onClick={() => router.push('/login')}
-            className="flex items-center gap-2 text-white/70 hover:text-white"
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
-            Back to Home
+            Back
           </button>
           <div className="flex items-center gap-2">
-            <Users className="w-6 h-6 text-purple-400" />
-            <span className="font-bold">Trainer Experience Demo</span>
+            <Users className="w-6 h-6 text-purple-500" />
+            <span className="font-bold">SnapFit Trainer Features</span>
           </div>
           <button
             onClick={() => router.push('/demo/user')}
-            className="text-sm text-white/70 hover:text-white"
+            className="text-sm text-purple-400 hover:text-purple-300 transition-colors"
           >
-            ← See User Demo
+            ← User Demo
           </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-12">
-        {/* Screen Navigation Dots */}
-        <div className="flex justify-center gap-2 mb-8">
-          {TRAINER_SCREENS.map((s, i) => (
-            <button
-              key={s.id}
-              onClick={() => setCurrentScreen(i)}
-              className={`w-3 h-3 rounded-full transition-all ${
-                i === currentScreen
-                  ? 'bg-purple-500 w-8'
-                  : 'bg-white/30 hover:bg-white/50'
-              }`}
-            />
-          ))}
+      <main className="max-w-7xl mx-auto px-4 py-8">
+        {/* Feature Navigation */}
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide">
+          {TRAINER_SCREENS.map((s, i) => {
+            const Icon = s.icon;
+            return (
+              <button
+                key={s.id}
+                onClick={() => setCurrentScreen(i)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full whitespace-nowrap transition-all ${
+                  i === currentScreen
+                    ? `bg-gradient-to-r ${s.color} text-white shadow-lg`
+                    : 'bg-white/10 text-white/70 hover:bg-white/20'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span className="text-sm font-medium">{s.title.split(' ')[0]}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Current Screen */}
         <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Mock Dashboard Preview */}
-          <div className="relative">
-            <div className={`absolute inset-0 bg-gradient-to-br ${screen.color} rounded-3xl blur-3xl opacity-30`} />
-            <div className="relative bg-gray-800/80 backdrop-blur rounded-3xl overflow-hidden border border-white/10 shadow-2xl p-6">
-              {/* Mock Header */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                    <Users className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <p className="font-bold">Trainer Dashboard</p>
-                    <p className="text-xs text-white/60">John Smith</p>
+          {/* Image/Preview */}
+          <div className="relative order-2 lg:order-1">
+            <div className={`absolute inset-0 bg-gradient-to-br ${screen.color} rounded-3xl blur-3xl opacity-20`} />
+            <div className="relative bg-zinc-800/80 backdrop-blur rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+              <div className="aspect-[4/3] relative">
+                <img
+                  src={screen.image}
+                  alt={screen.title}
+                  className="w-full h-full object-cover"
+                />
+                <div className={`absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent`} />
+
+                {/* Feature Icon Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className={`p-6 rounded-3xl bg-gradient-to-br ${screen.color} shadow-2xl`}>
+                    <IconComponent className="w-16 h-16 text-white" />
                   </div>
                 </div>
-                <button className="p-2 bg-white/10 rounded-lg">
-                  <UserPlus className="w-5 h-5" />
-                </button>
+
+                {/* Bottom info */}
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="flex -space-x-2">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="w-8 h-8 rounded-full bg-gradient-to-br from-zinc-600 to-zinc-700 border-2 border-zinc-800" />
+                      ))}
+                    </div>
+                    <p className="text-sm text-white/70">Trusted by 1,000+ trainers</p>
+                  </div>
+                </div>
               </div>
-
-              {/* Mock Content based on screen */}
-              {screen.id === 'dashboard' && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-white/5 rounded-xl p-4">
-                      <Users className="w-6 h-6 text-blue-400 mb-2" />
-                      <p className="text-2xl font-bold">{screen.mockData.activeClients}</p>
-                      <p className="text-xs text-white/60">Active Clients</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-4">
-                      <Clock className="w-6 h-6 text-yellow-400 mb-2" />
-                      <p className="text-2xl font-bold">{screen.mockData.pending}</p>
-                      <p className="text-xs text-white/60">Pending</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-4">
-                      <Dumbbell className="w-6 h-6 text-orange-400 mb-2" />
-                      <p className="text-2xl font-bold">{screen.mockData.totalWorkouts}</p>
-                      <p className="text-xs text-white/60">Total Workouts</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-4">
-                      <UtensilsCrossed className="w-6 h-6 text-green-400 mb-2" />
-                      <p className="text-2xl font-bold">{screen.mockData.totalMeals}</p>
-                      <p className="text-xs text-white/60">Meals Logged</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {screen.id === 'clients' && screen.mockData.clients && (
-                <div className="space-y-3">
-                  {screen.mockData.clients.map((client, i) => (
-                    <div key={i} className="bg-white/5 rounded-xl p-4 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center font-bold">
-                          {client.name.charAt(0)}
-                        </div>
-                        <div>
-                          <p className="font-medium">{client.name}</p>
-                          <p className="text-xs text-white/60">{client.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          client.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                        }`}>
-                          {client.status}
-                        </span>
-                        <ChevronRight className="w-4 h-4 text-white/40" />
-                      </div>
-                    </div>
-                  ))}
-                  <button className="w-full py-3 bg-white/5 border border-dashed border-white/20 rounded-xl text-white/60 flex items-center justify-center gap-2">
-                    <UserPlus className="w-4 h-4" />
-                    Add New Client
-                  </button>
-                </div>
-              )}
-
-              {screen.id === 'progress' && screen.mockData.stats && (
-                <div className="space-y-4">
-                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center font-bold text-xl">
-                        S
-                      </div>
-                      <div>
-                        <p className="font-bold">{screen.mockData.client}</p>
-                        <p className="text-xs text-white/70">Client since Jan 2024</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
-                      <p className="text-xl font-bold">{screen.mockData.stats.workouts}</p>
-                      <p className="text-xs text-white/60">Workouts</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
-                      <p className="text-xl font-bold">{screen.mockData.stats.minutes}</p>
-                      <p className="text-xs text-white/60">Minutes</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
-                      <p className="text-xl font-bold">{screen.mockData.stats.meals}</p>
-                      <p className="text-xs text-white/60">Meals</p>
-                    </div>
-                    <div className="bg-white/5 rounded-xl p-3 text-center">
-                      <p className="text-xl font-bold">{screen.mockData.stats.avgCalories}</p>
-                      <p className="text-xs text-white/60">Avg Cal</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {screen.id === 'insights' && screen.mockData.insights && (
-                <div className="space-y-3">
-                  {screen.mockData.insights.map((insight, i) => (
-                    <div key={i} className="bg-white/5 rounded-xl p-4 flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        insight.trend === 'up' ? 'bg-green-500/20' :
-                        insight.trend === 'down' ? 'bg-red-500/20' : 'bg-blue-500/20'
-                      }`}>
-                        {insight.trend === 'up' && <TrendingUp className="w-5 h-5 text-green-400" />}
-                        {insight.trend === 'down' && <Activity className="w-5 h-5 text-red-400" />}
-                        {insight.trend === 'new' && <Star className="w-5 h-5 text-blue-400" />}
-                      </div>
-                      <div>
-                        <p className="font-medium">{insight.client}</p>
-                        <p className="text-sm text-white/60">{insight.message}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
 
           {/* Description */}
-          <div>
+          <div className="order-1 lg:order-2">
             <div className={`inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r ${screen.color} rounded-full text-sm font-medium mb-4`}>
-              <span>Screen {currentScreen + 1} of {TRAINER_SCREENS.length}</span>
+              <IconComponent className="w-4 h-4" />
+              <span>Feature {currentScreen + 1} of {TRAINER_SCREENS.length}</span>
             </div>
 
-            <h1 className="text-4xl font-bold mb-4">{screen.title}</h1>
+            <h1 className="text-4xl lg:text-5xl font-bold mb-4">{screen.title}</h1>
             <p className="text-xl text-white/70 mb-8">{screen.description}</p>
 
-            <div className="space-y-4 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
               {screen.features.map((feature, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className={`w-6 h-6 rounded-full bg-gradient-to-r ${screen.color} flex items-center justify-center`}>
-                    <Check className="w-4 h-4" />
+                <div key={i} className="flex items-start gap-3 p-3 bg-white/5 rounded-xl">
+                  <div className={`w-5 h-5 rounded-full bg-gradient-to-r ${screen.color} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                    <Check className="w-3 h-3" />
                   </div>
-                  <span className="text-white/90">{feature}</span>
+                  <span className="text-sm text-white/90">{feature}</span>
                 </div>
               ))}
             </div>
@@ -318,22 +302,101 @@ export default function TrainerDemoPage() {
               </button>
               <button
                 onClick={nextScreen}
-                className="flex-1 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-purple-500/30 transition-all"
+                className={`flex-1 py-4 bg-gradient-to-r ${screen.color} rounded-full font-bold text-lg flex items-center justify-center gap-2 hover:shadow-lg transition-all`}
               >
-                Next Screen
+                Next Feature
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
 
+        {/* Feature Grid Preview */}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold mb-6 text-center">All Trainer Features</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+            {TRAINER_SCREENS.map((s, i) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setCurrentScreen(i)}
+                  className={`p-4 rounded-2xl transition-all ${
+                    i === currentScreen
+                      ? `bg-gradient-to-br ${s.color} shadow-lg scale-105`
+                      : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <Icon className="w-8 h-8 mx-auto mb-2" />
+                  <p className="text-xs font-medium text-center">{s.title.split(' ')[0]}</p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Revenue Highlight */}
+        <div className="mt-16 bg-gradient-to-br from-green-500/20 to-emerald-500/20 rounded-3xl p-8 border border-green-500/30">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <DollarSign className="w-8 h-8 text-green-400" />
+                <h3 className="text-2xl font-bold">Grow Your Income</h3>
+              </div>
+              <p className="text-white/70 mb-6">
+                SnapFit trainers earn an average of $2,500/month through program sales and client subscriptions.
+                Build passive income while helping more people reach their goals.
+              </p>
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-green-400">$50k+</p>
+                  <p className="text-sm text-white/60">Top trainer annual</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-green-400">15%</p>
+                  <p className="text-sm text-white/60">Platform fee only</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-3xl font-bold text-green-400">Weekly</p>
+                  <p className="text-sm text-white/60">Payouts</p>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div className="bg-zinc-800/80 rounded-2xl p-6 w-full max-w-xs">
+                <p className="text-sm text-white/60 mb-2">Example Monthly Revenue</p>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Program Sales</span>
+                    <span className="font-bold text-green-400">$1,200</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Client Subscriptions</span>
+                    <span className="font-bold text-green-400">$1,800</span>
+                  </div>
+                  <div className="h-px bg-white/10" />
+                  <div className="flex justify-between">
+                    <span className="text-white/70">Platform Fee (15%)</span>
+                    <span className="text-red-400">-$450</span>
+                  </div>
+                  <div className="h-px bg-white/10" />
+                  <div className="flex justify-between text-lg">
+                    <span className="font-bold">Your Earnings</span>
+                    <span className="font-bold text-green-400">$2,550</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* CTA */}
         <div className="mt-16 text-center">
-          <p className="text-white/60 mb-6">Ready to grow your training business?</p>
+          <p className="text-white/60 mb-6">Ready to scale your training business?</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={() => router.push('/login')}
-              className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full font-bold text-lg hover:shadow-lg transition-all"
+              className="px-8 py-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full font-bold text-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all"
             >
               Sign Up as Trainer
             </button>
@@ -341,7 +404,8 @@ export default function TrainerDemoPage() {
               onClick={() => router.push('/demo/user')}
               className="px-8 py-4 bg-white/10 rounded-full font-bold text-lg hover:bg-white/20 transition-all flex items-center justify-center gap-2"
             >
-              See User Experience
+              <Dumbbell className="w-5 h-5" />
+              See User Features
             </button>
           </div>
         </div>
