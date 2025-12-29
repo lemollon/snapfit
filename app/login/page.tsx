@@ -176,179 +176,181 @@ export default function LoginPage() {
     }
   };
 
-  const AuthModal = () => (
-    <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-50 flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md">
-        {/* Animated gradient border */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-pink-500 to-violet-500 rounded-3xl blur-lg opacity-50 animate-pulse pointer-events-none" />
+  return (
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Auth Modal - inline to prevent re-mounting on state change */}
+      {showAuth && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-2xl z-50 flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md">
+            {/* Animated gradient border */}
+            <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 via-pink-500 to-violet-500 rounded-3xl blur-lg opacity-50 animate-pulse pointer-events-none" />
 
-        <div className="relative bg-zinc-950 rounded-3xl border border-zinc-800 overflow-hidden">
-          {/* Header gradient */}
-          <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-orange-500/20 via-pink-500/10 to-transparent pointer-events-none" />
+            <div className="relative bg-zinc-950 rounded-3xl border border-zinc-800 overflow-hidden">
+              {/* Header gradient */}
+              <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-orange-500/20 via-pink-500/10 to-transparent pointer-events-none" />
 
-          <div className="relative p-8">
-            <button
-              onClick={() => setShowAuth(false)}
-              className="absolute top-4 right-4 p-2 rounded-full hover:bg-zinc-800 transition-colors"
-            >
-              <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+              <div className="relative p-8">
+                <button
+                  onClick={() => setShowAuth(false)}
+                  className="absolute top-4 right-4 p-2 rounded-full hover:bg-zinc-800 transition-colors z-10"
+                >
+                  <svg className="w-5 h-5 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
 
-            <div className="flex items-center gap-4 mb-8">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600 rounded-2xl blur-lg opacity-50" />
-                <div className="relative w-14 h-14 bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center">
-                  <Dumbbell className="w-7 h-7 text-white" />
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-black text-white">
-                  {isLogin ? 'Welcome Back' : 'Join SnapFit'}
-                </h2>
-                <p className="text-zinc-400">
-                  {isLogin ? 'Continue your journey' : 'Start transforming today'}
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {!isLogin && (
-                <div>
-                  <label className="block text-sm font-medium text-zinc-300 mb-2">Name</label>
-                  <div className="relative group">
-                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
-                    <div className="relative flex items-center">
-                      <User className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="w-full pl-12 pr-4 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-transparent transition-all"
-                        placeholder="Your name"
-                      />
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-pink-600 rounded-2xl blur-lg opacity-50 pointer-events-none" />
+                    <div className="relative w-14 h-14 bg-gradient-to-br from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center">
+                      <Dumbbell className="w-7 h-7 text-white" />
                     </div>
                   </div>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
-                <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
-                  <div className="relative flex items-center">
-                    <Mail className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      className="w-full pl-12 pr-4 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-transparent transition-all"
-                      placeholder="you@example.com"
-                    />
+                  <div>
+                    <h2 className="text-2xl font-black text-white">
+                      {isLogin ? 'Welcome Back' : 'Join SnapFit'}
+                    </h2>
+                    <p className="text-zinc-400">
+                      {isLogin ? 'Continue your journey' : 'Start transforming today'}
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
-                <div className="relative group">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
-                  <div className="relative flex items-center">
-                    <Lock className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="w-full pl-12 pr-12 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-transparent transition-all"
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 text-zinc-500 hover:text-zinc-300"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {!isLogin && (
-                <div className="relative p-4 rounded-xl bg-gradient-to-r from-orange-500/5 to-pink-500/5 border border-orange-500/20 overflow-hidden">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
-                  <label className="flex items-center cursor-pointer relative">
-                    <input
-                      type="checkbox"
-                      checked={isTrainer}
-                      onChange={(e) => setIsTrainer(e.target.checked)}
-                      className="sr-only"
-                    />
-                    <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-                      isTrainer ? 'bg-gradient-to-r from-orange-500 to-pink-500 border-transparent' : 'border-zinc-600'
-                    }`}>
-                      {isTrainer && <Check className="w-4 h-4 text-white" />}
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  {!isLogin && (
+                    <div>
+                      <label className="block text-sm font-medium text-zinc-300 mb-2">Name</label>
+                      <div className="relative group">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
+                        <div className="relative flex items-center">
+                          <User className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
+                          <input
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="w-full pl-12 pr-4 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-all"
+                            placeholder="Your name"
+                            autoComplete="name"
+                          />
+                        </div>
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <span className="font-semibold text-white">I&apos;m a Trainer</span>
-                      <p className="text-sm text-zinc-400">Manage clients & sell products</p>
-                    </div>
-                  </label>
-                </div>
-              )}
-
-              {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  </div>
-                  {error}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="relative w-full group"
-              >
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none" />
-                <div className="relative flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold py-4 rounded-xl text-lg">
-                  {loading ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      {isLogin ? 'Sign In' : 'Start Free'}
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </>
                   )}
-                </div>
-              </button>
-            </form>
 
-            <div className="mt-6 text-center">
-              <button
-                onClick={() => { setIsLogin(!isLogin); setError(''); }}
-                className="text-sm text-zinc-400 hover:text-white transition-colors"
-              >
-                {isLogin ? "Don't have an account? " : 'Already have an account? '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-400 font-semibold">
-                  {isLogin ? 'Sign up free' : 'Sign in'}
-                </span>
-              </button>
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
+                    <div className="relative group">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
+                      <div className="relative flex items-center">
+                        <Mail className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          required
+                          className="w-full pl-12 pr-4 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-all"
+                          placeholder="you@example.com"
+                          autoComplete="email"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
+                    <div className="relative group">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-500 rounded-xl opacity-0 group-focus-within:opacity-50 blur transition-opacity pointer-events-none" />
+                      <div className="relative flex items-center">
+                        <Lock className="absolute left-4 w-5 h-5 text-zinc-500 pointer-events-none" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          className="w-full pl-12 pr-12 py-4 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-all"
+                          placeholder="••••••••"
+                          autoComplete={isLogin ? 'current-password' : 'new-password'}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 text-zinc-500 hover:text-zinc-300 z-10"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {!isLogin && (
+                    <div className="relative p-4 rounded-xl bg-gradient-to-r from-orange-500/5 to-pink-500/5 border border-orange-500/20 overflow-hidden">
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-orange-500/10 to-transparent rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+                      <label className="flex items-center cursor-pointer relative z-10">
+                        <input
+                          type="checkbox"
+                          checked={isTrainer}
+                          onChange={(e) => setIsTrainer(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <div className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                          isTrainer ? 'bg-gradient-to-r from-orange-500 to-pink-500 border-transparent' : 'border-zinc-600'
+                        }`}>
+                          {isTrainer && <Check className="w-4 h-4 text-white" />}
+                        </div>
+                        <div className="ml-3">
+                          <span className="font-semibold text-white">I&apos;m a Trainer</span>
+                          <p className="text-sm text-zinc-400">Manage clients & sell products</p>
+                        </div>
+                      </label>
+                    </div>
+                  )}
+
+                  {error && (
+                    <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-sm flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                      </div>
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="relative w-full group"
+                  >
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500 to-pink-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition-opacity pointer-events-none" />
+                    <div className="relative flex items-center justify-center gap-2 bg-gradient-to-r from-orange-500 to-pink-600 text-white font-bold py-4 rounded-xl text-lg">
+                      {loading ? (
+                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          {isLogin ? 'Sign In' : 'Start Free'}
+                          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                        </>
+                      )}
+                    </div>
+                  </button>
+                </form>
+
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => { setIsLogin(!isLogin); setError(''); }}
+                    className="text-sm text-zinc-400 hover:text-white transition-colors"
+                  >
+                    {isLogin ? "Don't have an account? " : 'Already have an account? '}
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-pink-400 font-semibold">
+                      {isLogin ? 'Sign up free' : 'Sign in'}
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
-      {showAuth && <AuthModal />}
+      )}
 
       {/* Demo Selection Modal */}
       {showDemoModal && (
