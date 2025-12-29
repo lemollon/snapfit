@@ -9,11 +9,11 @@ import {
   Clock, TrendingUp, Apple, Utensils, Flame, Award, Crown, ChevronDown
 } from 'lucide-react';
 
-// Premium fitness imagery - aspirational bodies & results
+// Premium fitness imagery - wide shots showing full context
 const HERO_IMAGES = [
-  'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=1920&q=85', // Athletic woman with defined abs
-  'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=1920&q=85', // Intense workout
-  'https://images.unsplash.com/photo-1550345332-09e3ac987658?w=1920&q=85', // Strong woman training
+  'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1920&q=85', // Gym wide shot
+  'https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1920&q=85', // Gym interior wide
+  'https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1920&q=85', // Weights wide shot
 ];
 
 // Transformation & results focused imagery
@@ -97,6 +97,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [currentHeroImage, setCurrentHeroImage] = useState(0);
   const [scrolled, setScrolled] = useState(false);
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -282,6 +283,76 @@ export default function LoginPage() {
     <div className="min-h-screen bg-black text-white">
       {showAuth && <AuthModal />}
 
+      {/* Demo Selection Modal */}
+      {showDemoModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-lg bg-zinc-900 rounded-2xl border border-zinc-800 p-6 relative">
+            <button
+              onClick={() => setShowDemoModal(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            >
+              <span className="sr-only">Close</span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <h2 className="text-2xl font-bold mb-2">Explore SnapFit</h2>
+            <p className="text-zinc-400 mb-6">Choose a demo account to explore the app features</p>
+
+            <div className="grid gap-4">
+              {/* User Demo */}
+              <button
+                onClick={() => { setShowDemoModal(false); router.push('/demo/user'); }}
+                className="p-5 bg-gradient-to-br from-blue-500/10 to-purple-500/10 rounded-xl border border-blue-500/30 hover:border-blue-500/50 transition-all text-left group"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shrink-0">
+                    <User className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg group-hover:text-blue-400 transition-colors">User Account</h3>
+                    <p className="text-sm text-zinc-400 mt-1">Track workouts, log meals, view progress</p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="text-xs px-2 py-1 bg-zinc-800 rounded">AI Workouts</span>
+                      <span className="text-xs px-2 py-1 bg-zinc-800 rounded">Food Tracking</span>
+                      <span className="text-xs px-2 py-1 bg-zinc-800 rounded">Progress Photos</span>
+                      <span className="text-xs px-2 py-1 bg-zinc-800 rounded">Achievements</span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Trainer Demo */}
+              <button
+                onClick={() => { setShowDemoModal(false); router.push('/demo/trainer'); }}
+                className="p-5 bg-gradient-to-br from-orange-500/10 to-pink-500/10 rounded-xl border border-orange-500/30 hover:border-orange-500/50 transition-all text-left group"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500 to-pink-600 flex items-center justify-center shrink-0">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg group-hover:text-orange-400 transition-colors">Trainer Account</h3>
+                    <p className="text-sm text-zinc-400 mt-1">Manage clients, create programs, sell products</p>
+                    <div className="flex flex-wrap gap-2 mt-3">
+                      <span className="text-xs px-2 py-1 bg-zinc-800 rounded">Client Management</span>
+                      <span className="text-xs px-2 py-1 bg-zinc-800 rounded">Workout Templates</span>
+                      <span className="text-xs px-2 py-1 bg-zinc-800 rounded">Product Store</span>
+                      <span className="text-xs px-2 py-1 bg-zinc-800 rounded">Messaging</span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <p className="text-xs text-zinc-500 mt-6 text-center">
+              Demo accounts have limited features. Sign up for full access!
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Premium Dark Nav */}
       <nav className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
         scrolled ? 'bg-black/90 backdrop-blur-xl border-b border-zinc-800' : 'bg-transparent'
@@ -399,11 +470,11 @@ export default function LoginPage() {
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </button>
               <button
-                onClick={() => router.push('/?guest=true')}
+                onClick={() => setShowDemoModal(true)}
                 className="group flex items-center justify-center gap-3 bg-white/5 backdrop-blur-sm text-white font-bold text-lg px-10 py-5 rounded-full hover:bg-white/10 transition-all border border-white/10"
               >
                 <Play className="w-5 h-5" />
-                Watch Demo
+                Try Demo
               </button>
             </div>
 

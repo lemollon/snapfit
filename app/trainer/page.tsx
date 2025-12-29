@@ -3,10 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Users, Dumbbell, UtensilsCrossed, ArrowLeft, Plus, Mail, RefreshCw,
   Clock, TrendingUp, ChevronRight, X, Check, User, Activity, Calendar,
-  BarChart3, Eye, UserMinus, UserCheck, Loader2
+  BarChart3, Eye, UserMinus, UserCheck, Loader2, ShoppingBag, FileText,
+  MessageSquare, Settings
 } from 'lucide-react';
 
 interface Client {
@@ -306,6 +308,61 @@ export default function TrainerDashboard() {
             </p>
             <p className="text-white/60 text-sm">Total Meals Logged</p>
           </div>
+        </div>
+
+        {/* Trainer Tools */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          <Link
+            href="/profile"
+            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Profile</p>
+              <p className="text-xs text-white/50">Edit info</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/calendar"
+            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Calendar</p>
+              <p className="text-xs text-white/50">Schedule</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/trainer/products"
+            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center">
+              <ShoppingBag className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Products</p>
+              <p className="text-xs text-white/50">Sell items</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/trainer/templates"
+            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center">
+              <FileText className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Templates</p>
+              <p className="text-xs text-white/50">Workouts</p>
+            </div>
+          </Link>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
