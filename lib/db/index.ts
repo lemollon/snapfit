@@ -12,10 +12,12 @@ if (!connectionString) {
 }
 
 // For query purposes - with connection pooling settings for serverless
+// SSL is required for Render external connections
 const queryClient = postgres(connectionString, {
   max: 10, // Maximum connections in pool
   idle_timeout: 20, // Close idle connections after 20 seconds
   connect_timeout: 10, // Connection timeout in seconds
+  ssl: 'require', // Required for Render external connections
 });
 
 export const db = drizzle(queryClient, { schema });
