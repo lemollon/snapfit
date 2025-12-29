@@ -91,3 +91,44 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Failed to create template' }, { status: 500 });
   }
 }
+
+// DELETE - Remove workout template
+export async function DELETE(req: Request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const templateId = searchParams.get('id');
+
+    if (!templateId) {
+      return NextResponse.json({ error: 'Template ID is required' }, { status: 400 });
+    }
+
+    const [trainer] = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, session.user.email))
+      .limit(1);
+
+    if (!trainer?.isTrainer) {
+      return NextResponse.json({ error: 'Not a trainer account' }, { status: 403 });
+    }
+
+    await db
+      .delete(workoutTemplates)
+      .where(
+        and(
+          eq(workoutTemplates.id, templateId),
+          eq(workoutTemplates.trainerId, trainer.id)
+        )
+      );
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('Delete template error:', error);
+    return NextResponse.json({ error: 'Failed to delete template' }, { status: 500 });
+  }
+}

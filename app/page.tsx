@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, Suspense } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   Camera,
   Upload,
@@ -45,6 +46,9 @@ import {
   ChevronRight,
   Clock,
   Activity,
+  User,
+  Scale,
+  Ruler,
 } from 'lucide-react';
 
 // Stock fitness images from Unsplash
@@ -1721,6 +1725,75 @@ function SnapFitContent() {
                 </>
               )}
             </div>
+
+            {/* Quick Links to New Features */}
+            <div className={`p-5 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
+              <h3 className={`font-medium mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Quick Links</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  href="/profile"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Profile</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Edit your info</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/body"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center">
+                    <Scale className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Body</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Track weight</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/calendar"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Calendar</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Plan workouts</p>
+                  </div>
+                </Link>
+
+                <Link
+                  href="/achievements"
+                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
+                >
+                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+                    <Trophy className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Achievements</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>View badges</p>
+                  </div>
+                </Link>
+              </div>
+            </div>
+
+            {/* Sign Out Button */}
+            {session && !isGuestMode && (
+              <button
+                onClick={() => signOut({ callbackUrl: '/login' })}
+                className={`w-full p-4 rounded-2xl ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'} shadow-lg flex items-center justify-center gap-2 text-red-500 font-medium transition-all`}
+              >
+                <LogOut className="w-5 h-5" />
+                Sign Out
+              </button>
+            )}
           </div>
         )}
       </main>
