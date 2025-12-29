@@ -762,30 +762,138 @@ export const EXERCISE_LIBRARY: ExerciseData[] = [
   },
 ];
 
+// Common words to strip when matching exercise names
+const FILLER_WORDS = [
+  'standard', 'basic', 'regular', 'traditional', 'classic', 'simple',
+  'bodyweight', 'weighted', 'assisted', 'modified', 'advanced', 'beginner',
+  'exercise', 'workout', 'movement', 'drill',
+  'the', 'a', 'an', 'with', 'on', 'for',
+];
+
+// Common exercise name aliases
+const EXERCISE_ALIASES: Record<string, string[]> = {
+  'push-ups': ['pushups', 'push ups', 'press ups', 'pressups'],
+  'pull-ups': ['pullups', 'pull ups', 'chin ups', 'chinups'],
+  'squats': ['squat', 'air squats', 'bodyweight squats'],
+  'lunges': ['lunge', 'forward lunges', 'front lunges'],
+  'plank': ['planks', 'front plank', 'forearm plank'],
+  'crunches': ['crunch', 'ab crunches', 'abdominal crunches'],
+  'deadlift': ['deadlifts', 'dead lift', 'dead lifts'],
+  'bench press': ['flat bench', 'flat bench press', 'barbell bench', 'chest press'],
+  'bicep curls': ['biceps curls', 'arm curls', 'dumbbell curls', 'curls'],
+  'tricep dips': ['dips', 'bench dips', 'chair dips'],
+  'jumping jacks': ['jumping jack', 'star jumps', 'side straddle hop'],
+  'burpees': ['burpee', 'squat thrust'],
+  'mountain climbers': ['mountain climber', 'running planks'],
+  'leg raises': ['leg raise', 'lying leg raises', 'floor leg raises'],
+  'russian twists': ['russian twist', 'seated twists', 'torso twists'],
+  'high knees': ['high knee', 'running in place', 'knee raises'],
+  'butt kicks': ['butt kick', 'heel kicks', 'leg curls running'],
+  'calf raises': ['calf raise', 'heel raises', 'toe raises'],
+  'glute bridges': ['glute bridge', 'hip bridges', 'bridge exercise'],
+  'hip thrusts': ['hip thrust', 'barbell hip thrust'],
+  'shoulder press': ['overhead press', 'military press', 'ohp'],
+  'lateral raises': ['lateral raise', 'side raises', 'side laterals'],
+  'front raises': ['front raise', 'anterior raises'],
+  'bent over rows': ['bent over row', 'barbell rows', 'bb rows'],
+  'dumbbell rows': ['dumbbell row', 'one arm row', 'single arm row', 'db rows'],
+};
+
+// Normalize exercise name for matching
+function normalizeExerciseName(name: string): string {
+  let normalized = name.toLowerCase().trim();
+
+  // Remove filler words
+  FILLER_WORDS.forEach(word => {
+    normalized = normalized.replace(new RegExp(`\\b${word}\\b`, 'gi'), '');
+  });
+
+  // Normalize whitespace
+  normalized = normalized.replace(/\s+/g, ' ').trim();
+
+  // Remove trailing 's' for plurals (but not words ending in 'ss')
+  if (normalized.endsWith('s') && !normalized.endsWith('ss')) {
+    normalized = normalized.slice(0, -1);
+  }
+
+  return normalized;
+}
+
+// Calculate similarity score between two strings (0-1)
+function calculateSimilarity(str1: string, str2: string): number {
+  const s1 = str1.toLowerCase();
+  const s2 = str2.toLowerCase();
+
+  if (s1 === s2) return 1;
+  if (s1.includes(s2) || s2.includes(s1)) return 0.9;
+
+  // Word overlap score
+  const words1 = s1.split(/\s+/);
+  const words2 = s2.split(/\s+/);
+  const commonWords = words1.filter(w => words2.some(w2 => w.includes(w2) || w2.includes(w)));
+  const overlapScore = commonWords.length / Math.max(words1.length, words2.length);
+
+  return overlapScore;
+}
+
 // Helper function to find exercise by name (case-insensitive fuzzy match)
 export function findExerciseByName(name: string): ExerciseData | undefined {
-  const normalizedName = name.toLowerCase().trim();
+  const normalizedSearch = normalizeExerciseName(name);
+  const originalSearch = name.toLowerCase().trim();
 
   // Try exact match first
   let match = EXERCISE_LIBRARY.find(
-    ex => ex.name.toLowerCase() === normalizedName
+    ex => ex.name.toLowerCase() === originalSearch
   );
 
   if (match) return match;
 
-  // Try partial match
+  // Try normalized exact match
   match = EXERCISE_LIBRARY.find(
-    ex => ex.name.toLowerCase().includes(normalizedName) ||
-          normalizedName.includes(ex.name.toLowerCase())
+    ex => normalizeExerciseName(ex.name) === normalizedSearch
   );
 
   if (match) return match;
 
-  // Try word-by-word match
-  const searchWords = normalizedName.split(/\s+/);
+  // Check aliases
+  for (const [canonical, aliases] of Object.entries(EXERCISE_ALIASES)) {
+    if (aliases.some(alias => originalSearch.includes(alias) || alias.includes(originalSearch))) {
+      match = EXERCISE_LIBRARY.find(ex => ex.name.toLowerCase().includes(canonical));
+      if (match) return match;
+    }
+    if (originalSearch.includes(canonical)) {
+      match = EXERCISE_LIBRARY.find(ex => ex.name.toLowerCase().includes(canonical));
+      if (match) return match;
+    }
+  }
+
+  // Try partial match with normalized names
+  match = EXERCISE_LIBRARY.find(
+    ex => normalizeExerciseName(ex.name).includes(normalizedSearch) ||
+          normalizedSearch.includes(normalizeExerciseName(ex.name))
+  );
+
+  if (match) return match;
+
+  // Score-based matching - find best match above threshold
+  let bestMatch: ExerciseData | undefined;
+  let bestScore = 0.5; // Minimum threshold
+
+  for (const exercise of EXERCISE_LIBRARY) {
+    const score = calculateSimilarity(normalizedSearch, normalizeExerciseName(exercise.name));
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = exercise;
+    }
+  }
+
+  if (bestMatch) return bestMatch;
+
+  // Try word-by-word match as last resort
+  const searchWords = normalizedSearch.split(/\s+/).filter(w => w.length > 2);
   match = EXERCISE_LIBRARY.find(ex => {
-    const exerciseWords = ex.name.toLowerCase().split(/\s+/);
-    return searchWords.every(word =>
+    const exerciseWords = normalizeExerciseName(ex.name).split(/\s+/);
+    return searchWords.length > 0 && searchWords.every(word =>
       exerciseWords.some(exWord => exWord.includes(word) || word.includes(exWord))
     );
   });
