@@ -1,6 +1,14 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
 import { findExerciseByName, EXERCISE_LIBRARY } from '@/lib/data/exercise-library';
+import {
+  EQUIPMENT_LIBRARY,
+  EQUIPMENT_CATEGORIES,
+  findEquipmentByName,
+  matchDetectedEquipment,
+  getExercisesForEquipment,
+  getImprovisedAlternatives,
+} from '@/lib/data/equipment-library';
 
 // Add video URLs to exercises by matching with our library
 function enrichExercisesWithVideos(exercises: any[]): any[] {
@@ -23,6 +31,53 @@ function enrichExercisesWithVideos(exercises: any[]): any[] {
   });
 }
 
+// Enrich detected equipment with library data
+function enrichEquipmentWithDetails(detectedEquipment: string[]): any[] {
+  return detectedEquipment.map(item => {
+    const match = findEquipmentByName(item);
+    if (match) {
+      return {
+        name: match.name,
+        id: match.id,
+        category: match.category,
+        categoryName: EQUIPMENT_CATEGORIES[match.category].name,
+        muscleGroups: match.muscleGroups,
+        compatibleExercises: match.compatibleExercises.slice(0, 5), // Top 5 exercises
+        canBeImprovised: match.canBeImprovised,
+        improvisedAlternatives: match.improvisedAlternatives,
+        matched: true,
+      };
+    }
+    // Return unmatched item with basic info
+    return {
+      name: item,
+      matched: false,
+    };
+  });
+}
+
+// Build equipment recognition hints for the AI prompt
+function getEquipmentRecognitionHints(): string {
+  const categories = Object.entries(EQUIPMENT_CATEGORIES).map(([key, value]) => {
+    const items = EQUIPMENT_LIBRARY.filter(eq => eq.category === key)
+      .map(eq => eq.name)
+      .slice(0, 10)
+      .join(', ');
+    return `${value.name}: ${items}`;
+  }).join('\n');
+
+  return categories;
+}
+
+// Get visual cues to help AI identify equipment
+function getVisualCues(): string {
+  return EQUIPMENT_LIBRARY
+    .filter(eq => eq.isCommon)
+    .slice(0, 30) // Top 30 common items
+    .map(eq => `- ${eq.name}: ${eq.visualCues.slice(0, 2).join(', ')}`)
+    .join('\n');
+}
+
 export async function POST(request: Request) {
   try {
     const { images, fitnessLevel, duration, workoutTypes } = await request.json();
@@ -41,14 +96,26 @@ export async function POST(request: Request) {
     // Include exercise library names to help AI use exercises we have videos for
     const exerciseNames = EXERCISE_LIBRARY.map(ex => ex.name).join(', ');
 
-    const prompt = `You are an expert personal trainer. Analyze these ${images.length} photo(s) of a workout environment.
+    // Get equipment recognition hints and visual cues
+    const equipmentHints = getEquipmentRecognitionHints();
+    const visualCues = getVisualCues();
+
+    const prompt = `You are an expert personal trainer with extensive knowledge of gym equipment. Analyze these ${images.length} photo(s) of a workout environment.
 
 TASK 1 - EQUIPMENT DETECTION:
-Identify ALL workout equipment, furniture, or environmental features that could be used for exercise. Be creative and thorough. Include:
-- Traditional gym equipment (dumbbells, barbells, machines, etc.)
-- Bodyweight workout areas (open floor space, walls, stairs, etc.)
-- Improvised equipment (chairs, tables, countertops, sturdy furniture, etc.)
-- Outdoor features (benches, bars, hills, etc.)
+Carefully identify ALL workout equipment visible in the image(s). Use these categories and visual cues:
+
+EQUIPMENT CATEGORIES:
+${equipmentHints}
+
+VISUAL IDENTIFICATION GUIDE:
+${visualCues}
+
+Also look for:
+- Improvised equipment (chairs, tables, countertops, sturdy furniture)
+- Outdoor features (benches, bars, hills, stairs)
+- Open floor space for bodyweight exercises
+- Walls for wall sits, stretches, etc.
 
 TASK 2 - WORKOUT ROUTINE:
 Create a detailed ${duration}-minute workout routine for a ${fitnessLevel} level fitness enthusiast.
@@ -66,6 +133,11 @@ Include:
 Respond in this EXACT JSON format:
 {
     "equipment": ["item1", "item2", ...],
+    "equipmentDetails": {
+        "detected": ["list of equipment you can clearly identify"],
+        "possible": ["equipment that might be present but unclear"],
+        "suggested": ["equipment that would complement this space"]
+    },
     "workout": {
         "warmup": [
             {"name": "exercise name", "duration": "X minutes", "description": "brief description"}
@@ -109,6 +181,24 @@ CRITICAL: Respond ONLY with valid JSON. No markdown, no code blocks, no explanat
       if (workoutPlan.workout.cooldown) {
         workoutPlan.workout.cooldown = enrichExercisesWithVideos(workoutPlan.workout.cooldown);
       }
+    }
+
+    // Enrich equipment with detailed library information
+    if (workoutPlan.equipment) {
+      workoutPlan.equipmentEnriched = enrichEquipmentWithDetails(workoutPlan.equipment);
+
+      // Get all compatible exercises based on detected equipment
+      const matchedEquipment = matchDetectedEquipment(workoutPlan.equipment);
+      const equipmentIds = matchedEquipment.map(eq => eq.id);
+      workoutPlan.compatibleExercises = getExercisesForEquipment(equipmentIds);
+
+      // Add summary stats
+      workoutPlan.equipmentSummary = {
+        total: workoutPlan.equipment.length,
+        matched: workoutPlan.equipmentEnriched.filter((e: any) => e.matched).length,
+        categories: Array.from(new Set(matchedEquipment.map(eq => eq.category))),
+        muscleGroupsCovered: Array.from(new Set(matchedEquipment.flatMap(eq => eq.muscleGroups))),
+      };
     }
 
     return NextResponse.json(workoutPlan);
