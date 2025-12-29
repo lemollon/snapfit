@@ -8,7 +8,7 @@ import {
   ChevronRight, Star, Play, Check, ArrowRight, Sparkles, Target, Heart,
   Clock, TrendingUp, Apple, Utensils, Flame, Award, Crown, ChevronDown,
   MousePointer2, Smartphone, BarChart3, Shield, Gift, Bolt, Timer,
-  Calendar, MessageCircle, ShoppingBag, Activity
+  Calendar, MessageCircle, ShoppingBag, Activity, X
 } from 'lucide-react';
 
 // Live activity data for social proof
@@ -77,14 +77,24 @@ const STEPS = [
   }
 ];
 
-// Feature grid
+// Feature grid with images
 const FEATURES = [
-  { icon: Camera, title: 'AI Vision', desc: 'Snap any space for instant workouts', color: 'text-violet-400', bg: 'bg-violet-500/10' },
-  { icon: Utensils, title: 'Meal Tracking', desc: 'Photo your food, get macros instantly', color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  { icon: TrendingUp, title: 'Progress Photos', desc: 'Visual transformation timeline', color: 'text-pink-400', bg: 'bg-pink-500/10' },
-  { icon: Trophy, title: 'Achievements', desc: '40+ badges to unlock', color: 'text-amber-400', bg: 'bg-amber-500/10' },
-  { icon: MessageCircle, title: 'Trainer Chat', desc: 'Connect with certified pros', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-  { icon: ShoppingBag, title: 'Marketplace', desc: 'Programs & supplements', color: 'text-rose-400', bg: 'bg-rose-500/10' },
+  { icon: Camera, title: 'AI Vision', desc: 'Snap any space for instant workouts', color: 'text-violet-400', bg: 'bg-violet-500/10', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=400&q=80' },
+  { icon: Utensils, title: 'Meal Tracking', desc: 'Photo your food, get macros instantly', color: 'text-emerald-400', bg: 'bg-emerald-500/10', image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=400&q=80' },
+  { icon: TrendingUp, title: 'Progress Photos', desc: 'Visual transformation timeline', color: 'text-pink-400', bg: 'bg-pink-500/10', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&q=80' },
+  { icon: Trophy, title: 'Achievements', desc: '40+ badges to unlock', color: 'text-amber-400', bg: 'bg-amber-500/10', image: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&q=80' },
+  { icon: MessageCircle, title: 'Trainer Chat', desc: 'Connect with certified pros', color: 'text-blue-400', bg: 'bg-blue-500/10', image: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&q=80' },
+  { icon: ShoppingBag, title: 'Marketplace', desc: 'Programs & supplements', color: 'text-rose-400', bg: 'bg-rose-500/10', image: 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?w=400&q=80' },
+];
+
+// Exercise videos with YouTube IDs for demo
+const EXERCISE_VIDEOS = [
+  { title: 'Push-ups', category: 'Upper Body', duration: '0:30', image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=600&q=80', gradient: 'from-blue-500 to-cyan-500', youtubeId: 'IODxDxX7oi4' },
+  { title: 'Squats', category: 'Lower Body', duration: '0:45', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=80', gradient: 'from-orange-500 to-red-500', youtubeId: 'aclHkVaku9U' },
+  { title: 'Plank', category: 'Core', duration: '1:00', image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=600&q=80', gradient: 'from-purple-500 to-pink-500', youtubeId: 'pSHjTRCQxIw' },
+  { title: 'Lunges', category: 'Lower Body', duration: '0:40', image: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=600&q=80', gradient: 'from-green-500 to-emerald-500', youtubeId: 'QOVaHwm-Q6U' },
+  { title: 'Deadlift', category: 'Full Body', duration: '0:50', image: 'https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=600&q=80', gradient: 'from-amber-500 to-orange-500', youtubeId: 'r4MzxtBKyNE' },
+  { title: 'Yoga Flow', category: 'Flexibility', duration: '2:00', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80', gradient: 'from-teal-500 to-cyan-500', youtubeId: 'v7AYKMP6rOE' },
 ];
 
 export default function LoginPage() {
@@ -102,6 +112,7 @@ export default function LoginPage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [currentActivity, setCurrentActivity] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [videoModal, setVideoModal] = useState<{ show: boolean; video: typeof EXERCISE_VIDEOS[0] | null }>({ show: false, video: null });
 
   // Cycle through live activities
   useEffect(() => {
@@ -723,15 +734,12 @@ export default function LoginPage() {
 
           {/* Video Grid */}
           <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { title: 'Push-ups', category: 'Upper Body', duration: '0:30', image: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=600&q=80', gradient: 'from-blue-500 to-cyan-500' },
-              { title: 'Squats', category: 'Lower Body', duration: '0:45', image: 'https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=600&q=80', gradient: 'from-orange-500 to-red-500' },
-              { title: 'Plank', category: 'Core', duration: '1:00', image: 'https://images.unsplash.com/photo-1566241142559-40e1dab266c6?w=600&q=80', gradient: 'from-purple-500 to-pink-500' },
-              { title: 'Lunges', category: 'Lower Body', duration: '0:40', image: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=600&q=80', gradient: 'from-green-500 to-emerald-500' },
-              { title: 'Deadlift', category: 'Full Body', duration: '0:50', image: 'https://images.unsplash.com/photo-1517963879433-6ad2b056d712?w=600&q=80', gradient: 'from-amber-500 to-orange-500' },
-              { title: 'Yoga Flow', category: 'Flexibility', duration: '2:00', image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=600&q=80', gradient: 'from-teal-500 to-cyan-500' },
-            ].map((video, i) => (
-              <div key={i} className="group relative rounded-2xl overflow-hidden cursor-pointer">
+            {EXERCISE_VIDEOS.map((video, i) => (
+              <div
+                key={i}
+                className="group relative rounded-2xl overflow-hidden cursor-pointer"
+                onClick={() => setVideoModal({ show: true, video })}
+              >
                 <div className="aspect-video relative">
                   <img
                     src={video.image}
@@ -800,13 +808,25 @@ export default function LoginPage() {
             {FEATURES.map((feature, i) => (
               <div
                 key={i}
-                className="group relative p-8 rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-all hover:-translate-y-1"
+                className="group relative rounded-2xl bg-zinc-900/50 border border-zinc-800 hover:border-zinc-700 transition-all hover:-translate-y-1 overflow-hidden"
               >
-                <div className={`w-14 h-14 ${feature.bg} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
-                  <feature.icon className={`w-7 h-7 ${feature.color}`} />
+                {/* Feature image */}
+                <div className="aspect-[16/9] relative overflow-hidden">
+                  <img
+                    src={feature.image}
+                    alt={feature.title}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-900 via-zinc-900/60 to-transparent" />
+                  <div className={`absolute bottom-4 left-4 w-12 h-12 ${feature.bg} rounded-xl flex items-center justify-center backdrop-blur-sm`}>
+                    <feature.icon className={`w-6 h-6 ${feature.color}`} />
+                  </div>
                 </div>
-                <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                <p className="text-zinc-400">{feature.desc}</p>
+                {/* Feature content */}
+                <div className="p-6">
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-zinc-400">{feature.desc}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -971,6 +991,57 @@ export default function LoginPage() {
           animation: float 6s ease-in-out infinite;
         }
       `}</style>
+
+      {/* Video Modal */}
+      {videoModal.show && videoModal.video && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4"
+          onClick={() => setVideoModal({ show: false, video: null })}
+        >
+          <div
+            className="relative w-full max-w-4xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              onClick={() => setVideoModal({ show: false, video: null })}
+              className="absolute -top-12 right-0 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            >
+              <X className="w-6 h-6 text-white" />
+            </button>
+
+            {/* Video title */}
+            <div className="mb-4">
+              <p className={`text-sm font-medium text-transparent bg-clip-text bg-gradient-to-r ${videoModal.video.gradient}`}>
+                {videoModal.video.category}
+              </p>
+              <h3 className="text-2xl font-bold text-white">{videoModal.video.title}</h3>
+            </div>
+
+            {/* YouTube embed */}
+            <div className="aspect-video rounded-2xl overflow-hidden bg-zinc-900">
+              <iframe
+                src={`https://www.youtube.com/embed/${videoModal.video.youtubeId}?autoplay=1`}
+                title={videoModal.video.title}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+
+            {/* Info below video */}
+            <div className="mt-4 flex items-center justify-between">
+              <p className="text-zinc-400">Duration: {videoModal.video.duration}</p>
+              <button
+                onClick={() => { setVideoModal({ show: false, video: null }); setShowAuth(true); setIsLogin(false); }}
+                className={`px-6 py-2 bg-gradient-to-r ${videoModal.video.gradient} rounded-full font-bold text-white hover:shadow-lg transition-all`}
+              >
+                Get Full Access
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
