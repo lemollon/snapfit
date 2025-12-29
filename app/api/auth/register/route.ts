@@ -4,10 +4,15 @@ import { users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
+// Email validation regex
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MIN_PASSWORD_LENGTH = 8;
+
 export async function POST(req: Request) {
   try {
     const { email, password, name, isTrainer } = await req.json();
 
+    // Validate required fields
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email and password are required' },
@@ -15,26 +20,44 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if user exists
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
-
-    if (existingUser) {
+    // Validate email format
+    const normalizedEmail = email.toLowerCase().trim();
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
       return NextResponse.json(
-        { error: 'User with this email already exists' },
+        { error: 'Please enter a valid email address' },
         { status: 400 }
       );
     }
 
-    // Hash password
+    // Validate password strength
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      return NextResponse.json(
+        { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` },
+        { status: 400 }
+      );
+    }
+
+    // Check if user exists
+    const existingUser = await db.query.users.findFirst({
+      where: eq(users.email, normalizedEmail),
+    });
+
+    if (existingUser) {
+      // Generic message to prevent user enumeration
+      return NextResponse.json(
+        { error: 'Unable to create account. Please try a different email.' },
+        { status: 400 }
+      );
+    }
+
+    // Hash password with bcrypt (cost factor 12)
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create user
     const [newUser] = await db.insert(users).values({
-      email,
+      email: normalizedEmail,
       password: hashedPassword,
-      name: name || email.split('@')[0],
+      name: name?.trim() || normalizedEmail.split('@')[0],
       isTrainer: isTrainer || false,
     }).returning();
 
@@ -49,7 +72,7 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(
-      { error: 'Something went wrong' },
+      { error: 'Unable to create account. Please try again.' },
       { status: 500 }
     );
   }
