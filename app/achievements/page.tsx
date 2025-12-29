@@ -152,7 +152,7 @@ export default function AchievementsPage() {
     );
   }
 
-  const categories = ['all', ...new Set(achievements.map(a => a.category))];
+  const categories = ['all', ...Array.from(new Set(achievements.map(a => a.category)))];
   const filteredAchievements = achievements.filter(a => {
     if (filter === 'earned' && !a.isComplete) return false;
     if (filter === 'locked' && a.isComplete) return false;
