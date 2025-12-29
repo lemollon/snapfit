@@ -363,6 +363,45 @@ export default function TrainerDashboard() {
               <p className="text-xs text-white/50">Workouts</p>
             </div>
           </Link>
+
+          <Link
+            href="/trainer/revenue"
+            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Revenue</p>
+              <p className="text-xs text-white/50">Earnings</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/trainer/check-ins"
+            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-600 flex items-center justify-center">
+              <Activity className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Check-ins</p>
+              <p className="text-xs text-white/50">Progress</p>
+            </div>
+          </Link>
+
+          <Link
+            href="/programs"
+            className="flex items-center gap-3 p-4 bg-white/10 hover:bg-white/15 border border-white/10 rounded-xl transition-all"
+          >
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
+              <Dumbbell className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <p className="font-medium text-sm">Programs</p>
+              <p className="text-xs text-white/50">Marketplace</p>
+            </div>
+          </Link>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-6">
