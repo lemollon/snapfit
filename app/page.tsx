@@ -49,6 +49,12 @@ import {
   User,
   Scale,
   Ruler,
+  Watch,
+  BookOpen,
+  Droplets,
+  Globe,
+  Repeat,
+  Utensils,
 } from 'lucide-react';
 
 // Stock fitness images from Unsplash
@@ -2005,7 +2011,7 @@ function SnapFitContent() {
                         </span>
                       )}
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
-                        Level {userData?.level || 1}
+                        Level 1
                       </span>
                     </div>
                   </div>
@@ -2019,19 +2025,19 @@ function SnapFitContent() {
                 {/* Quick Stats Row */}
                 <div className="grid grid-cols-4 gap-2 mt-5 pt-5 border-t border-dashed ${darkMode ? 'border-gray-700' : 'border-gray-200'}">
                   <div className="text-center">
-                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{userData?.totalWorkouts || 0}</p>
+                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{totalWorkouts}</p>
                     <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Workouts</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{userData?.currentStreak || 0}</p>
+                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{streak}</p>
                     <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Day Streak</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{userData?.xp || 0}</p>
+                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>0</p>
                     <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>XP Points</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-lg font-bold text-orange-500`}>{weeklyWorkouts}/{weeklyGoal}</p>
+                    <p className={`text-lg font-bold text-orange-500`}>{weeklyProgress}/{weeklyGoal}</p>
                     <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>This Week</p>
                   </div>
                 </div>
@@ -2106,7 +2112,7 @@ function SnapFitContent() {
                   <span className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs rounded-full font-medium">AI</span>
                 </Link>
 
-                <Link href="/programs" className={`flex items-center gap-4 p-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors`}>
+                <Link href="/programs" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
                     <Dumbbell className="w-6 h-6 text-white" />
                   </div>
@@ -2115,6 +2121,72 @@ function SnapFitContent() {
                     <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Expert training plans</p>
                   </div>
                   <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                </Link>
+
+                <Link href="/timer" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+                    <Timer className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Workout Timers</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>AMRAP, EMOM, Tabata & more</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xs rounded-full font-medium">New</span>
+                </Link>
+
+                <Link href="/records" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-rose-500 flex items-center justify-center shadow-lg shadow-rose-500/20">
+                    <Medal className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Personal Records</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Track PRs & celebrate wins</p>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                </Link>
+
+                <Link href="/habits" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-sky-400 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <Repeat className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Daily Habits</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Water, sleep, steps & more</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-sky-500 to-blue-500 text-white text-xs rounded-full font-medium">New</span>
+                </Link>
+
+                <Link href="/recipes" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-lime-400 to-green-500 flex items-center justify-center shadow-lg shadow-green-500/20">
+                    <Utensils className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recipe Library</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Healthy meals & macros</p>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                </Link>
+
+                <Link href="/wearables" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <Watch className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Wearable Sync</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Apple, Garmin, Whoop & more</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs rounded-full font-medium">New</span>
+                </Link>
+
+                <Link href="/challenges/global" className={`flex items-center gap-4 p-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <Globe className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Global Challenges</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Compete worldwide</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-yellow-500 to-orange-500 text-white text-xs rounded-full font-medium">New</span>
                 </Link>
               </div>
 
@@ -2157,24 +2229,37 @@ function SnapFitContent() {
 
               {/* Trainer Dashboard - Premium Card */}
               {session && (session.user as any)?.isTrainer && (
-                <Link href="/trainer" className="block relative overflow-hidden rounded-2xl">
-                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600"
-                       style={{backgroundImage: 'url("https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
-                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/95 via-purple-600/90 to-pink-600/95" />
-                  </div>
-                  <div className="relative p-5">
-                    <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
-                        <Users className="w-7 h-7 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-white font-bold text-lg">Trainer Dashboard</p>
-                        <p className="text-white/70 text-sm">Manage clients, programs & revenue</p>
-                      </div>
-                      <ChevronRight className="w-6 h-6 text-white/70" />
+                <div className="space-y-3">
+                  <Link href="/trainer" className="block relative overflow-hidden rounded-2xl">
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600"
+                         style={{backgroundImage: 'url("https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                      <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/95 via-purple-600/90 to-pink-600/95" />
                     </div>
-                  </div>
-                </Link>
+                    <div className="relative p-5">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                          <Users className="w-7 h-7 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-bold text-lg">Trainer Dashboard</p>
+                          <p className="text-white/70 text-sm">Manage clients, programs & revenue</p>
+                        </div>
+                        <ChevronRight className="w-6 h-6 text-white/70" />
+                      </div>
+                    </div>
+                  </Link>
+
+                  <Link href="/trainer/branding" className={`flex items-center gap-4 p-4 rounded-2xl ${darkMode ? 'bg-gray-800 hover:bg-gray-700/50' : 'bg-white hover:bg-gray-50'} shadow-lg transition-colors`}>
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-fuchsia-400 to-pink-500 flex items-center justify-center shadow-lg shadow-pink-500/20">
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>White-Label Branding</p>
+                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Customize your brand colors & logo</p>
+                    </div>
+                    <span className="px-2 py-0.5 bg-gradient-to-r from-fuchsia-500 to-pink-500 text-white text-xs rounded-full font-medium">PRO</span>
+                  </Link>
+                </div>
               )}
 
               {/* Settings Section */}

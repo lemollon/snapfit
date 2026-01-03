@@ -1086,8 +1086,365 @@ export const aiProgramDrafts = pgTable('ai_program_drafts', {
 });
 
 // ============================================
+// PERSONAL RECORDS (PRs)
+// ============================================
+
+// Personal records for exercises
+export const personalRecords = pgTable('personal_records', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  exerciseName: text('exercise_name').notNull(),
+  category: text('category').notNull(), // strength, cardio, bodyweight, olympic
+  // Record types
+  maxWeight: real('max_weight'), // For strength exercises (in kg or lbs)
+  maxReps: integer('max_reps'), // Max reps at any weight
+  maxWeightReps: json('max_weight_reps'), // Array of {weight, reps} combinations
+  fastestTime: integer('fastest_time'), // For timed exercises (seconds)
+  longestDistance: real('longest_distance'), // For cardio (km or miles)
+  longestDuration: integer('longest_duration'), // For endurance (seconds)
+  // Metadata
+  unit: text('unit').default('kg'), // kg, lbs, km, miles
+  notes: text('notes'),
+  achievedAt: timestamp('achieved_at').defaultNow(),
+  workoutId: text('workout_id').references(() => workouts.id),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  uniqueUserExercise: unique().on(table.userId, table.exerciseName),
+}));
+
+// PR history (track all PRs over time)
+export const personalRecordHistory = pgTable('personal_record_history', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  personalRecordId: text('personal_record_id').notNull().references(() => personalRecords.id, { onDelete: 'cascade' }),
+  exerciseName: text('exercise_name').notNull(),
+  recordType: text('record_type').notNull(), // max_weight, max_reps, fastest_time, longest_distance
+  previousValue: real('previous_value'),
+  newValue: real('new_value').notNull(),
+  improvement: real('improvement'), // Percentage or absolute improvement
+  workoutId: text('workout_id').references(() => workouts.id),
+  celebrationShown: boolean('celebration_shown').default(false),
+  achievedAt: timestamp('achieved_at').defaultNow(),
+});
+
+// ============================================
+// HABIT TRACKING
+// ============================================
+
+// Habit definitions
+export const habits = pgTable('habits', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  description: text('description'),
+  icon: text('icon').default('check'), // Icon name from lucide
+  color: text('color').default('violet'), // Theme color
+  type: text('type').notNull(), // boolean, quantity, duration
+  // For quantity/duration types
+  targetValue: real('target_value'), // e.g., 8 glasses, 10000 steps
+  unit: text('unit'), // glasses, steps, minutes, liters
+  // Tracking settings
+  frequency: text('frequency').default('daily'), // daily, weekly
+  reminderTime: text('reminder_time'), // HH:MM format
+  reminderEnabled: boolean('reminder_enabled').default(false),
+  // Stats
+  currentStreak: integer('current_streak').default(0),
+  longestStreak: integer('longest_streak').default(0),
+  totalCompletions: integer('total_completions').default(0),
+  // Status
+  isActive: boolean('is_active').default(true),
+  sortOrder: integer('sort_order').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Daily habit logs
+export const habitLogs = pgTable('habit_logs', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  habitId: text('habit_id').notNull().references(() => habits.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  // Completion data
+  completed: boolean('completed').default(false),
+  value: real('value'), // For quantity types
+  notes: text('notes'),
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  uniqueHabitDate: unique().on(table.habitId, table.date),
+}));
+
+// ============================================
+// RECIPE LIBRARY
+// ============================================
+
+// Recipes (trainer-created or global)
+export const recipes = pgTable('recipes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  trainerId: text('trainer_id').references(() => users.id, { onDelete: 'cascade' }), // null = global recipe
+  name: text('name').notNull(),
+  description: text('description'),
+  imageUrl: text('image_url'),
+  // Categorization
+  category: text('category').notNull(), // breakfast, lunch, dinner, snack, dessert, smoothie
+  cuisine: text('cuisine'), // italian, mexican, asian, american, etc.
+  tags: text('tags').array(), // high-protein, low-carb, vegan, keto, etc.
+  // Details
+  prepTime: integer('prep_time'), // minutes
+  cookTime: integer('cook_time'), // minutes
+  servings: integer('servings').default(1),
+  difficulty: text('difficulty').default('easy'), // easy, medium, hard
+  // Nutrition per serving
+  calories: integer('calories'),
+  protein: real('protein'),
+  carbs: real('carbs'),
+  fat: real('fat'),
+  fiber: real('fiber'),
+  // Content
+  ingredients: json('ingredients'), // Array of {name, amount, unit}
+  instructions: json('instructions'), // Array of steps
+  tips: text('tips'),
+  videoUrl: text('video_url'),
+  // Settings
+  isPublic: boolean('is_public').default(true),
+  isFeatured: boolean('is_featured').default(false),
+  // Stats
+  saveCount: integer('save_count').default(0),
+  rating: real('rating'),
+  ratingCount: integer('rating_count').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// User saved recipes
+export const savedRecipes = pgTable('saved_recipes', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  recipeId: text('recipe_id').notNull().references(() => recipes.id, { onDelete: 'cascade' }),
+  savedAt: timestamp('saved_at').defaultNow(),
+}, (table) => ({
+  uniqueSave: unique().on(table.userId, table.recipeId),
+}));
+
+// ============================================
+// WHITE-LABEL BRANDING
+// ============================================
+
+// Trainer branding settings
+export const trainerBranding = pgTable('trainer_branding', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  trainerId: text('trainer_id').notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  // Brand identity
+  businessName: text('business_name'),
+  tagline: text('tagline'),
+  logoUrl: text('logo_url'),
+  logoLightUrl: text('logo_light_url'), // For dark backgrounds
+  faviconUrl: text('favicon_url'),
+  // Colors
+  primaryColor: text('primary_color').default('#8B5CF6'), // Violet
+  secondaryColor: text('secondary_color').default('#EC4899'), // Pink
+  accentColor: text('accent_color').default('#06B6D4'), // Cyan
+  backgroundColor: text('background_color').default('#0F172A'), // Slate 900
+  // Typography
+  fontFamily: text('font_family').default('Inter'),
+  headingFont: text('heading_font'),
+  // Custom domain (premium feature)
+  customDomain: text('custom_domain'),
+  domainVerified: boolean('domain_verified').default(false),
+  // Email branding
+  emailFromName: text('email_from_name'),
+  emailFooter: text('email_footer'),
+  // Social links for branding
+  instagramHandle: text('instagram_handle'),
+  tiktokHandle: text('tiktok_handle'),
+  youtubeHandle: text('youtube_handle'),
+  // Settings
+  hideSnapfitBranding: boolean('hide_snapfit_branding').default(false), // Premium feature
+  customCss: text('custom_css'), // Advanced customization
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// ============================================
+// WEARABLE INTEGRATIONS
+// ============================================
+
+// Connected wearable devices
+export const wearableConnections = pgTable('wearable_connections', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  provider: text('provider').notNull(), // apple_health, google_fit, garmin, whoop, fitbit, oura
+  // OAuth tokens (encrypted in production)
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  tokenExpiresAt: timestamp('token_expires_at'),
+  // Connection details
+  providerUserId: text('provider_user_id'),
+  deviceName: text('device_name'),
+  lastSyncAt: timestamp('last_sync_at'),
+  // Sync settings
+  syncSteps: boolean('sync_steps').default(true),
+  syncHeartRate: boolean('sync_heart_rate').default(true),
+  syncSleep: boolean('sync_sleep').default(true),
+  syncWorkouts: boolean('sync_workouts').default(true),
+  syncWeight: boolean('sync_weight').default(true),
+  // Status
+  isActive: boolean('is_active').default(true),
+  connectionError: text('connection_error'),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  uniqueUserProvider: unique().on(table.userId, table.provider),
+}));
+
+// Synced wearable data
+export const wearableData = pgTable('wearable_data', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  connectionId: text('connection_id').notNull().references(() => wearableConnections.id, { onDelete: 'cascade' }),
+  date: date('date').notNull(),
+  // Activity data
+  steps: integer('steps'),
+  activeMinutes: integer('active_minutes'),
+  caloriesBurned: integer('calories_burned'),
+  distance: real('distance'), // km
+  floors: integer('floors'),
+  // Heart data
+  restingHeartRate: integer('resting_heart_rate'),
+  averageHeartRate: integer('average_heart_rate'),
+  maxHeartRate: integer('max_heart_rate'),
+  hrv: integer('hrv'),
+  // Sleep data
+  sleepDuration: integer('sleep_duration'), // minutes
+  sleepQuality: integer('sleep_quality'), // 0-100
+  deepSleep: integer('deep_sleep'), // minutes
+  remSleep: integer('rem_sleep'), // minutes
+  lightSleep: integer('light_sleep'), // minutes
+  awakeTime: integer('awake_time'), // minutes
+  // Other metrics
+  bloodOxygen: integer('blood_oxygen'), // SpO2 percentage
+  bodyTemperature: real('body_temperature'),
+  respiratoryRate: integer('respiratory_rate'),
+  // Raw data
+  rawData: json('raw_data'),
+  syncedAt: timestamp('synced_at').defaultNow(),
+}, (table) => ({
+  uniqueUserDate: unique().on(table.userId, table.date),
+}));
+
+// ============================================
+// GLOBAL CHALLENGES
+// ============================================
+
+// Global community challenges
+export const globalChallenges = pgTable('global_challenges', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text('name').notNull(),
+  description: text('description'),
+  imageUrl: text('image_url'),
+  // Challenge details
+  type: text('type').notNull(), // steps, workouts, minutes, calories, distance, streak
+  goal: integer('goal').notNull(), // Target to reach
+  unit: text('unit'), // steps, workouts, minutes, etc.
+  // Timing
+  startDate: timestamp('start_date').notNull(),
+  endDate: timestamp('end_date').notNull(),
+  // Rewards
+  xpReward: integer('xp_reward').default(500),
+  badgeId: text('badge_id'), // Special achievement for completing
+  prizeDescription: text('prize_description'),
+  // Settings
+  isActive: boolean('is_active').default(true),
+  isFeatured: boolean('is_featured').default(false),
+  minLevel: integer('min_level').default(1), // Minimum level to join
+  maxParticipants: integer('max_participants'), // null = unlimited
+  // Stats
+  participantCount: integer('participant_count').default(0),
+  completionCount: integer('completion_count').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Global challenge participants
+export const globalChallengeParticipants = pgTable('global_challenge_participants', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  challengeId: text('challenge_id').notNull().references(() => globalChallenges.id, { onDelete: 'cascade' }),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  progress: integer('progress').default(0),
+  rank: integer('rank'), // Leaderboard position
+  completed: boolean('completed').default(false),
+  completedAt: timestamp('completed_at'),
+  rewardClaimed: boolean('reward_claimed').default(false),
+  joinedAt: timestamp('joined_at').defaultNow(),
+}, (table) => ({
+  uniqueParticipant: unique().on(table.challengeId, table.userId),
+}));
+
+// ============================================
+// SOCIAL SHARING
+// ============================================
+
+// Social share tracking
+export const socialShares = pgTable('social_shares', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  // What was shared
+  contentType: text('content_type').notNull(), // achievement, workout, pr, transformation, challenge
+  contentId: text('content_id'),
+  // Share details
+  platform: text('platform').notNull(), // instagram, tiktok, twitter, facebook, copy_link
+  shareImageUrl: text('share_image_url'), // Generated share image
+  caption: text('caption'),
+  // Tracking
+  shareUrl: text('share_url'), // If we can track the actual post
+  clicks: integer('clicks').default(0),
+  // Status
+  sharedAt: timestamp('shared_at').defaultNow(),
+});
+
+// ============================================
+// WORKOUT TIMER PRESETS
+// ============================================
+
+// Saved timer presets
+export const timerPresets = pgTable('timer_presets', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull(),
+  type: text('type').notNull(), // amrap, emom, tabata, stopwatch, countdown, interval
+  // Timer configuration
+  rounds: integer('rounds'),
+  workDuration: integer('work_duration'), // seconds
+  restDuration: integer('rest_duration'), // seconds
+  totalDuration: integer('total_duration'), // seconds (for AMRAP, countdown)
+  intervals: json('intervals'), // Custom intervals for complex timers
+  // Settings
+  countdownBeep: boolean('countdown_beep').default(true),
+  halfwayAlert: boolean('halfway_alert').default(false),
+  voiceAnnouncements: boolean('voice_announcements').default(true),
+  // Display
+  color: text('color').default('violet'),
+  isFavorite: boolean('is_favorite').default(false),
+  usageCount: integer('usage_count').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// ============================================
 // TYPES FOR TYPESCRIPT
 // ============================================
+
+export type PersonalRecord = typeof personalRecords.$inferSelect;
+export type PersonalRecordHistory = typeof personalRecordHistory.$inferSelect;
+export type Habit = typeof habits.$inferSelect;
+export type HabitLog = typeof habitLogs.$inferSelect;
+export type Recipe = typeof recipes.$inferSelect;
+export type SavedRecipe = typeof savedRecipes.$inferSelect;
+export type TrainerBranding = typeof trainerBranding.$inferSelect;
+export type WearableConnection = typeof wearableConnections.$inferSelect;
+export type WearableData = typeof wearableData.$inferSelect;
+export type GlobalChallenge = typeof globalChallenges.$inferSelect;
+export type GlobalChallengeParticipant = typeof globalChallengeParticipants.$inferSelect;
+export type SocialShare = typeof socialShares.$inferSelect;
+export type TimerPreset = typeof timerPresets.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
