@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "build:with-db": "npx drizzle-kit push && next build",
-    "postinstall": "[ -n \"$DATABASE_URL\" ] && npx drizzle-kit push || echo 'Skipping db:push - DATABASE_URL not set'",
+    "build": "npx drizzle-kit push && next build",
+    "build:skip-db": "next build",
+    "postinstall": "echo 'Dependencies installed'",
     "start": "next start",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
