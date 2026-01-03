@@ -251,9 +251,15 @@ function SnapFitContent() {
     }
   }, [status, router, isGuestMode]);
 
-  // Check onboarding status for authenticated users
+  // Check onboarding status for authenticated users and redirect trainers
   useEffect(() => {
     if (status === 'authenticated' && session?.user && !isGuestMode) {
+      // Redirect trainers to their dashboard
+      if ((session.user as any)?.isTrainer) {
+        router.push('/trainer');
+        return;
+      }
+
       fetch('/api/profile')
         .then(res => res.json())
         .then(data => {
