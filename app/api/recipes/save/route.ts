@@ -34,10 +34,13 @@ export async function POST(request: NextRequest) {
         .where(eq(savedRecipes.id, existing[0].id));
 
       // Decrement save count
-      await db
-        .update(recipes)
-        .set({ saveCount: (await db.select().from(recipes).where(eq(recipes.id, recipeId)))[0]?.saveCount! - 1 })
-        .where(eq(recipes.id, recipeId));
+      const recipe = await db.select().from(recipes).where(eq(recipes.id, recipeId));
+      if (recipe.length > 0) {
+        await db
+          .update(recipes)
+          .set({ saveCount: Math.max(0, (recipe[0].saveCount || 0) - 1) })
+          .where(eq(recipes.id, recipeId));
+      }
 
       return NextResponse.json({ saved: false, message: 'Recipe unsaved' });
     } else {

@@ -28,18 +28,23 @@ export async function GET(request: NextRequest) {
       .from(habitLogs)
       .where(and(eq(habitLogs.userId, userId), eq(habitLogs.date, today)));
 
-    // Combine habits with today's status
-    const habitsWithStatus = userHabits.map(habit => {
-      const todayLog = todayLogs.find(log => log.habitId === habit.id);
-      return {
-        ...habit,
-        todayValue: todayLog?.value || 0,
-        todayCompleted: todayLog?.completed || false,
-        todayLogId: todayLog?.id,
-      };
-    });
+    // Get week's logs for streak display
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    const weekStart = weekAgo.toISOString().split('T')[0];
 
-    return NextResponse.json(habitsWithStatus);
+    const weekLogs = await db
+      .select()
+      .from(habitLogs)
+      .where(and(eq(habitLogs.userId, userId)))
+      .orderBy(desc(habitLogs.date));
+
+    // Return habits with today's logs and week logs
+    return NextResponse.json({
+      habits: userHabits,
+      todayLogs,
+      weekLogs: weekLogs.filter(log => log.date && log.date >= weekStart),
+    });
   } catch (error) {
     console.error('Error fetching habits:', error);
     return NextResponse.json({ error: 'Failed to fetch habits' }, { status: 500 });
@@ -89,7 +94,7 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return NextResponse.json(habit, { status: 201 });
+    return NextResponse.json({ habit }, { status: 201 });
   } catch (error) {
     console.error('Error creating habit:', error);
     return NextResponse.json({ error: 'Failed to create habit' }, { status: 500 });

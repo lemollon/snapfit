@@ -34,7 +34,15 @@ export async function GET(request: NextRequest) {
 
     const records = await query.orderBy(desc(personalRecords.achievedAt));
 
-    return NextResponse.json(records);
+    // Get recent PR history
+    const history = await db
+      .select()
+      .from(personalRecordHistory)
+      .where(eq(personalRecordHistory.userId, (session.user as any).id))
+      .orderBy(desc(personalRecordHistory.achievedAt))
+      .limit(10);
+
+    return NextResponse.json({ records, history });
   } catch (error) {
     console.error('Error fetching personal records:', error);
     return NextResponse.json({ error: 'Failed to fetch records' }, { status: 500 });
