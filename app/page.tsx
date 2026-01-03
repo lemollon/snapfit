@@ -161,7 +161,7 @@ interface Challenge {
   userProgress: number;
 }
 
-type Tab = 'home' | 'workout' | 'timer' | 'history' | 'food' | 'friends' | 'challenges' | 'settings';
+type Tab = 'home' | 'workout' | 'timer' | 'history' | 'food' | 'friends' | 'challenges' | 'settings' | 'calendar';
 
 function SnapFitContent() {
   const { data: session, status } = useSession();
@@ -228,6 +228,11 @@ function SnapFitContent() {
     endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
 
+  // Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalType, setSuccessModalType] = useState<'workout' | 'meal'>('workout');
+  const [successModalData, setSuccessModalData] = useState<{ title: string; duration?: number; calories?: number }>({ title: '' });
+
   // Expandable sections
   const [expandedSections, setExpandedSections] = useState({
     warmup: true,
@@ -246,9 +251,15 @@ function SnapFitContent() {
     }
   }, [status, router, isGuestMode]);
 
-  // Check onboarding status for authenticated users
+  // Check onboarding status for authenticated users and redirect trainers
   useEffect(() => {
     if (status === 'authenticated' && session?.user && !isGuestMode) {
+      // Redirect trainers to their dashboard
+      if ((session.user as any)?.isTrainer) {
+        router.push('/trainer');
+        return;
+      }
+
       fetch('/api/profile')
         .then(res => res.json())
         .then(data => {
@@ -500,6 +511,11 @@ function SnapFitContent() {
         localStorage.setItem('snapfit_streak', String(newStreak));
 
         fetchWorkouts();
+
+        // Show success modal with Add to Calendar option
+        setSuccessModalType('workout');
+        setSuccessModalData({ title: `${duration}-min ${fitnessLevel} workout`, duration });
+        setShowSuccessModal(true);
       }
     } catch (err) {
       console.error('Failed to save workout:', err);
@@ -576,6 +592,14 @@ function SnapFitContent() {
       });
 
       if (res.ok) {
+        // Show success modal with Add to Calendar option
+        setSuccessModalType('meal');
+        setSuccessModalData({
+          title: `${mealType.charAt(0).toUpperCase() + mealType.slice(1)}: ${foodAnalysis.foodName}`,
+          calories: foodAnalysis.calories
+        });
+        setShowSuccessModal(true);
+
         setFoodPhoto(null);
         setFoodPhotoPreview(null);
         setFoodAnalysis(null);
@@ -673,6 +697,28 @@ function SnapFitContent() {
       if (name.includes(key)) return url;
     }
     return EXERCISE_IMAGES.default;
+  };
+
+  const addToCalendar = (type: 'workout' | 'meal', data: { title: string; duration?: number; calories?: number }) => {
+    const now = new Date();
+    const endTime = new Date(now.getTime() + (data.duration || 30) * 60 * 1000);
+
+    // Format dates for Google Calendar
+    const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d{3}/g, '');
+
+    const title = encodeURIComponent(data.title);
+    const description = encodeURIComponent(
+      type === 'workout'
+        ? `Completed ${data.duration || 30}-minute workout via SnapFit 💪`
+        : `Logged ${data.title} (${data.calories || 0} calories) via SnapFit 🍽️`
+    );
+
+    // Create Google Calendar URL
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatDate(now)}/${formatDate(endTime)}&details=${description}`;
+
+    // Open in new tab
+    window.open(googleCalendarUrl, '_blank');
+    setShowSuccessModal(false);
   };
 
   const TabButton = ({ tab, icon: Icon, label }: { tab: Tab; icon: typeof Dumbbell; label: string }) => (
@@ -1715,211 +1761,496 @@ function SnapFitContent() {
           </div>
         )}
 
-        {/* Settings Tab */}
-        {activeTab === 'settings' && (
-          <div className="py-6 max-w-md mx-auto space-y-4">
-            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Settings</h2>
-
-            <div className={`p-5 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  {darkMode ? <Moon className="text-indigo-400" size={24} /> : <Sun className="text-yellow-500" size={24} />}
-                  <div>
-                    <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>Dark Mode</h3>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Toggle theme</p>
+        {/* Calendar Tab - Advanced Fitness Calendar */}
+        {activeTab === 'calendar' && (
+          <div className="pb-6 max-w-lg mx-auto">
+            {/* Calendar Header */}
+            <div className="relative mb-6 overflow-hidden rounded-2xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600"
+                   style={{backgroundImage: 'url("https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/85 via-blue-500/85 to-indigo-600/85" />
+              </div>
+              <div className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h1 className="text-2xl font-bold text-white">Fitness Calendar</h1>
+                  <div className="flex items-center gap-2">
+                    <button className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
+                      <ChevronDown className="w-5 h-5 text-white" />
+                    </button>
                   </div>
                 </div>
-                <button
-                  onClick={() => setDarkMode(!darkMode)}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-gray-300'}`}
-                >
-                  <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
-                </button>
+                <p className="text-white/80 text-sm">Track your workouts, meals, and progress</p>
               </div>
             </div>
 
-            <div className={`p-5 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <div className="flex items-center gap-3 mb-3">
-                <Target className={`${darkMode ? 'text-indigo-400' : 'text-indigo-500'}`} size={24} />
-                <div>
-                  <h3 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>Weekly Goal</h3>
-                  <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Set your target workouts per week</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                {[3, 4, 5, 6, 7].map((num) => (
-                  <button
-                    key={num}
-                    onClick={() => setWeeklyGoal(num)}
-                    className={`w-10 h-10 rounded-xl font-bold transition-all ${
-                      weeklyGoal === num
-                        ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white'
-                        : darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {num}
-                  </button>
+            {/* Month Navigation */}
+            <div className={`flex items-center justify-between mb-4 px-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              <button className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
+                <ChevronDown className="w-5 h-5 rotate-90" />
+              </button>
+              <h2 className="text-lg font-bold">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+              <button className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
+                <ChevronDown className="w-5 h-5 -rotate-90" />
+              </button>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg overflow-hidden mb-6`}>
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                  <div key={i} className={`p-3 text-center text-xs font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {day}
+                  </div>
                 ))}
               </div>
+
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7">
+                {(() => {
+                  const today = new Date();
+                  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                  const startPadding = firstDay.getDay();
+                  const days = [];
+
+                  // Add empty cells for padding
+                  for (let i = 0; i < startPadding; i++) {
+                    days.push(<div key={`empty-${i}`} className="p-3" />);
+                  }
+
+                  // Add actual days
+                  for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const isToday = day === today.getDate();
+                    const hasWorkout = [2, 4, 6, 9, 11, 13, 16, 18, 20, 23, 25, 27, 30].includes(day);
+                    const hasMeal = [1, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 21, 22, 24, 26, 28, 29].includes(day);
+
+                    days.push(
+                      <button key={day} className={`p-2 text-center relative ${isToday ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl mx-1 my-1' : ''} ${darkMode && !isToday ? 'text-gray-300 hover:bg-gray-700' : !isToday ? 'text-gray-700 hover:bg-gray-100' : ''} transition-colors`}>
+                        <span className="text-sm font-medium">{day}</span>
+                        <div className="flex justify-center gap-0.5 mt-1">
+                          {hasWorkout && <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />}
+                          {hasMeal && <div className="w-1.5 h-1.5 rounded-full bg-green-400" />}
+                        </div>
+                      </button>
+                    );
+                  }
+
+                  return days;
+                })()}
+              </div>
             </div>
 
-            <div className={`p-5 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <h3 className={`font-medium mb-3 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Account</h3>
+            {/* Legend */}
+            <div className={`flex justify-center gap-6 mb-6 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-400" />
+                <span>Workout</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+                <span>Meal Logged</span>
+              </div>
+            </div>
+
+            {/* Today's Schedule */}
+            <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5 mb-6`}>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Today&apos;s Schedule</h3>
+
+              <div className="space-y-3">
+                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-orange-50'}`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                    <Dumbbell className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Morning Workout</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>7:00 AM - Upper Body Strength</p>
+                  </div>
+                  <Check className="w-5 h-5 text-green-500" />
+                </div>
+
+                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-green-50'}`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                    <UtensilsCrossed className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Breakfast</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>8:30 AM - Protein Oats & Berries</p>
+                  </div>
+                  <Check className="w-5 h-5 text-green-500" />
+                </div>
+
+                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'}`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+                    <UtensilsCrossed className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Lunch</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>12:30 PM - Planned</p>
+                  </div>
+                  <Clock className="w-5 h-5 text-blue-500" />
+                </div>
+
+                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-purple-50'}`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+                    <Dumbbell className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Evening Cardio</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>6:00 PM - 30 min HIIT</p>
+                  </div>
+                  <Clock className="w-5 h-5 text-purple-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Stats Overview */}
+            <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5 mb-6`}>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>This Week</h3>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mx-auto mb-2">
+                    <Flame className="w-7 h-7 text-white" />
+                  </div>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>5</p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Workouts</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-2">
+                    <UtensilsCrossed className="w-7 h-7 text-white" />
+                  </div>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>18</p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Meals Logged</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mx-auto mb-2">
+                    <Zap className="w-7 h-7 text-white" />
+                  </div>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>1,850</p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Calories Burned</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Upcoming Events */}
+            <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5`}>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Upcoming</h3>
+
+              <div className="space-y-3">
+                <div className={`flex items-center gap-4 p-3 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200'}`}>
+                  <div className="text-center">
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>TUE</p>
+                    <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{new Date().getDate() + 1}</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Leg Day Challenge</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>9:00 AM - Heavy Squats & Lunges</p>
+                  </div>
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                </div>
+
+                <div className={`flex items-center gap-4 p-3 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200'}`}>
+                  <div className="text-center">
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>FRI</p>
+                    <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{new Date().getDate() + 4}</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Weekly Weigh-In</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Track your progress</p>
+                  </div>
+                  <Scale className="w-5 h-5 text-blue-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Profile & More Tab - Premium Design */}
+        {activeTab === 'settings' && (
+          <div className="pb-6 max-w-lg mx-auto">
+            {/* Hero Profile Section */}
+            <div className="relative mb-6">
+              {/* Background Image/Gradient */}
+              <div className="h-32 bg-gradient-to-br from-orange-500 via-pink-500 to-purple-600 rounded-b-3xl"
+                   style={{backgroundImage: 'url("https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center', backgroundBlendMode: 'overlay'}}>
+                <div className="absolute inset-0 bg-gradient-to-br from-orange-500/80 via-pink-500/80 to-purple-600/80 rounded-b-3xl" />
+              </div>
+
+              {/* Profile Card Overlay */}
+              <div className={`relative -mt-16 mx-4 p-5 rounded-2xl ${darkMode ? 'bg-gray-800/95 backdrop-blur-xl' : 'bg-white/95 backdrop-blur-xl'} shadow-2xl border ${darkMode ? 'border-gray-700/50' : 'border-gray-200/50'}`}>
+                <div className="flex items-start gap-4">
+                  {/* Avatar */}
+                  <div className="relative">
+                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center font-bold text-2xl bg-gradient-to-br from-orange-500 to-pink-600 text-white shadow-lg`}>
+                      {session?.user?.name?.charAt(0) || session?.user?.email?.charAt(0) || 'G'}
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+                      <Sparkles className="w-3 h-3 text-white" />
+                    </div>
+                  </div>
+
+                  {/* User Info */}
+                  <div className="flex-1 min-w-0">
+                    <h2 className={`text-xl font-bold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                      {session?.user?.name || 'Guest User'}
+                    </h2>
+                    <p className={`text-sm truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                      {session?.user?.email || 'Try the demo'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2">
+                      {(session?.user as any)?.isTrainer && (
+                        <span className="px-2 py-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs rounded-full font-medium">
+                          PRO Trainer
+                        </span>
+                      )}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-100 text-gray-600'}`}>
+                        Level {userData?.level || 1}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Edit Profile Button */}
+                  <Link href="/profile" className={`p-2 rounded-xl ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-100 hover:bg-gray-200'} transition-colors`}>
+                    <Settings className={`w-5 h-5 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  </Link>
+                </div>
+
+                {/* Quick Stats Row */}
+                <div className="grid grid-cols-4 gap-2 mt-5 pt-5 border-t border-dashed ${darkMode ? 'border-gray-700' : 'border-gray-200'}">
+                  <div className="text-center">
+                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{userData?.totalWorkouts || 0}</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Workouts</p>
+                  </div>
+                  <div className="text-center">
+                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{userData?.currentStreak || 0}</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Day Streak</p>
+                  </div>
+                  <div className="text-center">
+                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{userData?.xp || 0}</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>XP Points</p>
+                  </div>
+                  <div className="text-center">
+                    <p className={`text-lg font-bold text-orange-500`}>{weeklyWorkouts}/{weeklyGoal}</p>
+                    <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>This Week</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature Cards - Premium Grid */}
+            <div className="px-4 space-y-4">
+              {/* Primary Features Row */}
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={() => setActiveTab('calendar')} className="group relative overflow-hidden rounded-2xl aspect-[4/3] text-left">
+                  <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600"
+                       style={{backgroundImage: 'url("https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-orange-500/90 to-red-600/90 group-hover:from-orange-500/80 group-hover:to-red-600/80 transition-all" />
+                  </div>
+                  <div className="relative h-full p-4 flex flex-col justify-between">
+                    <Calendar className="w-8 h-8 text-white/90" />
+                    <div>
+                      <p className="text-white font-bold text-lg">Calendar</p>
+                      <p className="text-white/70 text-xs">Plan & track</p>
+                    </div>
+                  </div>
+                </button>
+
+                <Link href="/body" className="group relative overflow-hidden rounded-2xl aspect-[4/3]">
+                  <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600"
+                       style={{backgroundImage: 'url("https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/90 to-teal-600/90 group-hover:from-emerald-500/80 group-hover:to-teal-600/80 transition-all" />
+                  </div>
+                  <div className="relative h-full p-4 flex flex-col justify-between">
+                    <Scale className="w-8 h-8 text-white/90" />
+                    <div>
+                      <p className="text-white font-bold text-lg">Body</p>
+                      <p className="text-white/70 text-xs">Track progress</p>
+                    </div>
+                  </div>
+                </Link>
+              </div>
+
+              {/* Secondary Features - Compact List */}
+              <div className={`rounded-2xl overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
+                <Link href="/achievements" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <Trophy className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Achievements</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Unlock badges & rewards</p>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                </Link>
+
+                <Link href="/recovery" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                    <Heart className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Recovery</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Readiness & wellness</p>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                </Link>
+
+                <Link href="/form-check" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-pink-400 to-rose-500 flex items-center justify-center shadow-lg shadow-rose-500/20">
+                    <Activity className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Form Check</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI-powered analysis</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-pink-500 to-rose-500 text-white text-xs rounded-full font-medium">AI</span>
+                </Link>
+
+                <Link href="/programs" className={`flex items-center gap-4 p-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-violet-400 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <Dumbbell className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Programs</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Expert training plans</p>
+                  </div>
+                  <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
+                </Link>
+              </div>
+
+              {/* Social & Compete Section */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setActiveTab('friends')}
+                  className="group relative overflow-hidden rounded-2xl aspect-[3/2]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600"
+                       style={{backgroundImage: 'url("https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/90 to-indigo-600/90 group-hover:from-blue-500/80 group-hover:to-indigo-600/80 transition-all" />
+                  </div>
+                  <div className="relative h-full p-4 flex flex-col justify-between">
+                    <Users className="w-7 h-7 text-white/90" />
+                    <div>
+                      <p className="text-white font-bold">Friends</p>
+                      <p className="text-white/70 text-xs">Connect & share</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('challenges')}
+                  className="group relative overflow-hidden rounded-2xl aspect-[3/2]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-500 to-orange-600"
+                       style={{backgroundImage: 'url("https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/90 to-orange-600/90 group-hover:from-yellow-500/80 group-hover:to-orange-600/80 transition-all" />
+                  </div>
+                  <div className="relative h-full p-4 flex flex-col justify-between">
+                    <Trophy className="w-7 h-7 text-white/90" />
+                    <div>
+                      <p className="text-white font-bold">Challenges</p>
+                      <p className="text-white/70 text-xs">Compete & win</p>
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {/* Trainer Dashboard - Premium Card */}
+              {session && (session.user as any)?.isTrainer && (
+                <Link href="/trainer" className="block relative overflow-hidden rounded-2xl">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600"
+                       style={{backgroundImage: 'url("https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=800&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                    <div className="absolute inset-0 bg-gradient-to-r from-indigo-600/95 via-purple-600/90 to-pink-600/95" />
+                  </div>
+                  <div className="relative p-5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center">
+                        <Users className="w-7 h-7 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-white font-bold text-lg">Trainer Dashboard</p>
+                        <p className="text-white/70 text-sm">Manage clients, programs & revenue</p>
+                      </div>
+                      <ChevronRight className="w-6 h-6 text-white/70" />
+                    </div>
+                  </div>
+                </Link>
+              )}
+
+              {/* Settings Section */}
+              <div className={`rounded-2xl overflow-hidden ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
+                <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <p className={`text-xs font-semibold uppercase tracking-wider ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Preferences</p>
+                </div>
+
+                {/* Dark Mode Toggle */}
+                <div className={`flex items-center justify-between p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                  <div className="flex items-center gap-3">
+                    {darkMode ? <Moon className="w-5 h-5 text-indigo-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
+                    <div>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dark Mode</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Easier on the eyes</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setDarkMode(!darkMode)}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors ${darkMode ? 'bg-indigo-600' : 'bg-gray-300'}`}
+                  >
+                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform shadow-lg ${darkMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                  </button>
+                </div>
+
+                {/* Weekly Goal */}
+                <div className={`p-4`}>
+                  <div className="flex items-center gap-3 mb-3">
+                    <Target className={`w-5 h-5 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
+                    <div>
+                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>Weekly Goal</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Workouts per week</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {[3, 4, 5, 6, 7].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setWeeklyGoal(num)}
+                        className={`flex-1 py-2 rounded-xl font-bold text-sm transition-all ${
+                          weeklyGoal === num
+                            ? 'bg-gradient-to-r from-orange-500 to-pink-500 text-white shadow-lg shadow-orange-500/25'
+                            : darkMode ? 'bg-gray-700 text-gray-400 hover:bg-gray-600' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Guest Mode CTA or Sign Out */}
               {isGuestMode ? (
-                <div className="space-y-3">
-                  <p className={`${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
-                    You&apos;re in demo mode. Create an account to save your data.
+                <div className={`p-5 rounded-2xl ${darkMode ? 'bg-gradient-to-br from-orange-500/20 to-pink-500/20 border border-orange-500/30' : 'bg-gradient-to-br from-orange-50 to-pink-50 border border-orange-200'}`}>
+                  <p className={`font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>Create Your Account</p>
+                  <p className={`text-sm mb-4 ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                    Save your progress and unlock all features
                   </p>
                   <button
                     onClick={() => router.push('/login')}
-                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-xl hover:shadow-lg transition-all"
+                    className="w-full py-3 bg-gradient-to-r from-orange-500 to-pink-500 text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-orange-500/25 transition-all"
                   >
-                    Create Free Account
+                    Get Started Free
                   </button>
                 </div>
               ) : session && (
-                <>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${darkMode ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white' : 'bg-gradient-to-br from-indigo-100 to-purple-100 text-indigo-600'}`}>
-                      {session.user?.name?.charAt(0) || session.user?.email?.charAt(0) || '?'}
-                    </div>
-                    <div>
-                      <p className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{session.user?.name || 'User'}</p>
-                      <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{session.user?.email}</p>
-                    </div>
-                  </div>
-                  {(session.user as any)?.isTrainer && (
-                    <span className="inline-block mt-3 px-3 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs rounded-full font-medium">
-                      Trainer Account
-                    </span>
-                  )}
-                </>
+                <button
+                  onClick={() => signOut({ callbackUrl: '/login' })}
+                  className={`w-full p-4 rounded-2xl ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'} shadow-lg flex items-center justify-center gap-2 text-red-500 font-medium transition-all`}
+                >
+                  <LogOut className="w-5 h-5" />
+                  Sign Out
+                </button>
               )}
             </div>
-
-            {/* Quick Links to New Features */}
-            <div className={`p-5 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-lg`}>
-              <h3 className={`font-medium mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Quick Links</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <Link
-                  href="/profile"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Profile</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Edit your info</p>
-                  </div>
-                </Link>
-
-                <Link
-                  href="/body"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center">
-                    <Scale className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Body</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Track weight</p>
-                  </div>
-                </Link>
-
-                <Link
-                  href="/calendar"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Calendar</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Plan workouts</p>
-                  </div>
-                </Link>
-
-                <Link
-                  href="/achievements"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                    <Trophy className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Achievements</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>View badges</p>
-                  </div>
-                </Link>
-
-                <Link
-                  href="/recovery"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Recovery</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Readiness score</p>
-                  </div>
-                </Link>
-
-                <Link
-                  href="/form-check"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
-                    <Activity className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Form Check</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI analysis</p>
-                  </div>
-                </Link>
-
-                <Link
-                  href="/programs"
-                  className={`flex items-center gap-3 p-3 rounded-xl transition-all ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-gray-50 hover:bg-gray-100'}`}
-                >
-                  <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
-                    <Dumbbell className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Programs</p>
-                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Marketplace</p>
-                  </div>
-                </Link>
-
-                {session && (session.user as any)?.isTrainer && (
-                  <Link
-                    href="/trainer"
-                    className={`flex items-center gap-3 p-3 rounded-xl transition-all col-span-2 ${darkMode ? 'bg-gradient-to-r from-indigo-900/50 to-purple-900/50 hover:from-indigo-800/50 hover:to-purple-800/50 border border-indigo-700/30' : 'bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-indigo-100 hover:to-purple-100 border border-indigo-200'}`}
-                  >
-                    <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-                      <Users className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <p className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>Trainer Dashboard</p>
-                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Manage clients, templates, products</p>
-                    </div>
-                    <ChevronRight className={`w-5 h-5 ml-auto ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-                  </Link>
-                )}
-              </div>
-            </div>
-
-            {/* Sign Out Button */}
-            {session && !isGuestMode && (
-              <button
-                onClick={() => signOut({ callbackUrl: '/login' })}
-                className={`w-full p-4 rounded-2xl ${darkMode ? 'bg-gray-800 hover:bg-gray-700' : 'bg-white hover:bg-gray-50'} shadow-lg flex items-center justify-center gap-2 text-red-500 font-medium transition-all`}
-              >
-                <LogOut className="w-5 h-5" />
-                Sign Out
-              </button>
-            )}
           </div>
         )}
       </main>
@@ -1929,12 +2260,79 @@ function SnapFitContent() {
         <div className="max-w-lg mx-auto px-1 py-2 flex justify-around">
           <TabButton tab="home" icon={Activity} label="Home" />
           <TabButton tab="workout" icon={Dumbbell} label="Train" />
+          <TabButton tab="calendar" icon={Calendar} label="Calendar" />
           <TabButton tab="food" icon={UtensilsCrossed} label="Food" />
-          <TabButton tab="friends" icon={Users} label="Friends" />
-          <TabButton tab="challenges" icon={Trophy} label="Compete" />
-          <TabButton tab="settings" icon={Settings} label="More" />
+          <TabButton tab="settings" icon={User} label="Profile" />
         </div>
       </nav>
+
+      {/* Success Modal with Add to Calendar */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)} />
+
+          {/* Modal */}
+          <div className={`relative w-full max-w-sm rounded-3xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-2xl overflow-hidden`}>
+            {/* Success Header */}
+            <div className={`p-6 text-center ${successModalType === 'workout' ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'}`}>
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
+                {successModalType === 'workout' ? (
+                  <Dumbbell className="w-10 h-10 text-white" />
+                ) : (
+                  <UtensilsCrossed className="w-10 h-10 text-white" />
+                )}
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-1">
+                {successModalType === 'workout' ? 'Workout Saved!' : 'Meal Logged!'}
+              </h3>
+              <p className="text-white/80 text-sm">{successModalData.title}</p>
+            </div>
+
+            {/* Actions */}
+            <div className="p-6 space-y-3">
+              <button
+                onClick={() => addToCalendar(successModalType, successModalData)}
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-2xl font-semibold hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+              >
+                <Calendar className="w-5 h-5" />
+                Add to Google Calendar
+              </button>
+
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className={`w-full py-4 px-6 rounded-2xl font-medium transition-all ${
+                  darkMode
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Done
+              </button>
+            </div>
+
+            {/* Stats badge */}
+            <div className={`px-6 pb-6 flex justify-center gap-4`}>
+              {successModalType === 'workout' && successModalData.duration && (
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <Clock className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {successModalData.duration} min
+                  </span>
+                </div>
+              )}
+              {successModalType === 'meal' && successModalData.calories && (
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <Flame className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
+                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {successModalData.calories} cal
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
