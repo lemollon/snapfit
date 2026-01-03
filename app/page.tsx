@@ -161,7 +161,7 @@ interface Challenge {
   userProgress: number;
 }
 
-type Tab = 'home' | 'workout' | 'timer' | 'history' | 'food' | 'friends' | 'challenges' | 'settings';
+type Tab = 'home' | 'workout' | 'timer' | 'history' | 'food' | 'friends' | 'challenges' | 'settings' | 'calendar';
 
 function SnapFitContent() {
   const { data: session, status } = useSession();
@@ -1715,6 +1715,211 @@ function SnapFitContent() {
           </div>
         )}
 
+        {/* Calendar Tab - Advanced Fitness Calendar */}
+        {activeTab === 'calendar' && (
+          <div className="pb-6 max-w-lg mx-auto">
+            {/* Calendar Header */}
+            <div className="relative mb-6 overflow-hidden rounded-2xl">
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500 via-blue-500 to-indigo-600"
+                   style={{backgroundImage: 'url("https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/85 via-blue-500/85 to-indigo-600/85" />
+              </div>
+              <div className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h1 className="text-2xl font-bold text-white">Fitness Calendar</h1>
+                  <div className="flex items-center gap-2">
+                    <button className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
+                      <ChevronDown className="w-5 h-5 text-white" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-white/80 text-sm">Track your workouts, meals, and progress</p>
+              </div>
+            </div>
+
+            {/* Month Navigation */}
+            <div className={`flex items-center justify-between mb-4 px-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              <button className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
+                <ChevronDown className="w-5 h-5 rotate-90" />
+              </button>
+              <h2 className="text-lg font-bold">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
+              <button className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
+                <ChevronDown className="w-5 h-5 -rotate-90" />
+              </button>
+            </div>
+
+            {/* Calendar Grid */}
+            <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg overflow-hidden mb-6`}>
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 border-b border-gray-200 dark:border-gray-700">
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, i) => (
+                  <div key={i} className={`p-3 text-center text-xs font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              {/* Calendar Days */}
+              <div className="grid grid-cols-7">
+                {(() => {
+                  const today = new Date();
+                  const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                  const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                  const startPadding = firstDay.getDay();
+                  const days = [];
+
+                  // Add empty cells for padding
+                  for (let i = 0; i < startPadding; i++) {
+                    days.push(<div key={`empty-${i}`} className="p-3" />);
+                  }
+
+                  // Add actual days
+                  for (let day = 1; day <= lastDay.getDate(); day++) {
+                    const isToday = day === today.getDate();
+                    const hasWorkout = [2, 4, 6, 9, 11, 13, 16, 18, 20, 23, 25, 27, 30].includes(day);
+                    const hasMeal = [1, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 21, 22, 24, 26, 28, 29].includes(day);
+
+                    days.push(
+                      <button key={day} className={`p-2 text-center relative ${isToday ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl mx-1 my-1' : ''} ${darkMode && !isToday ? 'text-gray-300 hover:bg-gray-700' : !isToday ? 'text-gray-700 hover:bg-gray-100' : ''} transition-colors`}>
+                        <span className="text-sm font-medium">{day}</span>
+                        <div className="flex justify-center gap-0.5 mt-1">
+                          {hasWorkout && <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />}
+                          {hasMeal && <div className="w-1.5 h-1.5 rounded-full bg-green-400" />}
+                        </div>
+                      </button>
+                    );
+                  }
+
+                  return days;
+                })()}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className={`flex justify-center gap-6 mb-6 text-sm ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-orange-400" />
+                <span>Workout</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+                <span>Meal Logged</span>
+              </div>
+            </div>
+
+            {/* Today's Schedule */}
+            <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5 mb-6`}>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Today&apos;s Schedule</h3>
+
+              <div className="space-y-3">
+                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-orange-50'}`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                    <Dumbbell className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Morning Workout</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>7:00 AM - Upper Body Strength</p>
+                  </div>
+                  <Check className="w-5 h-5 text-green-500" />
+                </div>
+
+                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-green-50'}`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                    <UtensilsCrossed className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Breakfast</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>8:30 AM - Protein Oats & Berries</p>
+                  </div>
+                  <Check className="w-5 h-5 text-green-500" />
+                </div>
+
+                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'}`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
+                    <UtensilsCrossed className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Lunch</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>12:30 PM - Planned</p>
+                  </div>
+                  <Clock className="w-5 h-5 text-blue-500" />
+                </div>
+
+                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-purple-50'}`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
+                    <Dumbbell className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Evening Cardio</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>6:00 PM - 30 min HIIT</p>
+                  </div>
+                  <Clock className="w-5 h-5 text-purple-500" />
+                </div>
+              </div>
+            </div>
+
+            {/* Weekly Stats Overview */}
+            <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5 mb-6`}>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>This Week</h3>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mx-auto mb-2">
+                    <Flame className="w-7 h-7 text-white" />
+                  </div>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>5</p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Workouts</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-2">
+                    <UtensilsCrossed className="w-7 h-7 text-white" />
+                  </div>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>18</p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Meals Logged</p>
+                </div>
+                <div className="text-center">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mx-auto mb-2">
+                    <Zap className="w-7 h-7 text-white" />
+                  </div>
+                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>1,850</p>
+                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Calories Burned</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Upcoming Events */}
+            <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5`}>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Upcoming</h3>
+
+              <div className="space-y-3">
+                <div className={`flex items-center gap-4 p-3 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200'}`}>
+                  <div className="text-center">
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>TUE</p>
+                    <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{new Date().getDate() + 1}</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Leg Day Challenge</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>9:00 AM - Heavy Squats & Lunges</p>
+                  </div>
+                  <Trophy className="w-5 h-5 text-yellow-500" />
+                </div>
+
+                <div className={`flex items-center gap-4 p-3 rounded-xl border ${darkMode ? 'border-gray-700 bg-gray-700/30' : 'border-gray-200'}`}>
+                  <div className="text-center">
+                    <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>FRI</p>
+                    <p className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{new Date().getDate() + 4}</p>
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Weekly Weigh-In</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Track your progress</p>
+                  </div>
+                  <Scale className="w-5 h-5 text-blue-500" />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Profile & More Tab - Premium Design */}
         {activeTab === 'settings' && (
           <div className="pb-6 max-w-lg mx-auto">
@@ -1791,7 +1996,7 @@ function SnapFitContent() {
             <div className="px-4 space-y-4">
               {/* Primary Features Row */}
               <div className="grid grid-cols-2 gap-3">
-                <Link href="/calendar" className="group relative overflow-hidden rounded-2xl aspect-[4/3]">
+                <button onClick={() => setActiveTab('calendar')} className="group relative overflow-hidden rounded-2xl aspect-[4/3] text-left">
                   <div className="absolute inset-0 bg-gradient-to-br from-orange-500 to-red-600"
                        style={{backgroundImage: 'url("https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=400&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
                     <div className="absolute inset-0 bg-gradient-to-br from-orange-500/90 to-red-600/90 group-hover:from-orange-500/80 group-hover:to-red-600/80 transition-all" />
@@ -1803,7 +2008,7 @@ function SnapFitContent() {
                       <p className="text-white/70 text-xs">Plan & track</p>
                     </div>
                   </div>
-                </Link>
+                </button>
 
                 <Link href="/body" className="group relative overflow-hidden rounded-2xl aspect-[4/3]">
                   <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600"
@@ -1865,6 +2070,43 @@ function SnapFitContent() {
                   </div>
                   <ChevronRight className={`w-5 h-5 ${darkMode ? 'text-gray-600' : 'text-gray-300'}`} />
                 </Link>
+              </div>
+
+              {/* Social & Compete Section */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => setActiveTab('friends')}
+                  className="group relative overflow-hidden rounded-2xl aspect-[3/2]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-indigo-600"
+                       style={{backgroundImage: 'url("https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/90 to-indigo-600/90 group-hover:from-blue-500/80 group-hover:to-indigo-600/80 transition-all" />
+                  </div>
+                  <div className="relative h-full p-4 flex flex-col justify-between">
+                    <Users className="w-7 h-7 text-white/90" />
+                    <div>
+                      <p className="text-white font-bold">Friends</p>
+                      <p className="text-white/70 text-xs">Connect & share</p>
+                    </div>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('challenges')}
+                  className="group relative overflow-hidden rounded-2xl aspect-[3/2]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-br from-yellow-500 to-orange-600"
+                       style={{backgroundImage: 'url("https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=400&auto=format&fit=crop&q=60")', backgroundSize: 'cover', backgroundPosition: 'center'}}>
+                    <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/90 to-orange-600/90 group-hover:from-yellow-500/80 group-hover:to-orange-600/80 transition-all" />
+                  </div>
+                  <div className="relative h-full p-4 flex flex-col justify-between">
+                    <Trophy className="w-7 h-7 text-white/90" />
+                    <div>
+                      <p className="text-white font-bold">Challenges</p>
+                      <p className="text-white/70 text-xs">Compete & win</p>
+                    </div>
+                  </div>
+                </button>
               </div>
 
               {/* Trainer Dashboard - Premium Card */}
@@ -1972,10 +2214,9 @@ function SnapFitContent() {
         <div className="max-w-lg mx-auto px-1 py-2 flex justify-around">
           <TabButton tab="home" icon={Activity} label="Home" />
           <TabButton tab="workout" icon={Dumbbell} label="Train" />
+          <TabButton tab="calendar" icon={Calendar} label="Calendar" />
           <TabButton tab="food" icon={UtensilsCrossed} label="Food" />
-          <TabButton tab="friends" icon={Users} label="Friends" />
-          <TabButton tab="challenges" icon={Trophy} label="Compete" />
-          <TabButton tab="settings" icon={Settings} label="More" />
+          <TabButton tab="settings" icon={User} label="Profile" />
         </div>
       </nav>
     </div>
