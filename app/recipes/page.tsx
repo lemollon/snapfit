@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   ArrowLeft, Search, Filter, Clock, Users, Flame, ChefHat,
   Heart, Bookmark, BookmarkCheck, Star, Plus, X, ChevronDown,
-  Utensils, Leaf, Wheat, Drumstick, Apple, Coffee
+  Utensils, Leaf, Wheat, Drumstick, Apple, Coffee, Loader2
 } from 'lucide-react';
 
 // Hero image
@@ -166,17 +167,84 @@ const CATEGORIES = [
 const DIET_FILTERS = ['All', 'High-Protein', 'Keto', 'Vegan', 'Vegetarian', 'Gluten-Free', 'Low-Carb', 'Meal Prep'];
 
 export default function RecipesPage() {
+  const { data: session } = useSession();
   const [recipes, setRecipes] = useState<Recipe[]>(SAMPLE_RECIPES);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedDiet, setSelectedDiet] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
 
-  const toggleSave = (recipeId: string) => {
+  // Fetch recipes from API
+  useEffect(() => {
+    const fetchRecipes = async () => {
+      try {
+        const params = new URLSearchParams();
+        if (selectedCategory !== 'all') params.append('category', selectedCategory);
+        if (selectedDiet !== 'All') params.append('tag', selectedDiet.toLowerCase().replace('-', ''));
+        if (searchQuery) params.append('search', searchQuery);
+
+        const response = await fetch(`/api/recipes?${params.toString()}`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.recipes && data.recipes.length > 0) {
+            const transformedRecipes = data.recipes.map((r: any) => ({
+              id: r.id,
+              name: r.name,
+              description: r.description,
+              imageUrl: r.imageUrl,
+              category: r.category,
+              cuisine: r.cuisine,
+              tags: r.tags || [],
+              prepTime: r.prepTime,
+              cookTime: r.cookTime,
+              servings: r.servings,
+              difficulty: r.difficulty || 'medium',
+              calories: r.calories,
+              protein: r.protein,
+              carbs: r.carbs,
+              fat: r.fat,
+              rating: r.rating || 4.5,
+              ratingCount: r.ratingCount || 0,
+              isSaved: data.savedRecipeIds?.includes(r.id) || false,
+              isFeatured: r.isFeatured,
+            }));
+            setRecipes(transformedRecipes);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching recipes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecipes();
+  }, [selectedCategory, selectedDiet, searchQuery]);
+
+  const toggleSave = async (recipeId: string) => {
+    // Optimistic update
     setRecipes(recipes.map(r =>
       r.id === recipeId ? { ...r, isSaved: !r.isSaved } : r
     ));
+
+    // Save to API if logged in
+    if (session?.user) {
+      try {
+        await fetch('/api/recipes/save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipeId }),
+        });
+      } catch (error) {
+        console.error('Error saving recipe:', error);
+        // Revert on error
+        setRecipes(recipes.map(r =>
+          r.id === recipeId ? { ...r, isSaved: !r.isSaved } : r
+        ));
+      }
+    }
   };
 
   const filteredRecipes = recipes.filter(recipe => {
@@ -199,6 +267,17 @@ export default function RecipesPage() {
       default: return 'text-white/60 bg-white/10';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-violet-500 animate-spin mx-auto mb-4" />
+          <p className="text-white/60">Loading recipes...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">

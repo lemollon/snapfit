@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   ArrowLeft, Trophy, TrendingUp, Dumbbell, Timer, Ruler, Flame,
   ChevronRight, Star, Zap, Crown, Medal, Target, Plus, X,
-  Calendar, Award, Sparkles, PartyPopper
+  Calendar, Award, Sparkles, PartyPopper, Loader2
 } from 'lucide-react';
 
 // Hero image
@@ -104,13 +105,76 @@ const CATEGORY_CONFIG = {
 };
 
 export default function RecordsPage() {
+  const { data: session } = useSession();
   const [records, setRecords] = useState<PersonalRecord[]>(SAMPLE_RECORDS);
   const [history, setHistory] = useState<PRHistory[]>(SAMPLE_HISTORY);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showConfetti, setShowConfetti] = useState(false);
   const [showNewPRModal, setShowNewPRModal] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
   const [celebratedPR, setCelebratedPR] = useState<PersonalRecord | null>(null);
+
+  // Form state for new PR
+  const [newPRForm, setNewPRForm] = useState({
+    exerciseName: '',
+    category: 'strength' as 'strength' | 'cardio' | 'bodyweight' | 'olympic',
+    weight: '',
+    reps: '',
+    unit: 'lbs',
+  });
+
+  // Fetch records from API
+  useEffect(() => {
+    const fetchRecords = async () => {
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/records');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.records && data.records.length > 0) {
+            const transformedRecords = data.records.map((r: any) => ({
+              id: r.id,
+              exerciseName: r.exerciseName,
+              category: r.category,
+              maxWeight: r.maxWeight,
+              maxReps: r.maxReps,
+              fastestTime: r.fastestTime,
+              longestDistance: r.longestDistance,
+              unit: r.unit,
+              achievedAt: r.updatedAt || r.createdAt,
+              improvement: r.improvement,
+              isNew: r.isNew,
+            }));
+            setRecords(transformedRecords);
+          }
+          if (data.history && data.history.length > 0) {
+            const transformedHistory = data.history.map((h: any) => ({
+              id: h.id,
+              exerciseName: h.exerciseName,
+              recordType: h.recordType,
+              previousValue: h.previousValue,
+              newValue: h.newValue,
+              improvement: h.improvementPercent || ((h.newValue - h.previousValue) / h.previousValue * 100),
+              achievedAt: h.achievedAt || h.createdAt,
+            }));
+            setHistory(transformedHistory);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching records:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecords();
+  }, [session]);
 
   // Check for new PRs and celebrate
   useEffect(() => {
@@ -121,7 +185,65 @@ export default function RecordsPage() {
       setShowConfetti(true);
       setTimeout(() => setShowConfetti(false), 3000);
     }
-  }, []);
+  }, [records]);
+
+  const savePR = async () => {
+    if (!newPRForm.exerciseName || (!newPRForm.weight && !newPRForm.reps)) {
+      return;
+    }
+
+    setSaving(true);
+
+    // Create local record for demo
+    const newRecord: PersonalRecord = {
+      id: `local-${Date.now()}`,
+      exerciseName: newPRForm.exerciseName,
+      category: newPRForm.category,
+      maxWeight: newPRForm.weight ? parseInt(newPRForm.weight) : undefined,
+      maxReps: newPRForm.reps ? parseInt(newPRForm.reps) : undefined,
+      unit: newPRForm.unit,
+      achievedAt: new Date().toISOString(),
+      isNew: true,
+      improvement: 5,
+    };
+
+    if (session?.user) {
+      try {
+        const response = await fetch('/api/records', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            exerciseName: newPRForm.exerciseName,
+            category: newPRForm.category,
+            value: newPRForm.weight ? parseInt(newPRForm.weight) : parseInt(newPRForm.reps),
+            reps: newPRForm.reps ? parseInt(newPRForm.reps) : undefined,
+            unit: newPRForm.unit,
+            recordType: 'max_weight',
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.isNewPR) {
+            newRecord.id = data.record.id;
+          }
+        }
+      } catch (error) {
+        console.error('Error saving PR:', error);
+      }
+    }
+
+    setRecords([newRecord, ...records.map(r => ({ ...r, isNew: false }))]);
+    setShowNewPRModal(false);
+    setNewPRForm({ exerciseName: '', category: 'strength', weight: '', reps: '', unit: 'lbs' });
+    setSaving(false);
+
+    // Trigger celebration
+    setCelebratedPR(newRecord);
+    setShowCelebration(true);
+    setShowConfetti(true);
+    setTimeout(() => setShowConfetti(false), 3000);
+  };
 
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
@@ -154,6 +276,17 @@ export default function RecordsPage() {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return date > thirtyDaysAgo;
   }).length;
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-violet-500 animate-spin mx-auto mb-4" />
+          <p className="text-white/60">Loading records...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -427,6 +560,8 @@ export default function RecordsPage() {
                 <label className="block text-sm text-white/60 mb-2">Exercise</label>
                 <input
                   type="text"
+                  value={newPRForm.exerciseName}
+                  onChange={(e) => setNewPRForm({ ...newPRForm, exerciseName: e.target.value })}
                   placeholder="e.g., Bench Press"
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-violet-500"
                 />
@@ -440,10 +575,16 @@ export default function RecordsPage() {
                     return (
                       <button
                         key={key}
-                        className={`p-3 rounded-xl flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 transition-all`}
+                        type="button"
+                        onClick={() => setNewPRForm({ ...newPRForm, category: key as any })}
+                        className={`p-3 rounded-xl flex items-center gap-2 border transition-all ${
+                          newPRForm.category === key
+                            ? `bg-gradient-to-r ${config.color} border-transparent text-white`
+                            : 'bg-white/5 hover:bg-white/10 border-white/10 text-white/80'
+                        }`}
                       >
-                        <Icon className="w-4 h-4 text-white/60" />
-                        <span className="text-white/80">{config.label}</span>
+                        <Icon className="w-4 h-4" />
+                        <span>{config.label}</span>
                       </button>
                     );
                   })}
@@ -455,6 +596,8 @@ export default function RecordsPage() {
                   <label className="block text-sm text-white/60 mb-2">Weight</label>
                   <input
                     type="number"
+                    value={newPRForm.weight}
+                    onChange={(e) => setNewPRForm({ ...newPRForm, weight: e.target.value })}
                     placeholder="0"
                     className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
@@ -463,6 +606,8 @@ export default function RecordsPage() {
                   <label className="block text-sm text-white/60 mb-2">Reps</label>
                   <input
                     type="number"
+                    value={newPRForm.reps}
+                    onChange={(e) => setNewPRForm({ ...newPRForm, reps: e.target.value })}
                     placeholder="0"
                     className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
@@ -470,9 +615,17 @@ export default function RecordsPage() {
               </div>
             </div>
 
-            <button className="w-full py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all">
-              <Trophy className="w-5 h-5 inline mr-2" />
-              Save PR
+            <button
+              onClick={savePR}
+              disabled={saving || !newPRForm.exerciseName || (!newPRForm.weight && !newPRForm.reps)}
+              className="w-full py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
+              ) : (
+                <Trophy className="w-5 h-5 inline mr-2" />
+              )}
+              {saving ? 'Saving...' : 'Save PR'}
             </button>
           </div>
         </div>

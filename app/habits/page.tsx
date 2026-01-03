@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   ArrowLeft, Droplets, Moon, Footprints, Brain, Plus, Check,
   Flame, TrendingUp, Calendar, ChevronLeft, ChevronRight, X,
-  Target, Award, Sparkles, Bell, Clock, Minus, Settings
+  Target, Award, Sparkles, Bell, Clock, Minus, Settings, Loader2
 } from 'lucide-react';
 
 // Hero image
@@ -45,9 +46,9 @@ const COLOR_MAP: { [key: string]: string } = {
   amber: 'from-amber-500 to-yellow-600',
 };
 
-const SAMPLE_HABITS: Habit[] = [
+const DEFAULT_HABITS: Habit[] = [
   {
-    id: '1',
+    id: 'demo-1',
     name: 'Water Intake',
     description: 'Stay hydrated throughout the day',
     icon: 'droplets',
@@ -61,7 +62,7 @@ const SAMPLE_HABITS: Habit[] = [
     todayCompleted: false,
   },
   {
-    id: '2',
+    id: 'demo-2',
     name: 'Sleep',
     description: 'Get quality rest',
     icon: 'moon',
@@ -75,7 +76,7 @@ const SAMPLE_HABITS: Habit[] = [
     todayCompleted: false,
   },
   {
-    id: '3',
+    id: 'demo-3',
     name: 'Steps',
     description: 'Keep moving',
     icon: 'footprints',
@@ -89,7 +90,7 @@ const SAMPLE_HABITS: Habit[] = [
     todayCompleted: false,
   },
   {
-    id: '4',
+    id: 'demo-4',
     name: 'Meditation',
     description: 'Daily mindfulness practice',
     icon: 'brain',
@@ -106,38 +107,201 @@ const SAMPLE_HABITS: Habit[] = [
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-// Sample week data (which days completed)
-const WEEK_DATA = [true, true, true, false, true, true, null]; // null = today
-
 export default function HabitsPage() {
-  const [habits, setHabits] = useState<Habit[]>(SAMPLE_HABITS);
+  const { data: session } = useSession();
+  const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
+  const [weekData, setWeekData] = useState<(boolean | null)[]>([true, true, true, false, true, true, null]);
+
+  // Fetch habits from API
+  useEffect(() => {
+    const fetchHabits = async () => {
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/habits');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.habits && data.habits.length > 0) {
+            // Transform API data to match our Habit interface
+            const transformedHabits = data.habits.map((h: any) => ({
+              id: h.id,
+              name: h.name,
+              description: h.description,
+              icon: h.icon || 'target',
+              color: h.color || 'purple',
+              type: h.habitType || 'quantity',
+              targetValue: h.targetValue,
+              unit: h.unit,
+              currentStreak: h.currentStreak || 0,
+              longestStreak: h.longestStreak || 0,
+              todayValue: data.todayLogs?.find((l: any) => l.habitId === h.id)?.value || 0,
+              todayCompleted: data.todayLogs?.find((l: any) => l.habitId === h.id)?.completed || false,
+            }));
+            setHabits(transformedHabits);
+          }
+          // Calculate week data from logs
+          if (data.weekLogs) {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const newWeekData = [...Array(7)].map((_, i) => {
+              if (i === dayOfWeek) return null; // today
+              if (i > dayOfWeek) return false; // future days
+              // Check if any habit was completed on this day
+              return data.weekLogs.some((log: any) => {
+                const logDate = new Date(log.logDate);
+                return logDate.getDay() === i && log.completed;
+              });
+            });
+            setWeekData(newWeekData);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching habits:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchHabits();
+  }, [session]);
 
   const completedToday = habits.filter(h => h.todayCompleted).length;
   const totalHabits = habits.length;
   const completionRate = Math.round((completedToday / totalHabits) * 100);
 
-  const updateHabitValue = (habitId: string, increment: number) => {
+  const updateHabitValue = async (habitId: string, increment: number) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return;
+
+    const newValue = Math.max(0, (habit.todayValue || 0) + increment);
+    const completed = habit.targetValue ? newValue >= habit.targetValue : false;
+
+    // Optimistic update
     setHabits(habits.map(h => {
       if (h.id === habitId) {
-        const newValue = Math.max(0, (h.todayValue || 0) + increment);
-        const completed = h.targetValue ? newValue >= h.targetValue : false;
         return { ...h, todayValue: newValue, todayCompleted: completed };
       }
       return h;
     }));
+
+    // Save to API if logged in
+    if (session?.user && !habitId.startsWith('demo-')) {
+      try {
+        await fetch('/api/habits', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            habitId,
+            value: newValue,
+            completed,
+          }),
+        });
+      } catch (error) {
+        console.error('Error updating habit:', error);
+      }
+    }
   };
 
-  const toggleHabit = (habitId: string) => {
+  const toggleHabit = async (habitId: string) => {
+    const habit = habits.find(h => h.id === habitId);
+    if (!habit) return;
+
+    const newCompleted = !habit.todayCompleted;
+
+    // Optimistic update
     setHabits(habits.map(h => {
       if (h.id === habitId) {
-        return { ...h, todayCompleted: !h.todayCompleted };
+        return { ...h, todayCompleted: newCompleted };
       }
       return h;
     }));
+
+    // Save to API if logged in
+    if (session?.user && !habitId.startsWith('demo-')) {
+      try {
+        await fetch('/api/habits', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            habitId,
+            value: newCompleted ? (habit.targetValue || 1) : 0,
+            completed: newCompleted,
+          }),
+        });
+      } catch (error) {
+        console.error('Error updating habit:', error);
+      }
+    }
+  };
+
+  const createHabit = async (preset: { name: string; icon: string; color: string; target: number; unit: string }) => {
+    if (!session?.user) {
+      // For demo mode, just add to local state
+      const newHabit: Habit = {
+        id: `demo-${Date.now()}`,
+        name: preset.name,
+        icon: preset.icon,
+        color: preset.color,
+        type: 'quantity',
+        targetValue: preset.target,
+        unit: preset.unit,
+        currentStreak: 0,
+        longestStreak: 0,
+        todayValue: 0,
+        todayCompleted: false,
+      };
+      setHabits([...habits, newHabit]);
+      setShowAddModal(false);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/habits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: preset.name,
+          icon: preset.icon,
+          color: preset.color,
+          habitType: 'quantity',
+          targetValue: preset.target,
+          unit: preset.unit,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newHabit: Habit = {
+          id: data.habit.id,
+          name: data.habit.name,
+          icon: data.habit.icon || preset.icon,
+          color: data.habit.color || preset.color,
+          type: data.habit.habitType || 'quantity',
+          targetValue: data.habit.targetValue,
+          unit: data.habit.unit,
+          currentStreak: 0,
+          longestStreak: 0,
+          todayValue: 0,
+          todayCompleted: false,
+        };
+        setHabits([...habits, newHabit]);
+        setShowAddModal(false);
+      }
+    } catch (error) {
+      console.error('Error creating habit:', error);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getProgress = (habit: Habit): number => {
@@ -150,6 +314,17 @@ export default function HabitsPage() {
     if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
     return value.toString();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-10 h-10 text-violet-500 animate-spin mx-auto mb-4" />
+          <p className="text-white/60">Loading habits...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -232,8 +407,8 @@ export default function HabitsPage() {
           {/* Week View */}
           <div className="grid grid-cols-7 gap-2">
             {DAYS.map((day, index) => {
-              const isCompleted = WEEK_DATA[index];
-              const isToday = index === 6;
+              const isCompleted = weekData[index];
+              const isToday = index === new Date().getDay();
               return (
                 <div key={index} className="text-center">
                   <p className="text-xs text-white/40 mb-1">{day}</p>
@@ -453,7 +628,9 @@ export default function HabitsPage() {
                   return (
                     <button
                       key={preset.name}
-                      className={`p-4 rounded-2xl border border-white/10 hover:border-white/30 transition-all flex items-center gap-3`}
+                      onClick={() => createHabit(preset)}
+                      disabled={saving}
+                      className={`p-4 rounded-2xl border border-white/10 hover:border-white/30 transition-all flex items-center gap-3 disabled:opacity-50`}
                     >
                       <div className={`p-2 rounded-xl bg-gradient-to-r ${colorClass}`}>
                         <IconComponent className="w-5 h-5 text-white" />
