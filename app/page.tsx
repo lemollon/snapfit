@@ -228,6 +228,11 @@ function SnapFitContent() {
     endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
   });
 
+  // Success modal state
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successModalType, setSuccessModalType] = useState<'workout' | 'meal'>('workout');
+  const [successModalData, setSuccessModalData] = useState<{ title: string; duration?: number; calories?: number }>({ title: '' });
+
   // Expandable sections
   const [expandedSections, setExpandedSections] = useState({
     warmup: true,
@@ -500,6 +505,11 @@ function SnapFitContent() {
         localStorage.setItem('snapfit_streak', String(newStreak));
 
         fetchWorkouts();
+
+        // Show success modal with Add to Calendar option
+        setSuccessModalType('workout');
+        setSuccessModalData({ title: `${duration}-min ${fitnessLevel} workout`, duration });
+        setShowSuccessModal(true);
       }
     } catch (err) {
       console.error('Failed to save workout:', err);
@@ -576,6 +586,14 @@ function SnapFitContent() {
       });
 
       if (res.ok) {
+        // Show success modal with Add to Calendar option
+        setSuccessModalType('meal');
+        setSuccessModalData({
+          title: `${mealType.charAt(0).toUpperCase() + mealType.slice(1)}: ${foodAnalysis.foodName}`,
+          calories: foodAnalysis.calories
+        });
+        setShowSuccessModal(true);
+
         setFoodPhoto(null);
         setFoodPhotoPreview(null);
         setFoodAnalysis(null);
@@ -673,6 +691,28 @@ function SnapFitContent() {
       if (name.includes(key)) return url;
     }
     return EXERCISE_IMAGES.default;
+  };
+
+  const addToCalendar = (type: 'workout' | 'meal', data: { title: string; duration?: number; calories?: number }) => {
+    const now = new Date();
+    const endTime = new Date(now.getTime() + (data.duration || 30) * 60 * 1000);
+
+    // Format dates for Google Calendar
+    const formatDate = (date: Date) => date.toISOString().replace(/-|:|\.\d{3}/g, '');
+
+    const title = encodeURIComponent(data.title);
+    const description = encodeURIComponent(
+      type === 'workout'
+        ? `Completed ${data.duration || 30}-minute workout via SnapFit 💪`
+        : `Logged ${data.title} (${data.calories || 0} calories) via SnapFit 🍽️`
+    );
+
+    // Create Google Calendar URL
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatDate(now)}/${formatDate(endTime)}&details=${description}`;
+
+    // Open in new tab
+    window.open(googleCalendarUrl, '_blank');
+    setShowSuccessModal(false);
   };
 
   const TabButton = ({ tab, icon: Icon, label }: { tab: Tab; icon: typeof Dumbbell; label: string }) => (
@@ -2219,6 +2259,74 @@ function SnapFitContent() {
           <TabButton tab="settings" icon={User} label="Profile" />
         </div>
       </nav>
+
+      {/* Success Modal with Add to Calendar */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)} />
+
+          {/* Modal */}
+          <div className={`relative w-full max-w-sm rounded-3xl ${darkMode ? 'bg-gray-800' : 'bg-white'} shadow-2xl overflow-hidden`}>
+            {/* Success Header */}
+            <div className={`p-6 text-center ${successModalType === 'workout' ? 'bg-gradient-to-br from-green-500 to-emerald-600' : 'bg-gradient-to-br from-blue-500 to-indigo-600'}`}>
+              <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-white/20 flex items-center justify-center">
+                {successModalType === 'workout' ? (
+                  <Dumbbell className="w-10 h-10 text-white" />
+                ) : (
+                  <UtensilsCrossed className="w-10 h-10 text-white" />
+                )}
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-1">
+                {successModalType === 'workout' ? 'Workout Saved!' : 'Meal Logged!'}
+              </h3>
+              <p className="text-white/80 text-sm">{successModalData.title}</p>
+            </div>
+
+            {/* Actions */}
+            <div className="p-6 space-y-3">
+              <button
+                onClick={() => addToCalendar(successModalType, successModalData)}
+                className="w-full flex items-center justify-center gap-3 py-4 px-6 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-2xl font-semibold hover:shadow-lg hover:shadow-orange-500/25 transition-all"
+              >
+                <Calendar className="w-5 h-5" />
+                Add to Google Calendar
+              </button>
+
+              <button
+                onClick={() => setShowSuccessModal(false)}
+                className={`w-full py-4 px-6 rounded-2xl font-medium transition-all ${
+                  darkMode
+                    ? 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Done
+              </button>
+            </div>
+
+            {/* Stats badge */}
+            <div className={`px-6 pb-6 flex justify-center gap-4`}>
+              {successModalType === 'workout' && successModalData.duration && (
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <Clock className={`w-4 h-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`} />
+                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {successModalData.duration} min
+                  </span>
+                </div>
+              )}
+              {successModalType === 'meal' && successModalData.calories && (
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                  <Flame className={`w-4 h-4 ${darkMode ? 'text-orange-400' : 'text-orange-500'}`} />
+                  <span className={`text-sm font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                    {successModalData.calories} cal
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
