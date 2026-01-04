@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   ArrowLeft, Trophy, Users, Target, Flame, Zap, Clock, Award,
   ChevronRight, Star, Crown, Medal, TrendingUp, Gift, Calendar,
-  CheckCircle, Lock, Share2
+  CheckCircle, Lock, Share2, Loader2
 } from 'lucide-react';
 
 // Hero image
@@ -136,17 +137,64 @@ const TYPE_CONFIG = {
 };
 
 export default function GlobalChallengesPage() {
+  const { data: session } = useSession();
   const [challenges, setChallenges] = useState<GlobalChallenge[]>(SAMPLE_CHALLENGES);
   const [selectedChallenge, setSelectedChallenge] = useState<GlobalChallenge | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'upcoming' | 'completed'>('active');
+  const [loading, setLoading] = useState(true);
 
-  const joinChallenge = (challengeId: string) => {
+  // Fetch challenges from API
+  useEffect(() => {
+    const fetchChallenges = async () => {
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/challenges/global');
+        if (response.ok) {
+          const data = await response.json();
+          // API returns array directly
+          if (Array.isArray(data) && data.length > 0) {
+            const apiChallenges = data.map((challenge: any) => ({
+              ...challenge,
+              daysLeft: Math.max(0, Math.ceil((new Date(challenge.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
+            }));
+            setChallenges(apiChallenges);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching challenges:', error);
+        // Keep sample data on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChallenges();
+  }, [session]);
+
+  const joinChallenge = async (challengeId: string) => {
+    // Optimistically update UI
     setChallenges(challenges.map(c =>
       c.id === challengeId
         ? { ...c, isJoined: true, progress: 0, participantCount: c.participantCount + 1 }
         : c
     ));
+
+    // Call API to join challenge
+    try {
+      await fetch('/api/challenges/global', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challengeId }),
+      });
+    } catch (error) {
+      console.error('Error joining challenge:', error);
+    }
   };
+
 
   const getProgressPercent = (challenge: GlobalChallenge): number => {
     if (!challenge.progress) return 0;
@@ -204,8 +252,15 @@ export default function GlobalChallengesPage() {
       </div>
 
       <div className="px-4 py-6 space-y-6">
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
+          </div>
+        )}
+
         {/* Stats Cards */}
-        <div className="grid grid-cols-3 gap-3">
+        {!loading && <div className="grid grid-cols-3 gap-3">
           <div className="bg-gradient-to-br from-violet-500/20 to-purple-600/20 backdrop-blur-xl rounded-2xl border border-violet-500/30 p-4 text-center">
             <Trophy className="w-6 h-6 text-amber-400 mx-auto mb-2" />
             <p className="text-2xl font-bold text-white">{challenges.filter(c => c.isJoined).length}</p>
@@ -223,7 +278,7 @@ export default function GlobalChallengesPage() {
             <p className="text-2xl font-bold text-white">{challenges.reduce((a, c) => a + (c.isCompleted ? c.xpReward : 0), 0)}</p>
             <p className="text-xs text-white/60">XP Earned</p>
           </div>
-        </div>
+        </div>}
 
         {/* Tab Navigation */}
         <div className="flex gap-2 bg-white/5 backdrop-blur-xl rounded-2xl p-1">

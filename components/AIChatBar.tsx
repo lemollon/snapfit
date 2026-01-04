@@ -184,6 +184,14 @@ export default function AIChatBar() {
         };
         setMessages(prev => [...prev, confirmMessage]);
 
+        // Handle redirect if present (for recipes, timer, etc.)
+        if (result.redirect) {
+          setTimeout(() => {
+            router.push(result.redirect);
+            setIsOpen(false);
+          }, 1000);
+        }
+
         // Celebration animation
         triggerHaptic('success');
       }
