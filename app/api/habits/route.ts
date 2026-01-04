@@ -60,9 +60,12 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, icon, color, type, targetValue, unit, frequency, reminderTime } = body;
+    const { name, description, icon, color, type, habitType, targetValue, unit, frequency, reminderTime } = body;
 
-    if (!name || !type) {
+    // Accept either 'type' or 'habitType' from frontend
+    const habitTypeValue = type || habitType;
+
+    if (!name || !habitTypeValue) {
       return NextResponse.json({ error: 'Name and type are required' }, { status: 400 });
     }
 
@@ -84,7 +87,7 @@ export async function POST(request: NextRequest) {
         description,
         icon: icon || 'check',
         color: color || 'violet',
-        type,
+        type: habitTypeValue,
         targetValue,
         unit,
         frequency: frequency || 'daily',
