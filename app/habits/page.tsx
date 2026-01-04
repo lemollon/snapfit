@@ -3,11 +3,15 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Droplets, Moon, Footprints, Brain, Plus, Check,
   Flame, TrendingUp, Calendar, ChevronLeft, ChevronRight, X,
   Target, Award, Sparkles, Bell, Clock, Minus, Settings, Loader2
 } from 'lucide-react';
+import { useCelebration } from '@/components/Celebration';
+import { triggerHaptic } from '@/lib/haptics';
+import { staggerContainer, listItem, popIn, scaleIn } from '@/lib/animations';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1200&auto=format&fit=crop&q=80';
@@ -118,6 +122,9 @@ export default function HabitsPage() {
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [weekData, setWeekData] = useState<(boolean | null)[]>([true, true, true, false, true, true, null]);
 
+  // Premium celebration animations
+  const { celebrate, CelebrationComponent } = useCelebration();
+
   // Fetch habits from API
   useEffect(() => {
     const fetchHabits = async () => {
@@ -183,7 +190,11 @@ export default function HabitsPage() {
     if (!habit) return;
 
     const newValue = Math.max(0, (habit.todayValue || 0) + increment);
+    const wasCompleted = habit.todayCompleted;
     const completed = habit.targetValue ? newValue >= habit.targetValue : false;
+
+    // Haptic feedback on increment
+    triggerHaptic(increment > 0 ? 'light' : 'selection');
 
     // Optimistic update
     setHabits(habits.map(h => {
@@ -192,6 +203,12 @@ export default function HabitsPage() {
       }
       return h;
     }));
+
+    // Celebrate when habit is completed for the first time today
+    if (completed && !wasCompleted) {
+      triggerHaptic('success');
+      celebrate('goal', 'HABIT COMPLETE!', habit.name);
+    }
 
     // Save to API if logged in
     if (session?.user && !habitId.startsWith('demo-')) {
@@ -328,6 +345,9 @@ export default function HabitsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Premium Celebration Component */}
+      {CelebrationComponent}
+
       {/* Hero Header */}
       <div className="relative">
         <div

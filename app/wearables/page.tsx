@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   ArrowLeft, Watch, Heart, Moon, Footprints, Activity, Zap,
   Check, X, RefreshCw, ChevronRight, Settings, Plus, Smartphone,
-  Wifi, WifiOff, TrendingUp, Clock
+  Wifi, WifiOff, TrendingUp, Clock, Loader2
 } from 'lucide-react';
 
 // Hero image
@@ -113,10 +114,51 @@ const DAILY_METRICS: DailyMetric[] = [
 ];
 
 export default function WearablesPage() {
+  const { data: session } = useSession();
   const [devices, setDevices] = useState<WearableDevice[]>(AVAILABLE_DEVICES);
   const [selectedDevice, setSelectedDevice] = useState<WearableDevice | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch connected devices from API
+  useEffect(() => {
+    const fetchDevices = async () => {
+      if (!session?.user) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/wearables');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.connections && data.connections.length > 0) {
+            // Merge API data with available devices
+            const updatedDevices = AVAILABLE_DEVICES.map(device => {
+              const apiConnection = data.connections.find((c: any) => c.provider === device.provider);
+              if (apiConnection) {
+                return {
+                  ...device,
+                  isConnected: true,
+                  lastSync: apiConnection.lastSyncedAt ? new Date(apiConnection.lastSyncedAt).toLocaleString() : 'Never',
+                  deviceName: apiConnection.deviceName,
+                };
+              }
+              return device;
+            });
+            setDevices(updatedDevices);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching wearable connections:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDevices();
+  }, [session]);
 
   const connectedDevices = devices.filter(d => d.isConnected);
 

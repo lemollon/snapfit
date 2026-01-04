@@ -3,58 +3,19 @@
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Trophy, TrendingUp, Dumbbell, Timer, Ruler, Flame,
   ChevronRight, Star, Zap, Crown, Medal, Target, Plus, X,
   Calendar, Award, Sparkles, PartyPopper, Loader2
 } from 'lucide-react';
+import Celebration, { useCelebration } from '@/components/Celebration';
+import { triggerHaptic } from '@/lib/haptics';
+import { staggerContainer, listItem, cardHover, cardTap, fadeInUp, popIn } from '@/lib/animations';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=1200&auto=format&fit=crop&q=80';
 
-// Confetti component
-const Confetti = ({ show }: { show: boolean }) => {
-  if (!show) return null;
-
-  return (
-    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-      {[...Array(50)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute animate-confetti"
-          style={{
-            left: `${Math.random() * 100}%`,
-            animationDelay: `${Math.random() * 2}s`,
-            animationDuration: `${2 + Math.random() * 2}s`,
-          }}
-        >
-          <div
-            className="w-3 h-3 rounded-sm"
-            style={{
-              backgroundColor: ['#8B5CF6', '#EC4899', '#F59E0B', '#10B981', '#3B82F6'][Math.floor(Math.random() * 5)],
-              transform: `rotate(${Math.random() * 360}deg)`,
-            }}
-          />
-        </div>
-      ))}
-      <style jsx>{`
-        @keyframes confetti {
-          0% {
-            transform: translateY(-100vh) rotate(0deg);
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(100vh) rotate(720deg);
-            opacity: 0;
-          }
-        }
-        .animate-confetti {
-          animation: confetti 3s ease-out forwards;
-        }
-      `}</style>
-    </div>
-  );
-};
 
 interface PersonalRecord {
   id: string;
@@ -111,10 +72,11 @@ export default function RecordsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [showConfetti, setShowConfetti] = useState(false);
   const [showNewPRModal, setShowNewPRModal] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
   const [celebratedPR, setCelebratedPR] = useState<PersonalRecord | null>(null);
+
+  // Use the celebration hook for premium animations
+  const { celebrate, CelebrationComponent } = useCelebration();
 
   // Form state for new PR
   const [newPRForm, setNewPRForm] = useState({
@@ -181,11 +143,10 @@ export default function RecordsPage() {
     const newPR = records.find(r => r.isNew);
     if (newPR) {
       setCelebratedPR(newPR);
-      setShowCelebration(true);
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 3000);
+      triggerHaptic('success');
+      celebrate('pr', 'NEW PR!', `${newPR.exerciseName} - ${newPR.maxWeight || newPR.maxReps}${newPR.unit}`);
     }
-  }, [records]);
+  }, [records, celebrate]);
 
   const savePR = async () => {
     if (!newPRForm.exerciseName || (!newPRForm.weight && !newPRForm.reps)) {
@@ -238,11 +199,10 @@ export default function RecordsPage() {
     setNewPRForm({ exerciseName: '', category: 'strength', weight: '', reps: '', unit: 'lbs' });
     setSaving(false);
 
-    // Trigger celebration
+    // Trigger celebration with haptic feedback
     setCelebratedPR(newRecord);
-    setShowCelebration(true);
-    setShowConfetti(true);
-    setTimeout(() => setShowConfetti(false), 3000);
+    triggerHaptic('success');
+    celebrate('pr', 'NEW PR!', `${newRecord.exerciseName} - ${newRecord.maxWeight || newRecord.maxReps}${newRecord.unit}`);
   };
 
   const formatTime = (seconds: number): string => {
@@ -290,7 +250,8 @@ export default function RecordsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <Confetti show={showConfetti} />
+      {/* Premium Celebration Component */}
+      {CelebrationComponent}
 
       {/* Hero Header */}
       <div className="relative">
@@ -392,65 +353,93 @@ export default function RecordsPage() {
         </div>
 
         {/* Records List */}
-        <div className="space-y-3">
+        <motion.div
+          className="space-y-3"
+          variants={staggerContainer}
+          initial="initial"
+          animate="animate"
+        >
           <h2 className="text-lg font-semibold text-white flex items-center gap-2">
             <Medal className="w-5 h-5 text-amber-400" />
             Your Records
           </h2>
 
-          {filteredRecords.map((record) => {
-            const categoryConfig = CATEGORY_CONFIG[record.category];
-            const CategoryIcon = categoryConfig.icon;
+          <AnimatePresence mode="popLayout">
+            {filteredRecords.map((record, index) => {
+              const categoryConfig = CATEGORY_CONFIG[record.category];
+              const CategoryIcon = categoryConfig.icon;
 
-            return (
-              <div
-                key={record.id}
-                className={`bg-white/5 backdrop-blur-xl rounded-2xl border p-4 transition-all hover:bg-white/10 ${
-                  record.isNew
-                    ? 'border-amber-500/50 ring-2 ring-amber-500/20'
-                    : 'border-white/10'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-3 rounded-xl bg-gradient-to-r ${categoryConfig.color}`}>
-                      <CategoryIcon className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-white">{record.exerciseName}</h3>
-                        {record.isNew && (
-                          <span className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full flex items-center gap-1">
-                            <Sparkles className="w-3 h-3" />
-                            NEW PR!
-                          </span>
-                        )}
+              return (
+                <motion.div
+                  key={record.id}
+                  variants={listItem}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  layout
+                  whileHover={cardHover}
+                  whileTap={cardTap}
+                  className={`bg-white/5 backdrop-blur-xl rounded-2xl border p-4 cursor-pointer ${
+                    record.isNew
+                      ? 'border-amber-500/50 ring-2 ring-amber-500/20'
+                      : 'border-white/10'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        className={`p-3 rounded-xl bg-gradient-to-r ${categoryConfig.color}`}
+                        whileHover={{ rotate: [0, -10, 10, 0] }}
+                        transition={{ duration: 0.5 }}
+                      >
+                        <CategoryIcon className="w-5 h-5 text-white" />
+                      </motion.div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-white">{record.exerciseName}</h3>
+                          {record.isNew && (
+                            <motion.span
+                              className="px-2 py-0.5 bg-amber-500/20 text-amber-400 text-xs font-medium rounded-full flex items-center gap-1"
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                            >
+                              <Sparkles className="w-3 h-3" />
+                              NEW PR!
+                            </motion.span>
+                          )}
+                        </div>
+                        <p className="text-sm text-white/50">{formatDate(record.achievedAt)}</p>
                       </div>
-                      <p className="text-sm text-white/50">{formatDate(record.achievedAt)}</p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="text-xl font-bold text-white">{getRecordValue(record)}</p>
+                      {record.improvement && (
+                        <motion.p
+                          className="text-sm text-green-400 flex items-center justify-end gap-1"
+                          initial={{ opacity: 0, x: 10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          <TrendingUp className="w-3 h-3" />
+                          +{record.improvement}%
+                        </motion.p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-xl font-bold text-white">{getRecordValue(record)}</p>
-                    {record.improvement && (
-                      <p className="text-sm text-green-400 flex items-center justify-end gap-1">
-                        <TrendingUp className="w-3 h-3" />
-                        +{record.improvement}%
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Additional details for strength exercises */}
-                {record.maxWeight && record.maxReps && (
-                  <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-4 text-sm text-white/60">
-                    <span>Best: {record.maxWeight} {record.unit} × {record.maxReps} reps</span>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  {/* Additional details for strength exercises */}
+                  {record.maxWeight && record.maxReps && (
+                    <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-4 text-sm text-white/60">
+                      <span>Best: {record.maxWeight} {record.unit} × {record.maxReps} reps</span>
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </AnimatePresence>
+        </motion.div>
 
         {/* Recent PR History */}
         <div className="space-y-3">
@@ -494,52 +483,6 @@ export default function RecordsPage() {
           </Link>
         </div>
       </div>
-
-      {/* PR Celebration Modal */}
-      {showCelebration && celebratedPR && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-3xl p-8 w-full max-w-md text-center relative overflow-hidden">
-            {/* Animated background */}
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute inset-0 bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 animate-pulse" />
-            </div>
-
-            <div className="relative z-10">
-              <div className="w-20 h-20 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                <PartyPopper className="w-10 h-10 text-white" />
-              </div>
-
-              <h2 className="text-3xl font-bold text-white mb-2">NEW PR!</h2>
-              <p className="text-white/60 mb-6">You just crushed your personal record!</p>
-
-              <div className="bg-white/10 rounded-2xl p-4 mb-6">
-                <h3 className="text-xl font-bold text-white">{celebratedPR.exerciseName}</h3>
-                <p className="text-4xl font-bold bg-gradient-to-r from-amber-400 to-yellow-500 text-transparent bg-clip-text my-2">
-                  {getRecordValue(celebratedPR)}
-                </p>
-                {celebratedPR.improvement && (
-                  <p className="text-green-400 flex items-center justify-center gap-1">
-                    <TrendingUp className="w-4 h-4" />
-                    {celebratedPR.improvement}% improvement!
-                  </p>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowCelebration(false)}
-                  className="flex-1 py-3 bg-white/10 rounded-2xl font-semibold text-white hover:bg-white/20 transition-all"
-                >
-                  Close
-                </button>
-                <button className="flex-1 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all">
-                  Share
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* New PR Modal */}
       {showNewPRModal && (

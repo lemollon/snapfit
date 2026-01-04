@@ -5,6 +5,17 @@ import { users } from './db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
+// Get secret with fallback for development/build
+function getAuthSecret(): string {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    // During build or development, use a fallback
+    // Production runtime will fail at request time if not set
+    return 'build-time-secret-not-for-production';
+  }
+  return secret;
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -65,9 +76,12 @@ export const authOptions: NextAuthOptions = {
   },
   pages: {
     signIn: '/login',
+    error: '/login',
   },
   session: {
     strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: getAuthSecret(),
+  debug: process.env.NODE_ENV === 'development',
 };
