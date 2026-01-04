@@ -438,6 +438,16 @@ function SnapFitContent() {
     setError(null);
   };
 
+  // Helper to get supported MIME type for Anthropic API
+  const getSupportedMediaType = (fileType: string): 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' => {
+    const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (supportedTypes.includes(fileType)) {
+      return fileType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+    }
+    // For unsupported types (HEIC, HEIF, empty) or unknown, default to jpeg
+    return 'image/jpeg';
+  };
+
   const generateWorkout = async () => {
     if (photos.length === 0) return;
 
@@ -457,7 +467,7 @@ function SnapFitContent() {
           type: 'image' as const,
           source: {
             type: 'base64' as const,
-            media_type: photo.file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+            media_type: getSupportedMediaType(photo.file.type),
             data: base64,
           },
         };
@@ -2218,6 +2228,17 @@ function SnapFitContent() {
                     <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Apple, Garmin, Whoop & more</p>
                   </div>
                   <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs rounded-full font-medium">New</span>
+                </Link>
+
+                <Link href="/reports" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-fuchsia-400 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <BarChart3 className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Weekly Reports</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI-generated progress analysis</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white text-xs rounded-full font-medium">AI</span>
                 </Link>
 
                 <Link href="/challenges/global" className={`flex items-center gap-4 p-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors`}>
