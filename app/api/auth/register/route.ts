@@ -38,9 +38,8 @@ export async function POST(req: Request) {
     }
 
     // Check if user exists
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, normalizedEmail),
-    });
+    const existingUsers = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+    const existingUser = existingUsers[0];
 
     if (existingUser) {
       // Generic message to prevent user enumeration
