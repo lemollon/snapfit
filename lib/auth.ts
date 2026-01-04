@@ -32,9 +32,16 @@ export const authOptions: NextAuthOptions = {
         // Normalize email
         const normalizedEmail = credentials.email.toLowerCase().trim();
 
-        const user = await db.query.users.findFirst({
-          where: eq(users.email, normalizedEmail),
-        });
+        let user;
+        try {
+          user = await db.query.users.findFirst({
+            where: eq(users.email, normalizedEmail),
+          });
+        } catch (dbError) {
+          // Log the actual error for debugging but don't expose it to users
+          console.error('Database error during login:', dbError);
+          throw new Error('Unable to sign in. Please try again later.');
+        }
 
         if (!user || !user.password) {
           // Generic message to prevent user enumeration
