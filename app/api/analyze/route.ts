@@ -1,6 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { findExerciseByName, EXERCISE_LIBRARY } from '@/lib/data/exercise-library';
+import { rateLimiters, getRateLimitHeaders } from '@/lib/rate-limit';
 import {
   EQUIPMENT_LIBRARY,
   EQUIPMENT_CATEGORIES,
@@ -80,6 +82,25 @@ function getVisualCues(): string {
 
 export async function POST(request: Request) {
   try {
+    // Require authentication for AI endpoints
+    const session = await getServerSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Rate limit AI requests (20 per minute per user)
+    const userId = (session.user as { id?: string }).id || 'unknown';
+    const rateLimitResult = rateLimiters.ai(userId);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait before generating more workouts.' },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult, 20)
+        }
+      );
+    }
+
     const { images, fitnessLevel, duration, workoutTypes } = await request.json();
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -89,6 +110,11 @@ export async function POST(request: Request) {
 
     if (!images || images.length === 0) {
       return NextResponse.json({ error: 'At least one image is required' }, { status: 400 });
+    }
+
+    // Validate image count
+    if (images.length > 5) {
+      return NextResponse.json({ error: 'Maximum 5 images allowed' }, { status: 400 });
     }
 
     const client = new Anthropic({ apiKey });

@@ -2,8 +2,33 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { sendEmail, emailTemplates, getEmailConfig } from '@/lib/email';
+import { rateLimiters, getClientIdentifier, getRateLimitHeaders } from '@/lib/rate-limit';
 
 type EmailType = 'welcome' | 'password-reset' | 'trainer-invite' | 'achievement' | 'weekly-report' | 'custom';
+
+/**
+ * Basic HTML sanitization to prevent XSS in custom emails
+ * Removes script tags, event handlers, and javascript: URLs
+ */
+function sanitizeHtml(html: string): string {
+  return html
+    // Remove script tags and their content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    // Remove event handlers (onclick, onload, onerror, etc.)
+    .replace(/\s+on\w+\s*=\s*["'][^"']*["']/gi, '')
+    .replace(/\s+on\w+\s*=\s*[^\s>]+/gi, '')
+    // Remove javascript: URLs
+    .replace(/javascript\s*:/gi, '')
+    // Remove data: URLs (can be used for XSS)
+    .replace(/data\s*:\s*text\/html/gi, '')
+    // Remove iframe with src
+    .replace(/<iframe[^>]*>/gi, '')
+    // Remove object/embed tags
+    .replace(/<object[^>]*>.*?<\/object>/gi, '')
+    .replace(/<embed[^>]*>/gi, '')
+    // Remove base tags (can hijack relative URLs)
+    .replace(/<base[^>]*>/gi, '');
+}
 
 interface EmailRequest {
   type: EmailType;
@@ -28,6 +53,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
+      );
+    }
+
+    // Rate limit email sending (10 per minute per user)
+    const rateLimitResult = rateLimiters.email(session.user.id);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many emails sent. Please wait before sending more.' },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult, 10)
+        }
       );
     }
 
@@ -119,9 +156,24 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
+        // Validate subject length
+        if (body.subject.length > 200) {
+          return NextResponse.json(
+            { error: 'Subject too long (max 200 characters)' },
+            { status: 400 }
+          );
+        }
+        // Validate HTML length
+        if (body.html.length > 100000) {
+          return NextResponse.json(
+            { error: 'Email content too long (max 100KB)' },
+            { status: 400 }
+          );
+        }
+        // Sanitize HTML to prevent XSS
         emailContent = {
           subject: body.subject,
-          html: body.html,
+          html: sanitizeHtml(body.html),
         };
         break;
 

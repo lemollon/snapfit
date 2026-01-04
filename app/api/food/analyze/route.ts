@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import Anthropic from '@anthropic-ai/sdk';
+import { rateLimiters, getRateLimitHeaders } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
   try {
@@ -8,6 +9,19 @@ export async function POST(req: Request) {
     const session = await getServerSession();
     if (!session?.user) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    // Rate limit AI requests (20 per minute per user)
+    const userId = (session.user as { id?: string }).id || 'unknown';
+    const rateLimitResult = rateLimiters.ai(userId);
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please wait before analyzing more images.' },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult, 20)
+        }
+      );
     }
 
     const { imageBase64 } = await req.json();

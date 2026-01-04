@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { users, passwordResetTokens } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendPasswordResetEmail, isEmailConfigured } from '@/lib/email';
+import { rateLimiters, getClientIdentifier, getRateLimitHeaders } from '@/lib/rate-limit';
 
 // Generate a 6-digit code
 function generateCode(): string {
@@ -13,6 +14,20 @@ const isDev = process.env.NODE_ENV === 'development';
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit password reset attempts (3 per 15 minutes)
+    const clientId = getClientIdentifier(req);
+    const rateLimitResult = rateLimiters.passwordReset(clientId);
+
+    if (!rateLimitResult.success) {
+      return NextResponse.json(
+        { error: 'Too many password reset attempts. Please try again later.' },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult, 3)
+        }
+      );
+    }
+
     const body = await req.json();
     const { email } = body;
 
