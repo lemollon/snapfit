@@ -34,9 +34,8 @@ export const authOptions: NextAuthOptions = {
 
         let user;
         try {
-          user = await db.query.users.findFirst({
-            where: eq(users.email, normalizedEmail),
-          });
+          const result = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+          user = result[0];
         } catch (dbError) {
           // Log the actual error for debugging but don't expose it to users
           console.error('Database error during login:', dbError);
