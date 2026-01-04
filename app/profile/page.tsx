@@ -294,9 +294,14 @@ export default function ProfilePage() {
           [type === 'avatar' ? 'avatarUrl' : 'coverUrl']: imageUrl,
         }),
       });
+      if (!res.ok) {
+        const error = await res.json().catch(() => ({}));
+        throw new Error(error.error || 'Failed to update profile');
+      }
       const data = await res.json();
       if (data.user) {
         setProfile(data.user);
+        toast.success('Image updated', `Your ${type} has been updated.`);
       }
     } catch (error) {
       console.error(`Failed to upload ${type}:`, error);
