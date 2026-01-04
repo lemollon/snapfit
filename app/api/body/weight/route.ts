@@ -70,8 +70,14 @@ export async function POST(req: Request) {
 
     const { weight, unit, notes } = await req.json();
 
-    if (!weight || weight <= 0) {
-      return NextResponse.json({ error: 'Valid weight is required' }, { status: 400 });
+    if (!weight || typeof weight !== 'number' || weight <= 0 || weight > 1000) {
+      return NextResponse.json({ error: 'Valid weight is required (0-1000)' }, { status: 400 });
+    }
+
+    // Validate unit
+    const validUnits = ['kg', 'lbs'];
+    if (unit && !validUnits.includes(unit)) {
+      return NextResponse.json({ error: 'Unit must be kg or lbs' }, { status: 400 });
     }
 
     const [user] = await db

@@ -126,14 +126,15 @@ export default function TrainerDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ clientEmail }),
       });
-      const data = await res.json();
       if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
         toast.error('Failed to add client', data.error || 'Please try again.');
         return;
       }
       setClientEmail('');
       setShowAddClient(false);
       fetchClients();
+      toast.success('Client added', 'Invitation sent successfully.');
     } catch {
       toast.error('Failed to add client', 'Please check your connection and try again.');
     } finally {

@@ -153,6 +153,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Receiver and content are required' }, { status: 400 });
     }
 
+    // Validate content length (max 10,000 characters)
+    if (content.length > 10000) {
+      return NextResponse.json({ error: 'Message too long (max 10,000 characters)' }, { status: 400 });
+    }
+
+    // Validate attachment type if provided
+    if (attachmentType) {
+      const validTypes = ['image', 'video', 'workout', 'meal', 'progress_photo'];
+      if (!validTypes.includes(attachmentType)) {
+        return NextResponse.json({ error: 'Invalid attachment type' }, { status: 400 });
+      }
+    }
+
     const [sender] = await db
       .select({ id: users.id })
       .from(users)
