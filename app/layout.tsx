@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Providers } from './providers';
+import BottomNav from '@/components/BottomNav';
 
 export const metadata: Metadata = {
   title: 'SnapFit - AI Workout Planner',
@@ -18,7 +19,12 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body className="font-sans antialiased bg-white dark:bg-black text-zinc-900 dark:text-white transition-colors">
-        <Providers>{children}</Providers>
+        <Providers>
+          <main className="pb-20 md:pb-0">
+            {children}
+          </main>
+          <BottomNav />
+        </Providers>
       </body>
     </html>
   );

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowLeft, Search, Filter, Clock, Users, Flame, ChefHat,
   Heart, Bookmark, BookmarkCheck, Star, Plus, X, ChevronDown,
-  Utensils, Leaf, Wheat, Drumstick, Apple, Coffee, Loader2
+  Utensils, Leaf, Wheat, Drumstick, Apple, Coffee, Loader2, Check
 } from 'lucide-react';
 
 // Hero image
@@ -175,6 +175,8 @@ export default function RecipesPage() {
   const [selectedDiet, setSelectedDiet] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [loggingMeal, setLoggingMeal] = useState(false);
+  const [mealLogged, setMealLogged] = useState(false);
 
   // Fetch recipes from API
   useEffect(() => {
@@ -244,6 +246,47 @@ export default function RecipesPage() {
           r.id === recipeId ? { ...r, isSaved: !r.isSaved } : r
         ));
       }
+    }
+  };
+
+  const logMeal = async (recipe: Recipe) => {
+    if (!session?.user) {
+      alert('Please log in to log meals');
+      return;
+    }
+
+    setLoggingMeal(true);
+    try {
+      const response = await fetch('/api/food', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          foodName: recipe.name,
+          mealType: recipe.category === 'breakfast' ? 'breakfast' :
+                    recipe.category === 'lunch' ? 'lunch' :
+                    recipe.category === 'dinner' ? 'dinner' : 'snack',
+          calories: recipe.calories,
+          protein: recipe.protein,
+          carbs: recipe.carbs,
+          fat: recipe.fat,
+          notes: `Recipe: ${recipe.name} - ${recipe.description}`,
+        }),
+      });
+
+      if (response.ok) {
+        setMealLogged(true);
+        setTimeout(() => {
+          setMealLogged(false);
+          setSelectedRecipe(null);
+        }, 1500);
+      } else {
+        throw new Error('Failed to log meal');
+      }
+    } catch (error) {
+      console.error('Error logging meal:', error);
+      alert('Failed to log meal. Please try again.');
+    } finally {
+      setLoggingMeal(false);
     }
   };
 
@@ -697,9 +740,31 @@ export default function RecipesPage() {
               </div>
 
               {/* Log this meal button */}
-              <button className="w-full py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all">
-                <Plus className="w-5 h-5 inline mr-2" />
-                Log This Meal
+              <button
+                onClick={() => selectedRecipe && logMeal(selectedRecipe)}
+                disabled={loggingMeal || mealLogged}
+                className={`w-full py-4 rounded-2xl font-semibold text-white transition-all flex items-center justify-center gap-2 ${
+                  mealLogged
+                    ? 'bg-green-500'
+                    : 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700'
+                } ${loggingMeal ? 'opacity-75' : ''}`}
+              >
+                {loggingMeal ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Logging...
+                  </>
+                ) : mealLogged ? (
+                  <>
+                    <Check className="w-5 h-5" />
+                    Meal Logged!
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5" />
+                    Log This Meal
+                  </>
+                )}
               </button>
             </div>
           </div>

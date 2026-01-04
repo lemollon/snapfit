@@ -142,6 +142,37 @@ export default function GlobalChallengesPage() {
   const [selectedChallenge, setSelectedChallenge] = useState<GlobalChallenge | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'upcoming' | 'completed'>('active');
   const [loading, setLoading] = useState(true);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
+  const [currentUserPosition, setCurrentUserPosition] = useState<LeaderboardEntry | null>(null);
+
+  // Fetch leaderboard when challenge is selected
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      if (!selectedChallenge) {
+        setLeaderboard([]);
+        setCurrentUserPosition(null);
+        return;
+      }
+
+      setLeaderboardLoading(true);
+      try {
+        const response = await fetch(`/api/challenges/global/leaderboard?challengeId=${selectedChallenge.id}&limit=10`);
+        if (response.ok) {
+          const data = await response.json();
+          setLeaderboard(data.leaderboard || []);
+          setCurrentUserPosition(data.currentUserPosition || null);
+        }
+      } catch (error) {
+        console.error('Error fetching leaderboard:', error);
+        // Keep empty leaderboard on error
+      } finally {
+        setLeaderboardLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, [selectedChallenge]);
 
   // Fetch challenges from API
   useEffect(() => {
@@ -541,56 +572,74 @@ export default function GlobalChallengesPage() {
                 </div>
 
                 <div className="divide-y divide-white/5">
-                  {SAMPLE_LEADERBOARD.slice(0, 10).map((entry) => (
-                    <div
-                      key={entry.rank}
-                      className={`px-4 py-3 flex items-center gap-3 ${
-                        entry.isCurrentUser ? 'bg-violet-500/10' : ''
-                      }`}
-                    >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        entry.rank === 1 ? 'bg-amber-500 text-white' :
-                        entry.rank === 2 ? 'bg-gray-300 text-gray-800' :
-                        entry.rank === 3 ? 'bg-amber-700 text-white' :
-                        'bg-white/10 text-white/60'
-                      }`}>
-                        {entry.rank <= 3 ? entry.badge : entry.rank}
-                      </div>
-                      <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl">
-                        {entry.avatar}
-                      </div>
-                      <div className="flex-1">
-                        <p className={`font-medium ${entry.isCurrentUser ? 'text-violet-400' : 'text-white'}`}>
-                          {entry.name}
-                        </p>
-                        <p className="text-xs text-white/50">Level {entry.level}</p>
-                      </div>
-                      <p className="font-bold text-white">{formatNumber(entry.progress)}</p>
+                  {leaderboardLoading ? (
+                    <div className="p-8 text-center">
+                      <Loader2 className="w-6 h-6 text-violet-400 animate-spin mx-auto" />
+                      <p className="text-white/50 text-sm mt-2">Loading leaderboard...</p>
                     </div>
-                  ))}
-
-                  {/* Current user if not in top 10 */}
-                  {SAMPLE_LEADERBOARD.find(e => e.isCurrentUser && e.rank > 10) && (
+                  ) : leaderboard.length === 0 ? (
+                    <div className="p-8 text-center">
+                      <Trophy className="w-10 h-10 text-white/20 mx-auto mb-2" />
+                      <p className="text-white/50 text-sm">No participants yet</p>
+                      <p className="text-white/30 text-xs">Be the first to join!</p>
+                    </div>
+                  ) : (
                     <>
-                      <div className="px-4 py-2 text-center text-white/30 text-sm">• • •</div>
-                      {(() => {
-                        const user = SAMPLE_LEADERBOARD.find(e => e.isCurrentUser)!;
-                        return (
+                      {leaderboard.map((entry) => (
+                        <div
+                          key={entry.rank}
+                          className={`px-4 py-3 flex items-center gap-3 ${
+                            entry.isCurrentUser ? 'bg-violet-500/10' : ''
+                          }`}
+                        >
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                            entry.rank === 1 ? 'bg-amber-500 text-white' :
+                            entry.rank === 2 ? 'bg-gray-300 text-gray-800' :
+                            entry.rank === 3 ? 'bg-amber-700 text-white' :
+                            'bg-white/10 text-white/60'
+                          }`}>
+                            {entry.rank <= 3 ? (entry.badge || entry.rank) : entry.rank}
+                          </div>
+                          <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl overflow-hidden">
+                            {entry.avatar?.startsWith('http') ? (
+                              <img src={entry.avatar} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              entry.avatar || '👤'
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className={`font-medium ${entry.isCurrentUser ? 'text-violet-400' : 'text-white'}`}>
+                              {entry.name}
+                            </p>
+                            <p className="text-xs text-white/50">Level {entry.level}</p>
+                          </div>
+                          <p className="font-bold text-white">{formatNumber(entry.progress)}</p>
+                        </div>
+                      ))}
+
+                      {/* Current user if not in top 10 */}
+                      {currentUserPosition && currentUserPosition.rank > 10 && (
+                        <>
+                          <div className="px-4 py-2 text-center text-white/30 text-sm">• • •</div>
                           <div className="px-4 py-3 flex items-center gap-3 bg-violet-500/10">
                             <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-sm font-bold text-white/60">
-                              {user.rank}
+                              {currentUserPosition.rank}
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl">
-                              {user.avatar}
+                            <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl overflow-hidden">
+                              {currentUserPosition.avatar?.startsWith('http') ? (
+                                <img src={currentUserPosition.avatar} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                currentUserPosition.avatar || '⭐'
+                              )}
                             </div>
                             <div className="flex-1">
-                              <p className="font-medium text-violet-400">{user.name}</p>
-                              <p className="text-xs text-white/50">Level {user.level}</p>
+                              <p className="font-medium text-violet-400">{currentUserPosition.name}</p>
+                              <p className="text-xs text-white/50">Level {currentUserPosition.level}</p>
                             </div>
-                            <p className="font-bold text-white">{formatNumber(user.progress)}</p>
+                            <p className="font-bold text-white">{formatNumber(currentUserPosition.progress)}</p>
                           </div>
-                        );
-                      })()}
+                        </>
+                      )}
                     </>
                   )}
                 </div>

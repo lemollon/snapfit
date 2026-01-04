@@ -163,15 +163,53 @@ export default function WearablesPage() {
   const connectedDevices = devices.filter(d => d.isConnected);
 
   const handleConnect = async (deviceId: string) => {
-    // Simulate OAuth connection
-    setDevices(devices.map(d =>
-      d.id === deviceId
-        ? { ...d, isConnected: true, lastSync: 'Just now' }
-        : d
-    ));
+    const device = devices.find(d => d.id === deviceId);
+    if (!device) return;
+
+    // Note: Real OAuth implementation would redirect to provider's auth page
+    // For now, we create a connection record to demonstrate the flow
+    if (session?.user) {
+      try {
+        const response = await fetch('/api/wearables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: device.provider,
+            deviceName: device.name,
+            // In production, these would come from OAuth callback
+            accessToken: 'demo-token',
+            refreshToken: 'demo-refresh',
+          }),
+        });
+
+        if (response.ok) {
+          setDevices(devices.map(d =>
+            d.id === deviceId
+              ? { ...d, isConnected: true, lastSync: 'Just now' }
+              : d
+          ));
+        } else {
+          throw new Error('Failed to connect');
+        }
+      } catch (error) {
+        console.error('Error connecting device:', error);
+        alert('Failed to connect device. Please try again.');
+      }
+    } else {
+      // Demo mode - just update local state
+      setDevices(devices.map(d =>
+        d.id === deviceId
+          ? { ...d, isConnected: true, lastSync: 'Just now' }
+          : d
+      ));
+    }
   };
 
-  const handleDisconnect = (deviceId: string) => {
+  const handleDisconnect = async (deviceId: string) => {
+    const device = devices.find(d => d.id === deviceId);
+    if (!device) return;
+
+    // Optimistic update
     setDevices(devices.map(d =>
       d.id === deviceId
         ? { ...d, isConnected: false, lastSync: undefined, deviceName: undefined }
@@ -179,10 +217,22 @@ export default function WearablesPage() {
     ));
     setSelectedDevice(null);
     setShowSettings(false);
+
+    if (session?.user) {
+      try {
+        await fetch(`/api/wearables?id=${deviceId}`, {
+          method: 'DELETE',
+        });
+      } catch (error) {
+        console.error('Error disconnecting device:', error);
+        // Could revert here but connection UI is already updated
+      }
+    }
   };
 
   const handleSync = async () => {
     setIsSyncing(true);
+    // In production, this would trigger a real sync with the wearable provider APIs
     await new Promise(resolve => setTimeout(resolve, 2000));
     setDevices(devices.map(d =>
       d.isConnected ? { ...d, lastSync: 'Just now' } : d
