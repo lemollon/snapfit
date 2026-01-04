@@ -43,6 +43,7 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useTheme } from '@/lib/theme-context';
 import { AchievementIcon, AvatarPlaceholder } from '@/components/achievement-icon';
+import { useToast } from '@/components/Toast';
 
 interface UserProfile {
   id: string;
@@ -129,6 +130,7 @@ function getLevelProgress(xp: number, level: number): number {
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
@@ -291,7 +293,7 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error(`Failed to upload ${type}:`, error);
-      alert(error instanceof Error ? error.message : `Failed to upload ${type}`);
+      toast.error('Upload failed', error instanceof Error ? error.message : `Failed to upload ${type}`);
     }
   };
 

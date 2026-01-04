@@ -8,6 +8,7 @@ import {
   Crown, Sparkles, Check, X, ExternalLink, Instagram, Youtube,
   Twitter, Smartphone, Monitor, Sun, Moon, Loader2
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=1200&auto=format&fit=crop&q=80';
@@ -50,6 +51,7 @@ const FONT_OPTIONS = [
 
 export default function BrandingPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const logoInputRef = useRef<HTMLInputElement>(null);
   const [settings, setSettings] = useState<BrandingSettings>({
     businessName: '',
@@ -141,13 +143,14 @@ export default function BrandingPage() {
         const uploadData = await uploadRes.json();
         if (uploadData.data?.url) {
           setSettings(prev => ({ ...prev, logoUrl: uploadData.data.url }));
+          toast.success('Logo uploaded', 'Your logo has been updated.');
         }
       } else {
-        alert('Failed to upload logo');
+        toast.error('Upload failed', 'Failed to upload logo. Please try again.');
       }
     } catch (error) {
       console.error('Logo upload failed:', error);
-      alert('Failed to upload logo');
+      toast.error('Upload failed', 'Failed to upload logo. Please try again.');
     } finally {
       setUploadingLogo(false);
     }
@@ -166,9 +169,10 @@ export default function BrandingPage() {
         const error = await res.json();
         throw new Error(error.error || 'Failed to save branding');
       }
+      toast.success('Changes saved', 'Your branding settings have been updated.');
     } catch (error) {
       console.error('Save failed:', error);
-      alert(error instanceof Error ? error.message : 'Failed to save branding settings');
+      toast.error('Save failed', error instanceof Error ? error.message : 'Failed to save branding settings');
     } finally {
       setIsSaving(false);
     }

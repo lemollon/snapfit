@@ -10,6 +10,7 @@ import {
   Target, Award, Sparkles, Bell, Clock, Minus, Settings, Loader2
 } from 'lucide-react';
 import { useCelebration } from '@/components/Celebration';
+import { useToast } from '@/components/Toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { staggerContainer, listItem, popIn, scaleIn } from '@/lib/animations';
 
@@ -113,6 +114,7 @@ const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function HabitsPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -327,7 +329,7 @@ export default function HabitsPage() {
 
   const createCustomHabit = async () => {
     if (!customHabitName.trim()) {
-      alert('Please enter a habit name');
+      toast.warning('Missing name', 'Please enter a habit name');
       return;
     }
 
@@ -395,7 +397,7 @@ export default function HabitsPage() {
       }
     } catch (error) {
       console.error('Error creating custom habit:', error);
-      alert('Failed to create habit. Please try again.');
+      toast.error('Failed to create habit', 'Please try again');
     } finally {
       setSaving(false);
     }
@@ -848,20 +850,26 @@ export default function HabitsPage() {
               </div>
             </div>
 
-            {/* Calendar Heatmap Placeholder */}
+            {/* Calendar Heatmap - Based on habit completion percentage */}
             <div className="bg-white/5 rounded-2xl p-4">
               <p className="text-sm text-white/60 mb-3">Last 30 Days</p>
               <div className="grid grid-cols-7 gap-1">
-                {[...Array(30)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`aspect-square rounded-sm ${
-                      Math.random() > 0.3
-                        ? 'bg-gradient-to-r from-violet-500/50 to-purple-600/50'
-                        : 'bg-white/10'
-                    }`}
-                  />
-                ))}
+                {[...Array(30)].map((_, i) => {
+                  // Calculate based on streak data - show completed days based on current streak
+                  const daysAgo = 29 - i;
+                  const isCompleted = selectedHabit && daysAgo < selectedHabit.currentStreak;
+                  return (
+                    <div
+                      key={i}
+                      className={`aspect-square rounded-sm ${
+                        isCompleted
+                          ? 'bg-gradient-to-r from-violet-500/50 to-purple-600/50'
+                          : 'bg-white/10'
+                      }`}
+                      title={isCompleted ? 'Completed' : 'Not completed'}
+                    />
+                  );
+                })}
               </div>
             </div>
 
@@ -873,7 +881,7 @@ export default function HabitsPage() {
                   <span className="text-white">Reminder</span>
                 </div>
                 <button
-                  onClick={() => alert('Reminders coming soon! Enable notifications in your device settings.')}
+                  onClick={() => toast.info('Coming soon', 'Reminders will be available in a future update')}
                   className="px-3 py-1 bg-white/10 rounded-lg text-sm text-white/60 hover:bg-white/20 transition-colors"
                 >
                   Off

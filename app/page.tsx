@@ -56,6 +56,7 @@ import {
   Repeat,
   Utensils,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Stock fitness images from Unsplash
 const HERO_IMAGES = [
@@ -173,6 +174,7 @@ function SnapFitContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const isGuestMode = searchParams.get('guest') === 'true';
 
   // State
@@ -629,9 +631,10 @@ function SnapFitContent() {
       if (res.ok) {
         setFriendEmail('');
         fetchFriends();
+        toast.success('Request sent', 'Friend request has been sent!');
       } else {
         const data = await res.json();
-        alert(data.error);
+        toast.error('Failed to send request', data.error || 'Please try again.');
       }
     } catch (err) {
       console.error('Failed to send friend request:', err);

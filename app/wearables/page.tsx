@@ -8,6 +8,7 @@ import {
   Check, X, RefreshCw, ChevronRight, Settings, Plus, Smartphone,
   Wifi, WifiOff, TrendingUp, Clock, Loader2
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1576243345690-4e4b79b63288?w=1200&auto=format&fit=crop&q=80';
@@ -115,6 +116,7 @@ const DAILY_METRICS: DailyMetric[] = [
 
 export default function WearablesPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const [devices, setDevices] = useState<WearableDevice[]>(AVAILABLE_DEVICES);
   const [selectedDevice, setSelectedDevice] = useState<WearableDevice | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -166,8 +168,8 @@ export default function WearablesPage() {
     const device = devices.find(d => d.id === deviceId);
     if (!device) return;
 
-    // Note: Real OAuth implementation would redirect to provider's auth page
-    // For now, we create a connection record to demonstrate the flow
+    // In production, this would redirect to the provider's OAuth page
+    // For demo purposes, we simulate the connection flow
     if (session?.user) {
       try {
         const response = await fetch('/api/wearables', {
@@ -176,9 +178,6 @@ export default function WearablesPage() {
           body: JSON.stringify({
             provider: device.provider,
             deviceName: device.name,
-            // In production, these would come from OAuth callback
-            accessToken: 'demo-token',
-            refreshToken: 'demo-refresh',
           }),
         });
 
@@ -188,20 +187,22 @@ export default function WearablesPage() {
               ? { ...d, isConnected: true, lastSync: 'Just now' }
               : d
           ));
+          toast.success('Device connected', `${device.name} is now syncing your health data.`);
         } else {
           throw new Error('Failed to connect');
         }
       } catch (error) {
         console.error('Error connecting device:', error);
-        alert('Failed to connect device. Please try again.');
+        toast.error('Connection failed', 'Failed to connect device. Please try again.');
       }
     } else {
-      // Demo mode - just update local state
+      // Demo mode - just update local state with feedback
       setDevices(devices.map(d =>
         d.id === deviceId
           ? { ...d, isConnected: true, lastSync: 'Just now' }
           : d
       ));
+      toast.info('Demo mode', `${device.name} connected (demo data shown).`);
     }
   };
 

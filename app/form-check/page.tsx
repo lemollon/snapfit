@@ -8,6 +8,7 @@ import {
   Camera, Video, Upload, ArrowLeft, Play, CheckCircle, AlertCircle,
   Star, TrendingUp, Target, Loader2, X, ChevronRight, LogOut
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface FormCheck {
   id: string;
@@ -27,6 +28,7 @@ interface FormCheck {
 export default function FormCheckPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [formChecks, setFormChecks] = useState<FormCheck[]>([]);
@@ -60,7 +62,7 @@ export default function FormCheckPage() {
 
   const handleFileUpload = async (file: File) => {
     if (!exerciseName.trim()) {
-      alert('Please enter the exercise name');
+      toast.warning('Missing exercise name', 'Please enter the exercise name before uploading.');
       return;
     }
 
@@ -121,7 +123,7 @@ export default function FormCheckPage() {
       }
     } catch (error) {
       console.error('Upload failed:', error);
-      alert(error instanceof Error ? error.message : 'Failed to upload video');
+      toast.error('Upload failed', error instanceof Error ? error.message : 'Failed to upload video');
     } finally {
       setUploading(false);
     }

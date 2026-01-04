@@ -20,6 +20,7 @@ import {
   Download,
   ZoomIn,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface ProgressPhoto {
   id: string;
@@ -34,6 +35,7 @@ interface ProgressPhoto {
 export default function ProgressPhotosPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -129,7 +131,7 @@ export default function ProgressPhotosPage() {
       }
     } catch (error) {
       console.error('Failed to upload photo:', error);
-      alert(error instanceof Error ? error.message : 'Failed to upload photo');
+      toast.error('Upload failed', error instanceof Error ? error.message : 'Failed to upload photo');
     } finally {
       setUploading(false);
     }

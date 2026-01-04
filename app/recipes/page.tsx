@@ -8,6 +8,7 @@ import {
   Heart, Bookmark, BookmarkCheck, Star, Plus, X, ChevronDown,
   Utensils, Leaf, Wheat, Drumstick, Apple, Coffee, Loader2, Check
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200&auto=format&fit=crop&q=80';
@@ -168,6 +169,7 @@ const DIET_FILTERS = ['All', 'High-Protein', 'Keto', 'Vegan', 'Vegetarian', 'Glu
 
 export default function RecipesPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const [recipes, setRecipes] = useState<Recipe[]>(SAMPLE_RECIPES);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -252,7 +254,7 @@ export default function RecipesPage() {
 
   const logMeal = async (recipe: Recipe) => {
     if (!session?.user) {
-      alert('Please log in to log meals');
+      toast.warning('Login required', 'Please log in to log meals');
       return;
     }
 
@@ -276,6 +278,7 @@ export default function RecipesPage() {
 
       if (response.ok) {
         setMealLogged(true);
+        toast.success('Meal logged!', `${recipe.name} added to your food diary`);
         setTimeout(() => {
           setMealLogged(false);
           setSelectedRecipe(null);
@@ -285,7 +288,7 @@ export default function RecipesPage() {
       }
     } catch (error) {
       console.error('Error logging meal:', error);
-      alert('Failed to log meal. Please try again.');
+      toast.error('Failed to log meal', 'Please try again');
     } finally {
       setLoggingMeal(false);
     }
