@@ -1876,8 +1876,12 @@ function SnapFitContent() {
                   // Add actual days
                   for (let day = 1; day <= lastDay.getDate(); day++) {
                     const isToday = day === today.getDate();
-                    const hasWorkout = [2, 4, 6, 9, 11, 13, 16, 18, 20, 23, 25, 27, 30].includes(day);
-                    const hasMeal = [1, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 21, 22, 24, 26, 28, 29].includes(day);
+                    const currentDate = new Date(today.getFullYear(), today.getMonth(), day);
+                    const dateStr = currentDate.toDateString();
+
+                    // Check if there are actual workouts or food logs for this day
+                    const hasWorkout = savedWorkouts.some((w: SavedWorkout) => new Date(w.createdAt).toDateString() === dateStr);
+                    const hasMeal = foodLogs.some((f: FoodLog) => new Date(f.loggedAt).toDateString() === dateStr);
 
                     days.push(
                       <button
@@ -1913,52 +1917,57 @@ function SnapFitContent() {
 
             {/* Today's Schedule */}
             <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5 mb-6`}>
-              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Today&apos;s Schedule</h3>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Today&apos;s Activity</h3>
 
               <div className="space-y-3">
-                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-orange-50'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                    <Dumbbell className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Morning Workout</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>7:00 AM - Upper Body Strength</p>
-                  </div>
-                  <Check className="w-5 h-5 text-green-500" />
-                </div>
+                {(() => {
+                  const todayStr = new Date().toDateString();
+                  const todayWorkouts = savedWorkouts.filter((w: SavedWorkout) => new Date(w.createdAt).toDateString() === todayStr);
+                  const todayMeals = foodLogs.filter((f: FoodLog) => new Date(f.loggedAt).toDateString() === todayStr);
 
-                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-green-50'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
-                    <UtensilsCrossed className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Breakfast</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>8:30 AM - Protein Oats & Berries</p>
-                  </div>
-                  <Check className="w-5 h-5 text-green-500" />
-                </div>
+                  if (todayWorkouts.length === 0 && todayMeals.length === 0) {
+                    return (
+                      <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                        <p>No activity logged today</p>
+                        <p className="text-sm opacity-75">Start a workout or log a meal!</p>
+                      </div>
+                    );
+                  }
 
-                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
-                    <UtensilsCrossed className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Lunch</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>12:30 PM - Planned</p>
-                  </div>
-                  <Clock className="w-5 h-5 text-blue-500" />
-                </div>
-
-                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-purple-50'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
-                    <Dumbbell className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Evening Cardio</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>6:00 PM - 30 min HIIT</p>
-                  </div>
-                  <Clock className="w-5 h-5 text-purple-500" />
-                </div>
+                  return (
+                    <>
+                      {todayWorkouts.map((workout: SavedWorkout) => (
+                        <div key={workout.id} className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-orange-50'}`}>
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                            <Dumbbell className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{workout.title || 'Workout'}</p>
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {new Date(workout.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {workout.duration} min
+                            </p>
+                          </div>
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                      ))}
+                      {todayMeals.map((meal: FoodLog) => (
+                        <div key={meal.id} className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-green-50'}`}>
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                            <UtensilsCrossed className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{meal.foodName || meal.mealType}</p>
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {new Date(meal.loggedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {meal.calories || 0} cal
+                            </p>
+                          </div>
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
@@ -1966,29 +1975,42 @@ function SnapFitContent() {
             <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5 mb-6`}>
               <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>This Week</h3>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mx-auto mb-2">
-                    <Flame className="w-7 h-7 text-white" />
+              {(() => {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                const weeklyMeals = foodLogs.filter((f: FoodLog) => new Date(f.loggedAt) > oneWeekAgo).length;
+                const weeklyWorkoutMinutes = savedWorkouts
+                  .filter((w: SavedWorkout) => new Date(w.createdAt) > oneWeekAgo)
+                  .reduce((acc: number, w: SavedWorkout) => acc + (w.duration || 0), 0);
+                // Estimate calories burned: ~8 cal/min for moderate exercise
+                const estimatedCaloriesBurned = weeklyWorkoutMinutes * 8;
+
+                return (
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mx-auto mb-2">
+                        <Flame className="w-7 h-7 text-white" />
+                      </div>
+                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{weeklyProgress}</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Workouts</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-2">
+                        <UtensilsCrossed className="w-7 h-7 text-white" />
+                      </div>
+                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{weeklyMeals}</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Meals Logged</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mx-auto mb-2">
+                        <Zap className="w-7 h-7 text-white" />
+                      </div>
+                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{estimatedCaloriesBurned.toLocaleString()}</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Calories Burned</p>
+                    </div>
                   </div>
-                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>5</p>
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Workouts</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-2">
-                    <UtensilsCrossed className="w-7 h-7 text-white" />
-                  </div>
-                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>18</p>
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Meals Logged</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mx-auto mb-2">
-                    <Zap className="w-7 h-7 text-white" />
-                  </div>
-                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>1,850</p>
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Calories Burned</p>
-                </div>
-              </div>
+                );
+              })()}
             </div>
 
             {/* Upcoming Events */}
@@ -2085,7 +2107,7 @@ function SnapFitContent() {
                     <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Day Streak</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>0</p>
+                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{(totalWorkouts * 10) + (foodLogs.length * 5)}</p>
                     <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>XP Points</p>
                   </div>
                   <div className="text-center">
