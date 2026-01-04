@@ -73,6 +73,7 @@ export default function ProgramDetailPage() {
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
   const [activeWeek, setActiveWeek] = useState<number | null>(null);
+  const [showVideoPreview, setShowVideoPreview] = useState(false);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -187,8 +188,11 @@ export default function ProgramDetailPage() {
               className="w-full h-full object-cover"
             />
             {program.previewVideoUrl && (
-              <button className="absolute inset-0 flex items-center justify-center bg-black/40">
-                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+              <button
+                onClick={() => setShowVideoPreview(true)}
+                className="absolute inset-0 flex items-center justify-center bg-black/40 hover:bg-black/50 transition-colors"
+              >
+                <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
                   <Play className="w-8 h-8 text-white ml-1" />
                 </div>
               </button>
@@ -427,6 +431,29 @@ export default function ProgramDetailPage() {
               <Play className="w-5 h-5" />
               Continue Week {purchaseInfo?.currentWeek || 1}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Video Preview Modal */}
+      {showVideoPreview && program?.previewVideoUrl && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+          onClick={() => setShowVideoPreview(false)}
+        >
+          <div className="relative w-full max-w-3xl" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setShowVideoPreview(false)}
+              className="absolute -top-12 right-0 text-white hover:text-zinc-300"
+            >
+              Close
+            </button>
+            <video
+              src={program.previewVideoUrl}
+              controls
+              autoPlay
+              className="w-full rounded-xl"
+            />
           </div>
         </div>
       )}

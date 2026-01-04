@@ -20,6 +20,7 @@ import {
   Download,
   ZoomIn,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface ProgressPhoto {
   id: string;
@@ -34,6 +35,7 @@ interface ProgressPhoto {
 export default function ProgressPhotosPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -75,15 +77,46 @@ export default function ProgressPhotosPage() {
 
     setUploading(true);
     try {
-      // In production, upload to cloud storage
-      // For now, create a local URL
-      const photoUrl = URL.createObjectURL(file);
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64Image = await base64Promise;
 
+      // Upload to Cloudinary via our API
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: base64Image,
+          folder: 'progress-photos',
+          generateThumbnail: true,
+        }),
+      });
+
+      if (!uploadRes.ok) {
+        const error = await uploadRes.json();
+        throw new Error(error.error || 'Failed to upload image');
+      }
+
+      const uploadData = await uploadRes.json();
+      const photoUrl = uploadData.data?.url;
+      const thumbnailUrl = uploadData.data?.thumbnailUrl;
+
+      if (!photoUrl) {
+        throw new Error('No URL returned from upload');
+      }
+
+      // Save photo record to database
       const res = await fetch('/api/body/photos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           photoUrl,
+          thumbnailUrl,
           type: newPhoto.type,
           notes: newPhoto.notes,
         }),
@@ -93,9 +126,12 @@ export default function ProgressPhotosPage() {
         await fetchPhotos();
         setShowUpload(false);
         setNewPhoto({ type: 'front', notes: '' });
+      } else {
+        throw new Error('Failed to save photo record');
       }
     } catch (error) {
       console.error('Failed to upload photo:', error);
+      toast.error('Upload failed', error instanceof Error ? error.message : 'Failed to upload photo');
     } finally {
       setUploading(false);
     }

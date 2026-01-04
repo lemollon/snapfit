@@ -10,6 +10,7 @@ import {
   Target, Award, Sparkles, Bell, Clock, Minus, Settings, Loader2
 } from 'lucide-react';
 import { useCelebration } from '@/components/Celebration';
+import { useToast } from '@/components/Toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { staggerContainer, listItem, popIn, scaleIn } from '@/lib/animations';
 
@@ -113,6 +114,7 @@ const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function HabitsPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -121,6 +123,10 @@ export default function HabitsPage() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
   const [weekData, setWeekData] = useState<(boolean | null)[]>([true, true, true, false, true, true, null]);
+  const [customHabitName, setCustomHabitName] = useState('');
+  const [customHabitTarget, setCustomHabitTarget] = useState('');
+  const [customHabitUnit, setCustomHabitUnit] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   // Premium celebration animations
   const { celebrate, CelebrationComponent } = useCelebration();
@@ -318,6 +324,106 @@ export default function HabitsPage() {
       console.error('Error creating habit:', error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const createCustomHabit = async () => {
+    if (!customHabitName.trim()) {
+      toast.warning('Missing name', 'Please enter a habit name');
+      return;
+    }
+
+    const target = parseInt(customHabitTarget) || 1;
+    const unit = customHabitUnit.trim() || 'times';
+
+    if (!session?.user) {
+      // For demo mode
+      const newHabit: Habit = {
+        id: `demo-${Date.now()}`,
+        name: customHabitName.trim(),
+        icon: 'target',
+        color: 'purple',
+        type: 'quantity',
+        targetValue: target,
+        unit: unit,
+        currentStreak: 0,
+        longestStreak: 0,
+        todayValue: 0,
+        todayCompleted: false,
+      };
+      setHabits([...habits, newHabit]);
+      setShowAddModal(false);
+      setCustomHabitName('');
+      setCustomHabitTarget('');
+      setCustomHabitUnit('');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/habits', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: customHabitName.trim(),
+          icon: 'target',
+          color: 'purple',
+          habitType: 'quantity',
+          targetValue: target,
+          unit: unit,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const newHabit: Habit = {
+          id: data.habit.id,
+          name: data.habit.name,
+          icon: data.habit.icon || 'target',
+          color: data.habit.color || 'purple',
+          type: data.habit.habitType || 'quantity',
+          targetValue: data.habit.targetValue,
+          unit: data.habit.unit,
+          currentStreak: 0,
+          longestStreak: 0,
+          todayValue: 0,
+          todayCompleted: false,
+        };
+        setHabits([...habits, newHabit]);
+        setShowAddModal(false);
+        setCustomHabitName('');
+        setCustomHabitTarget('');
+        setCustomHabitUnit('');
+      }
+    } catch (error) {
+      console.error('Error creating custom habit:', error);
+      toast.error('Failed to create habit', 'Please try again');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteHabit = async (habitId: string) => {
+    if (!confirm('Are you sure you want to delete this habit?')) return;
+
+    // Optimistic update
+    setHabits(habits.filter(h => h.id !== habitId));
+    setShowDetailModal(false);
+
+    if (!session?.user || habitId.startsWith('demo-')) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await fetch(`/api/habits?id=${habitId}`, {
+        method: 'DELETE',
+      });
+    } catch (error) {
+      console.error('Error deleting habit:', error);
+      // Note: We don't revert since the habit was already removed from UI
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -671,6 +777,8 @@ export default function HabitsPage() {
                 <input
                   type="text"
                   placeholder="Habit name..."
+                  value={customHabitName}
+                  onChange={(e) => setCustomHabitName(e.target.value)}
                   className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-violet-500"
                 />
 
@@ -678,20 +786,37 @@ export default function HabitsPage() {
                   <input
                     type="number"
                     placeholder="Target"
+                    value={customHabitTarget}
+                    onChange={(e) => setCustomHabitTarget(e.target.value)}
                     className="p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
                   <input
                     type="text"
-                    placeholder="Unit"
+                    placeholder="Unit (e.g., glasses)"
+                    value={customHabitUnit}
+                    onChange={(e) => setCustomHabitUnit(e.target.value)}
                     className="col-span-2 p-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-violet-500"
                   />
                 </div>
               </div>
             </div>
 
-            <button className="w-full py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all">
-              <Plus className="w-5 h-5 inline mr-2" />
-              Create Habit
+            <button
+              onClick={createCustomHabit}
+              disabled={saving || !customHabitName.trim()}
+              className="w-full py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-5 h-5" />
+                  Create Habit
+                </>
+              )}
             </button>
           </div>
         </div>
@@ -725,20 +850,26 @@ export default function HabitsPage() {
               </div>
             </div>
 
-            {/* Calendar Heatmap Placeholder */}
+            {/* Calendar Heatmap - Based on habit completion percentage */}
             <div className="bg-white/5 rounded-2xl p-4">
               <p className="text-sm text-white/60 mb-3">Last 30 Days</p>
               <div className="grid grid-cols-7 gap-1">
-                {[...Array(30)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`aspect-square rounded-sm ${
-                      Math.random() > 0.3
-                        ? 'bg-gradient-to-r from-violet-500/50 to-purple-600/50'
-                        : 'bg-white/10'
-                    }`}
-                  />
-                ))}
+                {[...Array(30)].map((_, i) => {
+                  // Calculate based on streak data - show completed days based on current streak
+                  const daysAgo = 29 - i;
+                  const isCompleted = selectedHabit && daysAgo < selectedHabit.currentStreak;
+                  return (
+                    <div
+                      key={i}
+                      className={`aspect-square rounded-sm ${
+                        isCompleted
+                          ? 'bg-gradient-to-r from-violet-500/50 to-purple-600/50'
+                          : 'bg-white/10'
+                      }`}
+                      title={isCompleted ? 'Completed' : 'Not completed'}
+                    />
+                  );
+                })}
               </div>
             </div>
 
@@ -749,7 +880,10 @@ export default function HabitsPage() {
                   <Bell className="w-5 h-5 text-white/60" />
                   <span className="text-white">Reminder</span>
                 </div>
-                <button className="px-3 py-1 bg-white/10 rounded-lg text-sm text-white/60">
+                <button
+                  onClick={() => toast.info('Coming soon', 'Reminders will be available in a future update')}
+                  className="px-3 py-1 bg-white/10 rounded-lg text-sm text-white/60 hover:bg-white/20 transition-colors"
+                >
                   Off
                 </button>
               </div>
@@ -766,8 +900,12 @@ export default function HabitsPage() {
             </div>
 
             <div className="flex gap-3">
-              <button className="flex-1 py-3 bg-red-500/20 text-red-400 rounded-2xl font-medium hover:bg-red-500/30 transition-all">
-                Delete Habit
+              <button
+                onClick={() => selectedHabit && deleteHabit(selectedHabit.id)}
+                disabled={deleting}
+                className="flex-1 py-3 bg-red-500/20 text-red-400 rounded-2xl font-medium hover:bg-red-500/30 transition-all disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete Habit'}
               </button>
               <button
                 onClick={() => setShowDetailModal(false)}

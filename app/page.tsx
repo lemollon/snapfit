@@ -56,6 +56,7 @@ import {
   Repeat,
   Utensils,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Stock fitness images from Unsplash
 const HERO_IMAGES = [
@@ -173,6 +174,7 @@ function SnapFitContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const toast = useToast();
   const isGuestMode = searchParams.get('guest') === 'true';
 
   // State
@@ -629,9 +631,10 @@ function SnapFitContent() {
       if (res.ok) {
         setFriendEmail('');
         fetchFriends();
+        toast.success('Request sent', 'Friend request has been sent!');
       } else {
         const data = await res.json();
-        alert(data.error);
+        toast.error('Failed to send request', data.error || 'Please try again.');
       }
     } catch (err) {
       console.error('Failed to send friend request:', err);
@@ -1780,7 +1783,10 @@ function SnapFitContent() {
                 <div className="flex items-center justify-between mb-4">
                   <h1 className="text-2xl font-bold text-white">Fitness Calendar</h1>
                   <div className="flex items-center gap-2">
-                    <button className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors">
+                    <button
+                      onClick={() => router.push('/calendar')}
+                      className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                    >
                       <ChevronDown className="w-5 h-5 text-white" />
                     </button>
                   </div>
@@ -1791,11 +1797,17 @@ function SnapFitContent() {
 
             {/* Month Navigation */}
             <div className={`flex items-center justify-between mb-4 px-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-              <button className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
+              <button
+                onClick={() => router.push('/calendar')}
+                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+              >
                 <ChevronDown className="w-5 h-5 rotate-90" />
               </button>
               <h2 className="text-lg font-bold">{new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</h2>
-              <button className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
+              <button
+                onClick={() => router.push('/calendar')}
+                className={`p-2 rounded-lg ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}
+              >
                 <ChevronDown className="w-5 h-5 -rotate-90" />
               </button>
             </div>
@@ -1832,7 +1844,11 @@ function SnapFitContent() {
                     const hasMeal = [1, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 21, 22, 24, 26, 28, 29].includes(day);
 
                     days.push(
-                      <button key={day} className={`p-2 text-center relative ${isToday ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl mx-1 my-1' : ''} ${darkMode && !isToday ? 'text-gray-300 hover:bg-gray-700' : !isToday ? 'text-gray-700 hover:bg-gray-100' : ''} transition-colors`}>
+                      <button
+                        key={day}
+                        onClick={() => router.push('/calendar')}
+                        className={`p-2 text-center relative ${isToday ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl mx-1 my-1' : ''} ${darkMode && !isToday ? 'text-gray-300 hover:bg-gray-700' : !isToday ? 'text-gray-700 hover:bg-gray-100' : ''} transition-colors`}
+                      >
                         <span className="text-sm font-medium">{day}</span>
                         <div className="flex justify-center gap-0.5 mt-1">
                           {hasWorkout && <div className="w-1.5 h-1.5 rounded-full bg-orange-400" />}

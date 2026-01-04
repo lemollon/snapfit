@@ -10,6 +10,7 @@ import {
   BarChart3, Eye, UserMinus, UserCheck, Loader2, ShoppingBag, FileText,
   Sparkles, Crown, Zap, DollarSign, Home
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Premium stock image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1200&auto=format&fit=crop&q=80';
@@ -64,6 +65,7 @@ interface ClientDetail {
 export default function TrainerDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [pendingClients, setPendingClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
@@ -121,14 +123,14 @@ export default function TrainerDashboard() {
       });
       const data = await res.json();
       if (!res.ok) {
-        alert(data.error || 'Failed to add client');
+        toast.error('Failed to add client', data.error || 'Please try again.');
         return;
       }
       setClientEmail('');
       setShowAddClient(false);
       fetchClients();
     } catch {
-      alert('Failed to add client');
+      toast.error('Failed to add client', 'Please check your connection and try again.');
     } finally {
       setAddingClient(false);
     }
@@ -143,7 +145,7 @@ export default function TrainerDashboard() {
         setSelectedClient(data);
       }
     } catch {
-      alert('Failed to load client details');
+      toast.error('Error', 'Failed to load client details.');
     } finally {
       setLoadingClient(false);
     }
@@ -163,7 +165,7 @@ export default function TrainerDashboard() {
         }
       }
     } catch {
-      alert('Failed to update client');
+      toast.error('Error', 'Failed to update client.');
     }
   };
 
@@ -180,7 +182,7 @@ export default function TrainerDashboard() {
         }
       }
     } catch {
-      alert('Failed to remove client');
+      toast.error('Error', 'Failed to remove client.');
     }
   };
 

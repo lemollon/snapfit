@@ -6,8 +6,9 @@ import Link from 'next/link';
 import {
   ArrowLeft, Search, Filter, Clock, Users, Flame, ChefHat,
   Heart, Bookmark, BookmarkCheck, Star, Plus, X, ChevronDown,
-  Utensils, Leaf, Wheat, Drumstick, Apple, Coffee, Loader2
+  Utensils, Leaf, Wheat, Drumstick, Apple, Coffee, Loader2, Check
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200&auto=format&fit=crop&q=80';
@@ -168,6 +169,7 @@ const DIET_FILTERS = ['All', 'High-Protein', 'Keto', 'Vegan', 'Vegetarian', 'Glu
 
 export default function RecipesPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const [recipes, setRecipes] = useState<Recipe[]>(SAMPLE_RECIPES);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -175,6 +177,9 @@ export default function RecipesPage() {
   const [selectedDiet, setSelectedDiet] = useState('All');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [loggingMeal, setLoggingMeal] = useState(false);
+  const [mealLogged, setMealLogged] = useState(false);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
 
   // Fetch recipes from API
   useEffect(() => {
@@ -247,13 +252,56 @@ export default function RecipesPage() {
     }
   };
 
+  const logMeal = async (recipe: Recipe) => {
+    if (!session?.user) {
+      toast.warning('Login required', 'Please log in to log meals');
+      return;
+    }
+
+    setLoggingMeal(true);
+    try {
+      const response = await fetch('/api/food', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          foodName: recipe.name,
+          mealType: recipe.category === 'breakfast' ? 'breakfast' :
+                    recipe.category === 'lunch' ? 'lunch' :
+                    recipe.category === 'dinner' ? 'dinner' : 'snack',
+          calories: recipe.calories,
+          protein: recipe.protein,
+          carbs: recipe.carbs,
+          fat: recipe.fat,
+          notes: `Recipe: ${recipe.name} - ${recipe.description}`,
+        }),
+      });
+
+      if (response.ok) {
+        setMealLogged(true);
+        toast.success('Meal logged!', `${recipe.name} added to your food diary`);
+        setTimeout(() => {
+          setMealLogged(false);
+          setSelectedRecipe(null);
+        }, 1500);
+      } else {
+        throw new Error('Failed to log meal');
+      }
+    } catch (error) {
+      console.error('Error logging meal:', error);
+      toast.error('Failed to log meal', 'Please try again');
+    } finally {
+      setLoggingMeal(false);
+    }
+  };
+
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       recipe.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || recipe.category === selectedCategory;
     const matchesDiet = selectedDiet === 'All' ||
       recipe.tags.some(tag => tag.toLowerCase().includes(selectedDiet.toLowerCase().replace('-', '')));
-    return matchesSearch && matchesCategory && matchesDiet;
+    const matchesSaved = !showSavedOnly || recipe.isSaved;
+    return matchesSearch && matchesCategory && matchesDiet && matchesSaved;
   });
 
   const featuredRecipes = recipes.filter(r => r.isFeatured);
@@ -300,8 +348,13 @@ export default function RecipesPage() {
           </Link>
 
           <div className="flex items-center gap-2">
-            <button className="p-3 bg-white/10 backdrop-blur-xl rounded-2xl hover:bg-white/20 transition-all relative">
-              <Bookmark className="w-5 h-5 text-white" />
+            <button
+              onClick={() => setShowSavedOnly(!showSavedOnly)}
+              className={`p-3 backdrop-blur-xl rounded-2xl transition-all relative ${
+                showSavedOnly ? 'bg-violet-500' : 'bg-white/10 hover:bg-white/20'
+              }`}
+            >
+              <Bookmark className={`w-5 h-5 ${showSavedOnly ? 'text-white fill-white' : 'text-white'}`} />
               {savedRecipes.length > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 rounded-full text-xs flex items-center justify-center text-white">
                   {savedRecipes.length}
@@ -697,9 +750,31 @@ export default function RecipesPage() {
               </div>
 
               {/* Log this meal button */}
-              <button className="w-full py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all">
-                <Plus className="w-5 h-5 inline mr-2" />
-                Log This Meal
+              <button
+                onClick={() => selectedRecipe && logMeal(selectedRecipe)}
+                disabled={loggingMeal || mealLogged}
+                className={`w-full py-4 rounded-2xl font-semibold text-white transition-all flex items-center justify-center gap-2 ${
+                  mealLogged
+                    ? 'bg-green-500'
+                    : 'bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700'
+                } ${loggingMeal ? 'opacity-75' : ''}`}
+              >
+                {loggingMeal ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Logging...
+                  </>
+                ) : mealLogged ? (
+                  <>
+                    <Check className="w-5 h-5" />
+                    Meal Logged!
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-5 h-5" />
+                    Log This Meal
+                  </>
+                )}
               </button>
             </div>
           </div>

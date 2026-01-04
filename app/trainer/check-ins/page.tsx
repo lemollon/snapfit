@@ -8,6 +8,7 @@ import {
   ArrowLeft, Plus, Calendar, Camera, Scale, Moon, Brain, Clock,
   ChevronRight, Loader2, Check, X, Eye, User, MessageSquare
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface CheckInTemplate {
   id: string;
@@ -30,6 +31,7 @@ interface PendingCheckIn {
 export default function CheckInsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<CheckInTemplate[]>([]);
@@ -288,7 +290,10 @@ export default function CheckInsPage() {
                     <span className={`text-sm ${template.isActive ? 'text-green-400' : 'text-zinc-500'}`}>
                       {template.isActive ? 'Active' : 'Inactive'}
                     </span>
-                    <button className="text-orange-400 text-sm font-medium">
+                    <button
+                      onClick={() => toast.info('Schedule check-in', `To schedule "${template.name}", go to the Clients page and select a client.`)}
+                      className="text-orange-400 text-sm font-medium hover:text-orange-300 transition-colors"
+                    >
                       Schedule →
                     </button>
                   </div>

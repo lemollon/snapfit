@@ -8,6 +8,7 @@ import {
   Check, X, RefreshCw, ChevronRight, Settings, Plus, Smartphone,
   Wifi, WifiOff, TrendingUp, Clock, Loader2
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1576243345690-4e4b79b63288?w=1200&auto=format&fit=crop&q=80';
@@ -115,6 +116,7 @@ const DAILY_METRICS: DailyMetric[] = [
 
 export default function WearablesPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const [devices, setDevices] = useState<WearableDevice[]>(AVAILABLE_DEVICES);
   const [selectedDevice, setSelectedDevice] = useState<WearableDevice | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -163,15 +165,52 @@ export default function WearablesPage() {
   const connectedDevices = devices.filter(d => d.isConnected);
 
   const handleConnect = async (deviceId: string) => {
-    // Simulate OAuth connection
-    setDevices(devices.map(d =>
-      d.id === deviceId
-        ? { ...d, isConnected: true, lastSync: 'Just now' }
-        : d
-    ));
+    const device = devices.find(d => d.id === deviceId);
+    if (!device) return;
+
+    // In production, this would redirect to the provider's OAuth page
+    // For demo purposes, we simulate the connection flow
+    if (session?.user) {
+      try {
+        const response = await fetch('/api/wearables', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            provider: device.provider,
+            deviceName: device.name,
+          }),
+        });
+
+        if (response.ok) {
+          setDevices(devices.map(d =>
+            d.id === deviceId
+              ? { ...d, isConnected: true, lastSync: 'Just now' }
+              : d
+          ));
+          toast.success('Device connected', `${device.name} is now syncing your health data.`);
+        } else {
+          throw new Error('Failed to connect');
+        }
+      } catch (error) {
+        console.error('Error connecting device:', error);
+        toast.error('Connection failed', 'Failed to connect device. Please try again.');
+      }
+    } else {
+      // Demo mode - just update local state with feedback
+      setDevices(devices.map(d =>
+        d.id === deviceId
+          ? { ...d, isConnected: true, lastSync: 'Just now' }
+          : d
+      ));
+      toast.info('Demo mode', `${device.name} connected (demo data shown).`);
+    }
   };
 
-  const handleDisconnect = (deviceId: string) => {
+  const handleDisconnect = async (deviceId: string) => {
+    const device = devices.find(d => d.id === deviceId);
+    if (!device) return;
+
+    // Optimistic update
     setDevices(devices.map(d =>
       d.id === deviceId
         ? { ...d, isConnected: false, lastSync: undefined, deviceName: undefined }
@@ -179,10 +218,22 @@ export default function WearablesPage() {
     ));
     setSelectedDevice(null);
     setShowSettings(false);
+
+    if (session?.user) {
+      try {
+        await fetch(`/api/wearables?id=${deviceId}`, {
+          method: 'DELETE',
+        });
+      } catch (error) {
+        console.error('Error disconnecting device:', error);
+        // Could revert here but connection UI is already updated
+      }
+    }
   };
 
   const handleSync = async () => {
     setIsSyncing(true);
+    // In production, this would trigger a real sync with the wearable provider APIs
     await new Promise(resolve => setTimeout(resolve, 2000));
     setDevices(devices.map(d =>
       d.isConnected ? { ...d, lastSync: 'Just now' } : d

@@ -211,6 +211,79 @@ export async function uploadFoodPhoto(
 }
 
 /**
+ * Upload a video to Cloudinary
+ */
+export async function uploadVideo(
+  base64Data: string,
+  folder: string,
+  options: {
+    userId?: string;
+    generateThumbnail?: boolean;
+    publicId?: string;
+  } = {}
+): Promise<UploadResult> {
+  const config = getCloudinaryConfig();
+
+  if (!config.configured) {
+    throw new Error('Cloudinary is not configured. Please set CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET.');
+  }
+
+  const { userId, generateThumbnail = true } = options;
+
+  // Ensure the base64 data has the proper prefix
+  const dataUri = base64Data.startsWith('data:')
+    ? base64Data
+    : `data:video/mp4;base64,${base64Data}`;
+
+  // Generate a unique public ID if not provided
+  const timestamp = Date.now();
+  const uniqueId = options.publicId || (userId ? `${userId}_${timestamp}` : `${timestamp}`);
+
+  try {
+    const uploadOptions: Record<string, unknown> = {
+      folder: `snapfit/${folder}`,
+      resource_type: 'video',
+      public_id: uniqueId,
+      context: {
+        userId: userId || 'anonymous',
+        folder,
+        uploadedAt: new Date().toISOString(),
+      },
+    };
+
+    const result = await cloudinary.uploader.upload(dataUri, uploadOptions);
+
+    // Generate thumbnail URL from video
+    let thumbnailUrl: string | undefined;
+    if (generateThumbnail) {
+      thumbnailUrl = cloudinary.url(result.public_id, {
+        resource_type: 'video',
+        transformation: [
+          { width: 400, height: 300, crop: 'fill' },
+          { start_offset: '0' },
+        ],
+        format: 'jpg',
+      });
+    }
+
+    return {
+      url: result.secure_url,
+      publicId: result.public_id,
+      width: result.width,
+      height: result.height,
+      format: result.format,
+      bytes: result.bytes,
+      thumbnailUrl,
+    };
+  } catch (error) {
+    console.error('Cloudinary video upload error:', error);
+    throw new Error(
+      error instanceof Error ? error.message : 'Failed to upload video to Cloudinary'
+    );
+  }
+}
+
+/**
  * Delete an image from Cloudinary
  */
 export async function deleteImage(publicId: string): Promise<boolean> {

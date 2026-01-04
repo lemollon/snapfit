@@ -43,6 +43,7 @@ import {
 import { ThemeToggle } from '@/components/theme-toggle';
 import { useTheme } from '@/lib/theme-context';
 import { AchievementIcon, AvatarPlaceholder } from '@/components/achievement-icon';
+import { useToast } from '@/components/Toast';
 
 interface UserProfile {
   id: string;
@@ -129,6 +130,7 @@ function getLevelProgress(xp: number, level: number): number {
 export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
@@ -244,27 +246,55 @@ export default function ProfilePage() {
   };
 
   const handleImageUpload = async (type: 'avatar' | 'cover', file: File) => {
-    // For now, we'll use a placeholder. In production, you'd upload to S3/Cloudinary
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const base64 = reader.result as string;
-      try {
-        const res = await fetch('/api/profile', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            [type === 'avatar' ? 'avatarUrl' : 'coverUrl']: base64,
-          }),
-        });
-        const data = await res.json();
-        if (data.user) {
-          setProfile(data.user);
-        }
-      } catch (error) {
-        console.error(`Failed to upload ${type}:`, error);
+    try {
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64 = await base64Promise;
+
+      // Upload to Cloudinary
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: base64,
+          folder: type === 'avatar' ? 'avatars' : 'covers',
+          generateThumbnail: type === 'avatar',
+        }),
+      });
+
+      if (!uploadRes.ok) {
+        const error = await uploadRes.json();
+        throw new Error(error.error || 'Failed to upload image');
       }
-    };
-    reader.readAsDataURL(file);
+
+      const uploadData = await uploadRes.json();
+      const imageUrl = uploadData.data?.url;
+
+      if (!imageUrl) {
+        throw new Error('No URL returned from upload');
+      }
+
+      // Update profile with the Cloudinary URL
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          [type === 'avatar' ? 'avatarUrl' : 'coverUrl']: imageUrl,
+        }),
+      });
+      const data = await res.json();
+      if (data.user) {
+        setProfile(data.user);
+      }
+    } catch (error) {
+      console.error(`Failed to upload ${type}:`, error);
+      toast.error('Upload failed', error instanceof Error ? error.message : `Failed to upload ${type}`);
+    }
   };
 
   if (loading || status === 'loading') {
