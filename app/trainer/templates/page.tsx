@@ -91,10 +91,12 @@ export default function TrainerTemplatesPage() {
   const fetchTemplates = async () => {
     try {
       const res = await fetch('/api/trainer/templates');
+      if (!res.ok) throw new Error('Failed to fetch templates');
       const data = await res.json();
       setTemplates(data.templates || []);
     } catch (error) {
       console.error('Failed to fetch templates:', error);
+      toast.error('Failed to load templates', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -125,7 +127,10 @@ export default function TrainerTemplatesPage() {
   };
 
   const handleAddTemplate = async () => {
-    if (!newTemplate.name) return;
+    if (!newTemplate.name) {
+      toast.error('Name required', 'Please enter a template name.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/trainer/templates', {
@@ -140,6 +145,7 @@ export default function TrainerTemplatesPage() {
           exercises: newTemplate.exercises,
         }),
       });
+      if (!res.ok) throw new Error('Failed to create template');
       const data = await res.json();
       if (data.template) {
         setTemplates([data.template, ...templates]);
@@ -152,9 +158,11 @@ export default function TrainerTemplatesPage() {
           exercises: [],
         });
         setShowAddModal(false);
+        toast.success('Template created', 'Your workout template is ready to use.');
       }
     } catch (error) {
       console.error('Failed to add template:', error);
+      toast.error('Failed to create template', 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -193,12 +201,15 @@ export default function TrainerTemplatesPage() {
           exercises: template.exercises,
         }),
       });
+      if (!res.ok) throw new Error('Failed to duplicate template');
       const data = await res.json();
       if (data.template) {
         setTemplates([data.template, ...templates]);
+        toast.success('Template duplicated', 'A copy has been created.');
       }
     } catch (error) {
       console.error('Failed to duplicate template:', error);
+      toast.error('Failed to duplicate', 'Please try again.');
     } finally {
       setSaving(false);
     }

@@ -8,6 +8,7 @@ import {
   ArrowLeft, DollarSign, TrendingUp, TrendingDown, Users, ShoppingBag,
   Calendar, ChevronRight, Loader2, CreditCard, BarChart3, PieChart
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface RevenueSummary {
   totalRevenue: number;
@@ -31,6 +32,7 @@ interface Transaction {
 export default function RevenuePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState('30');
@@ -57,6 +59,7 @@ export default function RevenuePage() {
   const fetchRevenue = async () => {
     try {
       const res = await fetch(`/api/trainer/revenue?period=${period}`);
+      if (!res.ok) throw new Error('Failed to fetch revenue data');
       const data = await res.json();
 
       setSummary(data.summary);
@@ -66,6 +69,7 @@ export default function RevenuePage() {
       setTopPrograms(data.topPrograms || []);
     } catch (error) {
       console.error('Failed to fetch revenue:', error);
+      toast.error('Failed to load revenue', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }

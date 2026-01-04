@@ -73,17 +73,22 @@ export default function TrainerProductsPage() {
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/trainer/products');
+      if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       setProducts(data.products || []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      toast.error('Failed to load products', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddProduct = async () => {
-    if (!newProduct.name) return;
+    if (!newProduct.name) {
+      toast.error('Name required', 'Please enter a product name.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/trainer/products', {
@@ -97,14 +102,17 @@ export default function TrainerProductsPage() {
           productUrl: newProduct.productUrl || undefined,
         }),
       });
+      if (!res.ok) throw new Error('Failed to add product');
       const data = await res.json();
       if (data.product) {
         setProducts([data.product, ...products]);
         setNewProduct({ name: '', description: '', price: '', category: 'supplement', productUrl: '' });
         setShowAddModal(false);
+        toast.success('Product added', 'Your product has been created successfully.');
       }
     } catch (error) {
       console.error('Failed to add product:', error);
+      toast.error('Failed to add product', 'Please try again.');
     } finally {
       setSaving(false);
     }
