@@ -52,78 +52,21 @@ const COLOR_MAP: { [key: string]: string } = {
   amber: 'from-amber-500 to-yellow-600',
 };
 
-const DEFAULT_HABITS: Habit[] = [
-  {
-    id: 'demo-1',
-    name: 'Water Intake',
-    description: 'Stay hydrated throughout the day',
-    icon: 'droplets',
-    color: 'blue',
-    type: 'quantity',
-    targetValue: 8,
-    unit: 'glasses',
-    currentStreak: 12,
-    longestStreak: 21,
-    todayValue: 5,
-    todayCompleted: false,
-  },
-  {
-    id: 'demo-2',
-    name: 'Sleep',
-    description: 'Get quality rest',
-    icon: 'moon',
-    color: 'purple',
-    type: 'duration',
-    targetValue: 8,
-    unit: 'hours',
-    currentStreak: 5,
-    longestStreak: 14,
-    todayValue: 7.5,
-    todayCompleted: false,
-  },
-  {
-    id: 'demo-3',
-    name: 'Steps',
-    description: 'Keep moving',
-    icon: 'footprints',
-    color: 'green',
-    type: 'quantity',
-    targetValue: 10000,
-    unit: 'steps',
-    currentStreak: 8,
-    longestStreak: 30,
-    todayValue: 7234,
-    todayCompleted: false,
-  },
-  {
-    id: 'demo-4',
-    name: 'Meditation',
-    description: 'Daily mindfulness practice',
-    icon: 'brain',
-    color: 'orange',
-    type: 'duration',
-    targetValue: 10,
-    unit: 'minutes',
-    currentStreak: 3,
-    longestStreak: 10,
-    todayValue: 10,
-    todayCompleted: true,
-  },
-];
+// No default demo habits - users should see empty state until they create habits
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function HabitsPage() {
   const { data: session } = useSession();
   const toast = useToast();
-  const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
-  const [weekData, setWeekData] = useState<(boolean | null)[]>([true, true, true, false, true, true, null]);
+  const [weekData, setWeekData] = useState<(boolean | null)[]>([null, null, null, null, null, null, null]);
   const [customHabitName, setCustomHabitName] = useState('');
   const [customHabitTarget, setCustomHabitTarget] = useState('');
   const [customHabitUnit, setCustomHabitUnit] = useState('');
@@ -599,6 +542,35 @@ export default function HabitsPage() {
             <Target className="w-5 h-5 text-violet-400" />
             Your Habits
           </h2>
+
+          {habits.length === 0 && (
+            <div className="text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+              <Target className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              {!session?.user ? (
+                <>
+                  <p className="text-white/60 mb-2">Log in to track your habits</p>
+                  <Link
+                    href="/login"
+                    className="inline-block px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all"
+                  >
+                    Log In
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-white/60 mb-2">No habits yet</p>
+                  <p className="text-white/40 text-sm mb-4">Start building healthy routines</p>
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Your First Habit
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {habits.map((habit) => {
             const IconComponent = ICON_MAP[habit.icon] || Check;

@@ -117,11 +117,12 @@ export default function RecipesPage() {
     // Save to API if logged in
     if (session?.user) {
       try {
-        await fetch('/api/recipes/save', {
+        const res = await fetch('/api/recipes/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ recipeId }),
         });
+        if (!res.ok) throw new Error('Failed to save recipe');
       } catch (error) {
         console.error('Error saving recipe:', error);
         toast.error('Failed to save recipe', 'Please try again.');

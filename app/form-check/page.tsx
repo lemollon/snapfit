@@ -117,6 +117,11 @@ export default function FormCheckPage() {
         }),
       });
 
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create form check');
+      }
+
       const data = await res.json();
       if (data.formCheck) {
         setFormChecks([data.formCheck, ...formChecks]);

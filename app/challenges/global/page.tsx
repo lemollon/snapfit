@@ -153,11 +153,12 @@ export default function GlobalChallengesPage() {
 
     // Call API to join challenge
     try {
-      await fetch('/api/challenges/global', {
+      const res = await fetch('/api/challenges/global', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ challengeId }),
       });
+      if (!res.ok) throw new Error('Failed to join challenge');
     } catch (error) {
       console.error('Error joining challenge:', error);
       toast.error('Failed to join challenge', 'Please try again.');

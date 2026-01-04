@@ -368,10 +368,35 @@ export default function TimerPage() {
   };
 
   // Toggle favorite
-  const toggleFavorite = (id: string) => {
+  const toggleFavorite = async (id: string) => {
+    const preset = presets.find(p => p.id === id);
+    if (!preset) return;
+
+    const newFavorite = !preset.isFavorite;
+
+    // Optimistic update
     setPresets(presets.map(p =>
-      p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
+      p.id === id ? { ...p, isFavorite: newFavorite } : p
     ));
+
+    // Only persist for user presets (not default presets)
+    if (session?.user && !DEFAULT_PRESETS.some(dp => dp.id === id)) {
+      try {
+        const res = await fetch('/api/timer/presets', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, isFavorite: newFavorite }),
+        });
+        if (!res.ok) throw new Error('Failed to update favorite');
+      } catch (error) {
+        console.error('Error updating favorite:', error);
+        // Revert on error
+        setPresets(presets.map(p =>
+          p.id === id ? { ...p, isFavorite: !newFavorite } : p
+        ));
+        toast.error('Failed to save', 'Could not update favorite status.');
+      }
+    }
   };
 
   // Get progress percentage
