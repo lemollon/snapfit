@@ -34,25 +34,40 @@ export const authOptions: NextAuthOptions = {
 
         let user;
         try {
+          console.log('[AUTH] Starting login for email:', normalizedEmail);
+          console.log('[AUTH] DATABASE_URL set:', !!process.env.DATABASE_URL);
           const result = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
+          console.log('[AUTH] Query completed, found users:', result.length);
           user = result[0];
         } catch (dbError) {
-          // Log the actual error for debugging but don't expose it to users
-          console.error('Database error during login:', dbError);
+          // Log detailed error for debugging
+          console.error('[AUTH] Database error during login:', {
+            message: dbError instanceof Error ? dbError.message : 'Unknown error',
+            name: dbError instanceof Error ? dbError.name : 'Unknown',
+            stack: dbError instanceof Error ? dbError.stack : undefined,
+            email: normalizedEmail,
+            databaseUrlSet: !!process.env.DATABASE_URL,
+          });
           throw new Error('Unable to sign in. Please try again later.');
         }
 
         if (!user || !user.password) {
+          console.log('[AUTH] User not found or no password set for:', normalizedEmail);
           // Generic message to prevent user enumeration
           throw new Error('Invalid email or password');
         }
 
+        console.log('[AUTH] User found, comparing passwords...');
         const passwordMatch = await bcrypt.compare(credentials.password, user.password);
+        console.log('[AUTH] Password match result:', passwordMatch);
 
         if (!passwordMatch) {
+          console.log('[AUTH] Password mismatch for user:', normalizedEmail);
           // Same generic message
           throw new Error('Invalid email or password');
         }
+
+        console.log('[AUTH] Login successful for:', normalizedEmail);
 
         return {
           id: user.id,
