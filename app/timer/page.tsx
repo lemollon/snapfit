@@ -2,11 +2,15 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Play, Pause, RotateCcw, Settings, Volume2, VolumeX,
   Timer, Zap, Flame, Clock, Target, Infinity, Plus, Minus, Save,
   ChevronDown, ChevronUp, Trophy, X, Check, Star, Bookmark
 } from 'lucide-react';
+import { useCelebration } from '@/components/Celebration';
+import { triggerHaptic } from '@/lib/haptics';
+import { popIn, scaleIn } from '@/lib/animations';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&auto=format&fit=crop&q=80';
@@ -64,6 +68,9 @@ export default function TimerPage() {
   const [showPresets, setShowPresets] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [presetName, setPresetName] = useState('');
+
+  // Premium celebration animations
+  const { celebrate, CelebrationComponent } = useCelebration();
 
   // Refs
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -241,6 +248,15 @@ export default function TimerPage() {
     };
   }, [isRunning, isPaused, mode, isWorkPhase, currentRound, rounds, workDuration, restDuration, playCountdownBeep, playPhaseChange, playBeep]);
 
+  // Celebrate when timer completes (not stopwatch)
+  useEffect(() => {
+    if (!isRunning && roundsCompleted > 0 && mode !== 'stopwatch') {
+      triggerHaptic('success');
+      const modeName = TIMER_MODES.find(m => m.id === mode)?.name || 'Workout';
+      celebrate('challenge', 'WORKOUT COMPLETE!', `${roundsCompleted} rounds of ${modeName}`);
+    }
+  }, [isRunning, roundsCompleted, mode, celebrate]);
+
   // Start/pause timer
   const toggleTimer = () => {
     if (!isRunning) {
@@ -303,6 +319,9 @@ export default function TimerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Premium Celebration Component */}
+      {CelebrationComponent}
+
       {/* Hero Header */}
       <div className="relative">
         <div

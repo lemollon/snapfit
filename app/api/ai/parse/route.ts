@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 
 interface ParsedAction {
-  type: 'workout' | 'food' | 'habit' | 'pr' | 'timer' | 'recipe' | 'unknown';
+  type: 'workout' | 'food' | 'habit' | 'pr' | 'timer' | 'recipe' | 'navigate' | 'info' | 'unknown';
   data: Record<string, any>;
   message: string;
   confidence: number;
@@ -38,6 +38,18 @@ const PATTERNS = {
 
   // Recipe
   recipe: /(?:find|search|show|get)\s*(?:me\s*)?(?:a\s*)?([\w\s]+?)\s*recipe/i,
+
+  // Navigation
+  goTo: /(?:go\s*to|open|show|take\s*me\s*to|navigate\s*to)\s*(?:my\s*)?(records|prs|habits|timer|recipes|workouts|progress|profile|calendar|body|measurements|challenges)/i,
+
+  // Progress/Stats queries
+  progress: /(?:how\s*am\s*i\s*doing|show\s*(?:my\s*)?progress|what(?:'s|\s*is)\s*my\s*(?:progress|stats?|streak)|how\s*(?:many|much)|my\s*stats)/i,
+
+  // Suggestions
+  suggestion: /(?:what\s*should\s*i\s*(?:eat|do|work\s*on|train)|suggest|recommend|give\s*me\s*(?:a\s*)?(?:tip|idea|suggestion))/i,
+
+  // Motivation
+  motivation: /(?:motivate\s*me|i\s*need\s*motivation|inspire\s*me|pump\s*me\s*up|let(?:'s|\s*us)\s*go)/i,
 };
 
 function parseInput(input: string): ParsedAction {
@@ -219,11 +231,92 @@ function parseInput(input: string): ParsedAction {
     };
   }
 
+  // Check for navigation
+  match = text.match(PATTERNS.goTo);
+  if (match) {
+    const destination = match[1]?.toLowerCase();
+    const routes: Record<string, string> = {
+      records: '/records',
+      prs: '/records',
+      habits: '/habits',
+      timer: '/timer',
+      recipes: '/recipes',
+      workouts: '/',
+      progress: '/reports',
+      profile: '/profile',
+      calendar: '/calendar',
+      body: '/body',
+      measurements: '/body/measurements',
+      challenges: '/challenges/global',
+    };
+    const route = routes[destination] || '/';
+    return {
+      type: 'navigate',
+      data: {
+        destination,
+        route,
+      },
+      message: `Open ${destination}?`,
+      confidence: 0.95,
+    };
+  }
+
+  // Check for progress/stats query
+  if (PATTERNS.progress.test(text)) {
+    return {
+      type: 'info',
+      data: {
+        infoType: 'progress',
+      },
+      message: '📊 Checking your progress...',
+      confidence: 0.9,
+    };
+  }
+
+  // Check for suggestions
+  if (PATTERNS.suggestion.test(text)) {
+    const isFood = text.includes('eat');
+    const isWorkout = text.includes('do') || text.includes('work') || text.includes('train');
+    return {
+      type: 'info',
+      data: {
+        infoType: 'suggestion',
+        category: isFood ? 'nutrition' : isWorkout ? 'workout' : 'general',
+      },
+      message: isFood
+        ? '🥗 Getting nutrition suggestions...'
+        : isWorkout
+          ? '💪 Getting workout suggestions...'
+          : '✨ Getting personalized suggestions...',
+      confidence: 0.85,
+    };
+  }
+
+  // Check for motivation
+  if (PATTERNS.motivation.test(text)) {
+    const quotes = [
+      "💪 The only bad workout is the one that didn't happen. Let's crush it!",
+      "🔥 Your future self will thank you. Get after it!",
+      "⚡ Champions are made when no one is watching. Time to work!",
+      "🏆 Every rep counts. Every step matters. You've got this!",
+      "🚀 Pain is temporary, but glory is forever. Let's go!",
+    ];
+    return {
+      type: 'info',
+      data: {
+        infoType: 'motivation',
+        quote: quotes[Math.floor(Math.random() * quotes.length)],
+      },
+      message: quotes[Math.floor(Math.random() * quotes.length)],
+      confidence: 1.0,
+    };
+  }
+
   // Unknown - but try to be helpful
   return {
     type: 'unknown',
     data: { rawInput: input },
-    message: "I'm not sure what you'd like to log. Try saying something like:\n• \"Drank 8 glasses of water\"\n• \"Benched 225 for 5 reps\"\n• \"30 minute run\"\n• \"Had chicken salad for lunch\"",
+    message: "I'm not sure what you'd like to do. Try:\n• \"Log 8 glasses of water\"\n• \"Benched 225 for 5 reps\"\n• \"30 minute run\"\n• \"Show my progress\"\n• \"Go to habits\"\n• \"What should I eat?\"",
     confidence: 0,
   };
 }

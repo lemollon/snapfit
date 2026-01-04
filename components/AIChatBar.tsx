@@ -2,15 +2,17 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import {
   MessageCircle, Send, X, Loader2, Sparkles, Check,
-  Dumbbell, Utensils, Droplets, Trophy, Timer, Mic, MicOff
+  Dumbbell, Utensils, Droplets, Trophy, Timer, Mic, MicOff,
+  Navigation, Info, Zap
 } from 'lucide-react';
 import { triggerHaptic } from '@/lib/haptics';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ParsedAction {
-  type: 'workout' | 'food' | 'habit' | 'pr' | 'timer' | 'recipe' | 'unknown';
+  type: 'workout' | 'food' | 'habit' | 'pr' | 'timer' | 'recipe' | 'navigate' | 'info' | 'unknown';
   data: Record<string, any>;
   message: string;
   confidence: number;
@@ -31,6 +33,8 @@ const ACTION_ICONS = {
   pr: Trophy,
   timer: Timer,
   recipe: Utensils,
+  navigate: Navigation,
+  info: Zap,
   unknown: MessageCircle,
 };
 
@@ -41,11 +45,14 @@ const ACTION_COLORS = {
   pr: 'from-amber-500 to-orange-600',
   timer: 'from-rose-500 to-pink-600',
   recipe: 'from-lime-500 to-green-600',
+  navigate: 'from-indigo-500 to-blue-600',
+  info: 'from-cyan-500 to-teal-600',
   unknown: 'from-gray-500 to-gray-600',
 };
 
 export default function AIChatBar() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -113,8 +120,22 @@ export default function AIChatBar() {
         setMessages(prev => [...prev, assistantMessage]);
 
         if (result.action && result.action.type !== 'unknown') {
-          setPendingAction(result.action);
-          triggerHaptic('success');
+          // Info and navigate don't need confirmation - execute immediately
+          if (result.action.type === 'info') {
+            // Just display the message, no action needed
+            triggerHaptic('light');
+          } else if (result.action.type === 'navigate') {
+            // Auto-navigate
+            triggerHaptic('success');
+            setTimeout(() => {
+              router.push(result.action.data.route);
+              setIsOpen(false);
+            }, 500);
+          } else {
+            // Other actions need confirmation
+            setPendingAction(result.action);
+            triggerHaptic('success');
+          }
         }
       } else {
         const errorMessage: ChatMessage = {

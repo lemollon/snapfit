@@ -175,7 +175,7 @@ export const cardHover = {
   scale: 1.02,
   y: -4,
   transition: {
-    type: 'spring',
+    type: 'spring' as const,
     stiffness: 400,
     damping: 25,
   },
@@ -184,7 +184,7 @@ export const cardHover = {
 export const cardTap = {
   scale: 0.98,
   transition: {
-    type: 'spring',
+    type: 'spring' as const,
     stiffness: 400,
     damping: 25,
   },
@@ -194,7 +194,7 @@ export const cardTap = {
 export const buttonHover = {
   scale: 1.05,
   transition: {
-    type: 'spring',
+    type: 'spring' as const,
     stiffness: 400,
     damping: 17,
   },
@@ -203,7 +203,7 @@ export const buttonHover = {
 export const buttonTap = {
   scale: 0.95,
   transition: {
-    type: 'spring',
+    type: 'spring' as const,
     stiffness: 400,
     damping: 17,
   },

@@ -5,7 +5,7 @@ import { habits, habitLogs, personalRecords, personalRecordHistory, workouts, fo
 import { eq, and } from 'drizzle-orm';
 
 interface ParsedAction {
-  type: 'workout' | 'food' | 'habit' | 'pr' | 'timer' | 'recipe' | 'unknown';
+  type: 'workout' | 'food' | 'habit' | 'pr' | 'timer' | 'recipe' | 'navigate' | 'info' | 'unknown';
   data: Record<string, any>;
   message: string;
   confidence: number;
@@ -316,6 +316,101 @@ export async function POST(request: NextRequest) {
           success: true,
           message: `🍳 Searching for ${query} recipes...`,
           redirect: `/recipes?search=${encodeURIComponent(query)}`,
+        });
+      }
+
+      case 'navigate': {
+        const { destination, route } = action.data;
+        return NextResponse.json({
+          success: true,
+          message: `🚀 Opening ${destination}...`,
+          redirect: route,
+        });
+      }
+
+      case 'info': {
+        const { infoType, category, quote } = action.data;
+
+        if (infoType === 'motivation') {
+          return NextResponse.json({
+            success: true,
+            message: quote,
+            noAction: true,
+          });
+        }
+
+        if (infoType === 'progress') {
+          // Get user stats
+          const today = new Date().toISOString().split('T')[0];
+          const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+          // Get workout count
+          const workoutsThisWeek = await db
+            .select()
+            .from(workouts)
+            .where(eq(workouts.userId, userId));
+
+          // Get habit completion
+          const habitsCompleted = await db
+            .select()
+            .from(habitLogs)
+            .where(and(
+              eq(habitLogs.userId, userId),
+              eq(habitLogs.date, today),
+              eq(habitLogs.completed, true)
+            ));
+
+          // Get recent PRs
+          const recentPRs = await db
+            .select()
+            .from(personalRecordHistory)
+            .where(eq(personalRecordHistory.userId, userId))
+            .limit(3);
+
+          return NextResponse.json({
+            success: true,
+            message: `📊 This Week's Progress:\n\n• ${workoutsThisWeek.length} workouts logged\n• ${habitsCompleted.length} habits completed today\n• ${recentPRs.length} recent PRs\n\nKeep it up! 💪`,
+            noAction: true,
+          });
+        }
+
+        if (infoType === 'suggestion') {
+          const suggestions = {
+            nutrition: [
+              '🥗 Try adding more protein to your meals - aim for 30g per meal',
+              '💧 Remember to drink water before meals to help with portion control',
+              '🥚 Consider meal prepping on Sundays to stay on track',
+              '🍎 Snack on fruits and nuts instead of processed foods',
+            ],
+            workout: [
+              '🏋️ Focus on compound movements like squats and deadlifts',
+              '💪 Try progressive overload - add 5lbs each week',
+              '🔥 Add a HIIT session for extra calorie burn',
+              '🧘 Don\'t skip your warm-up and cool-down stretches',
+            ],
+            general: [
+              '😴 Prioritize 7-8 hours of sleep for recovery',
+              '📱 Log your meals right after eating for accuracy',
+              '🎯 Set a specific goal for this week',
+              '👥 Find a workout buddy for accountability',
+            ],
+          };
+
+          const categoryKey = (category || 'general') as keyof typeof suggestions;
+          const tipList = suggestions[categoryKey] || suggestions.general;
+          const tip = tipList[Math.floor(Math.random() * tipList.length)];
+
+          return NextResponse.json({
+            success: true,
+            message: tip,
+            noAction: true,
+          });
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: 'ℹ️ Here to help!',
+          noAction: true,
         });
       }
 
