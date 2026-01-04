@@ -42,23 +42,6 @@ interface PRHistory {
   achievedAt: string;
 }
 
-const SAMPLE_RECORDS: PersonalRecord[] = [
-  { id: '1', exerciseName: 'Bench Press', category: 'strength', maxWeight: 225, maxReps: 5, unit: 'lbs', achievedAt: '2025-01-02', improvement: 10, isNew: true },
-  { id: '2', exerciseName: 'Deadlift', category: 'strength', maxWeight: 405, maxReps: 3, unit: 'lbs', achievedAt: '2024-12-28' },
-  { id: '3', exerciseName: 'Squat', category: 'strength', maxWeight: 315, maxReps: 5, unit: 'lbs', achievedAt: '2024-12-20' },
-  { id: '4', exerciseName: 'Pull-ups', category: 'bodyweight', maxReps: 18, unit: 'reps', achievedAt: '2024-12-15' },
-  { id: '5', exerciseName: 'Push-ups', category: 'bodyweight', maxReps: 65, unit: 'reps', achievedAt: '2024-12-10' },
-  { id: '6', exerciseName: '5K Run', category: 'cardio', fastestTime: 1380, longestDistance: 5, unit: 'km', achievedAt: '2024-12-05' },
-  { id: '7', exerciseName: 'Clean & Jerk', category: 'olympic', maxWeight: 185, unit: 'lbs', achievedAt: '2024-11-30' },
-  { id: '8', exerciseName: 'Snatch', category: 'olympic', maxWeight: 155, unit: 'lbs', achievedAt: '2024-11-25' },
-];
-
-const SAMPLE_HISTORY: PRHistory[] = [
-  { id: '1', exerciseName: 'Bench Press', recordType: 'max_weight', previousValue: 215, newValue: 225, improvement: 4.7, achievedAt: '2025-01-02' },
-  { id: '2', exerciseName: 'Deadlift', recordType: 'max_weight', previousValue: 385, newValue: 405, improvement: 5.2, achievedAt: '2024-12-28' },
-  { id: '3', exerciseName: 'Pull-ups', recordType: 'max_reps', previousValue: 15, newValue: 18, improvement: 20, achievedAt: '2024-12-15' },
-];
-
 const CATEGORY_CONFIG = {
   strength: { icon: Dumbbell, color: 'from-violet-500 to-purple-600', label: 'Strength' },
   cardio: { icon: Timer, color: 'from-green-500 to-emerald-600', label: 'Cardio' },
@@ -187,18 +170,20 @@ export default function RecordsPage() {
           body: JSON.stringify({
             exerciseName: newPRForm.exerciseName,
             category: newPRForm.category,
-            value: newPRForm.weight ? parseInt(newPRForm.weight) : parseInt(newPRForm.reps),
-            reps: newPRForm.reps ? parseInt(newPRForm.reps) : undefined,
+            maxWeight: newPRForm.weight ? parseInt(newPRForm.weight) : undefined,
+            maxReps: newPRForm.reps ? parseInt(newPRForm.reps) : undefined,
             unit: newPRForm.unit,
-            recordType: 'max_weight',
           }),
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.isNewPR) {
-            newRecord.id = data.record.id;
-          }
+        if (!response.ok) {
+          throw new Error('Failed to save PR');
+        }
+
+        const data = await response.json();
+        if (data.record) {
+          newRecord.id = data.record.id;
+          toast.success('PR saved!', 'Your personal record has been saved.');
         }
       } catch (error) {
         console.error('Error saving PR:', error);
