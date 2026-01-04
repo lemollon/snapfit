@@ -71,6 +71,32 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error('Registration error:', error);
+
+    // Provide more specific error messages for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+
+    // Check for common database errors
+    if (errorMessage.includes('connect') || errorMessage.includes('ECONNREFUSED') || errorMessage.includes('timeout')) {
+      return NextResponse.json(
+        { error: 'Database connection failed. Please try again.' },
+        { status: 503 }
+      );
+    }
+
+    if (errorMessage.includes('duplicate') || errorMessage.includes('unique')) {
+      return NextResponse.json(
+        { error: 'An account with this email already exists.' },
+        { status: 400 }
+      );
+    }
+
+    if (errorMessage.includes('SSL') || errorMessage.includes('ssl')) {
+      return NextResponse.json(
+        { error: 'Database SSL connection error. Please contact support.' },
+        { status: 503 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Unable to create account. Please try again.' },
       { status: 500 }
