@@ -4,14 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx drizzle-kit push && next build",
-    "build:skip-db": "next build",
-    "postinstall": "echo 'Dependencies installed'",
+    "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "postinstall": "echo 'Dependencies installed'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.27.0",
