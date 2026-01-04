@@ -17,6 +17,7 @@ import {
   Calendar,
   ChevronRight,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface BodyMeasurement {
   id: string;
@@ -55,6 +56,7 @@ const MEASUREMENT_FIELDS = [
 export default function BodyMeasurementsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [measurements, setMeasurements] = useState<BodyMeasurement[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -95,6 +97,7 @@ export default function BodyMeasurementsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch measurements:', error);
+      toast.error('Failed to load measurements', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -140,9 +143,13 @@ export default function BodyMeasurementsPage() {
           unit: 'cm',
           notes: '',
         });
+        toast.success('Measurements saved', 'Your body measurements have been recorded.');
+      } else {
+        toast.error('Failed to save', 'Please check your inputs and try again.');
       }
     } catch (error) {
       console.error('Failed to save measurement:', error);
+      toast.error('Failed to save measurements', 'Please try again.');
     } finally {
       setSaving(false);
     }

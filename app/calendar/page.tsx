@@ -39,6 +39,7 @@ import {
   List,
   Sparkles,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface CalendarData {
   events: any[];
@@ -108,6 +109,7 @@ function isSameDay(date1: Date, date2: Date): boolean {
 export default function CalendarPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<'day' | 'week' | 'month' | 'timeline'>('month');
@@ -172,6 +174,7 @@ export default function CalendarPage() {
       setCalendarData(data);
     } catch (error) {
       console.error('Failed to fetch calendar data:', error);
+      toast.error('Failed to load calendar', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }

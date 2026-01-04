@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useCelebration } from '@/components/Celebration';
 import { useToast } from '@/components/Toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import { triggerHaptic } from '@/lib/haptics';
 import { staggerContainer, listItem, popIn, scaleIn } from '@/lib/animations';
 
@@ -127,6 +128,10 @@ export default function HabitsPage() {
   const [customHabitTarget, setCustomHabitTarget] = useState('');
   const [customHabitUnit, setCustomHabitUnit] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; habitId: string | null }>({
+    isOpen: false,
+    habitId: null,
+  });
 
   // Premium celebration animations
   const { celebrate, CelebrationComponent } = useCelebration();
@@ -404,11 +409,11 @@ export default function HabitsPage() {
   };
 
   const deleteHabit = async (habitId: string) => {
-    if (!confirm('Are you sure you want to delete this habit?')) return;
-
     // Optimistic update
     setHabits(habits.filter(h => h.id !== habitId));
     setShowDetailModal(false);
+    setDeleteConfirm({ isOpen: false, habitId: null });
+    toast.success('Habit deleted', 'The habit has been removed.');
 
     if (!session?.user || habitId.startsWith('demo-')) {
       return;
@@ -421,10 +426,14 @@ export default function HabitsPage() {
       });
     } catch (error) {
       console.error('Error deleting habit:', error);
-      // Note: We don't revert since the habit was already removed from UI
+      toast.error('Sync error', 'Habit removed locally but may not have synced.');
     } finally {
       setDeleting(false);
     }
+  };
+
+  const confirmDeleteHabit = (habitId: string) => {
+    setDeleteConfirm({ isOpen: true, habitId });
   };
 
   const getProgress = (habit: Habit): number => {
@@ -901,7 +910,7 @@ export default function HabitsPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => selectedHabit && deleteHabit(selectedHabit.id)}
+                onClick={() => selectedHabit && confirmDeleteHabit(selectedHabit.id)}
                 disabled={deleting}
                 className="flex-1 py-3 bg-red-500/20 text-red-400 rounded-2xl font-medium hover:bg-red-500/30 transition-all disabled:opacity-50"
               >
@@ -917,6 +926,17 @@ export default function HabitsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, habitId: null })}
+        onConfirm={() => deleteConfirm.habitId && deleteHabit(deleteConfirm.habitId)}
+        title="Delete Habit?"
+        message="This habit and all its tracking history will be permanently deleted."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

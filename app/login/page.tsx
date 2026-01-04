@@ -986,9 +986,9 @@ export default function LoginPage() {
             </div>
             <p className="text-sm text-zinc-500">&copy; 2024 SnapFit. All rights reserved.</p>
             <div className="flex items-center gap-6">
-              <a href="#" className="text-zinc-500 hover:text-white transition-colors">Privacy</a>
-              <a href="#" className="text-zinc-500 hover:text-white transition-colors">Terms</a>
-              <a href="#" className="text-zinc-500 hover:text-white transition-colors">Contact</a>
+              <a href="/privacy" className="text-zinc-500 hover:text-white transition-colors">Privacy</a>
+              <a href="/terms" className="text-zinc-500 hover:text-white transition-colors">Terms</a>
+              <a href="mailto:support@snapfit.app" className="text-zinc-500 hover:text-white transition-colors">Contact</a>
             </div>
           </div>
         </div>

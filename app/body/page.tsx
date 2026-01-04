@@ -23,6 +23,7 @@ import {
   Activity,
   Sparkles,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Premium stock images
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1200&auto=format&fit=crop&q=80';
@@ -66,6 +67,7 @@ interface UserProfile {
 export default function BodyTrackingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'weight' | 'measurements' | 'photos'>('weight');
   const [weightLogs, setWeightLogs] = useState<WeightLog[]>([]);
   const [measurements, setMeasurements] = useState<BodyMeasurement[]>([]);
@@ -124,6 +126,7 @@ export default function BodyTrackingPage() {
       setProfile(profileData.user);
     } catch (error) {
       console.error('Failed to fetch data:', error);
+      toast.error('Failed to load data', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -147,9 +150,11 @@ export default function BodyTrackingPage() {
         setWeightLogs([data.log, ...weightLogs]);
         setNewWeight({ weight: '', unit: 'kg', notes: '' });
         setShowAddWeight(false);
+        toast.success('Weight logged', 'Your weight has been recorded.');
       }
     } catch (error) {
       console.error('Failed to add weight:', error);
+      toast.error('Failed to save weight', 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -188,9 +193,11 @@ export default function BodyTrackingPage() {
           bodyFatPercent: '', unit: 'cm', notes: '',
         });
         setShowAddMeasurement(false);
+        toast.success('Measurements saved', 'Your measurements have been recorded.');
       }
     } catch (error) {
       console.error('Failed to add measurement:', error);
+      toast.error('Failed to save measurements', 'Please try again.');
     } finally {
       setSaving(false);
     }

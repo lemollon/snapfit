@@ -20,6 +20,7 @@ import {
   Award,
 } from 'lucide-react';
 import { AchievementIcon } from '@/components/achievement-icon';
+import { useToast } from '@/components/Toast';
 
 // Premium stock image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&auto=format&fit=crop&q=80';
@@ -105,6 +106,7 @@ function getLevelProgress(xp: number, level: number): number {
 export default function AchievementsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,6 +146,7 @@ export default function AchievementsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch achievements:', error);
+      toast.error('Failed to load achievements', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
