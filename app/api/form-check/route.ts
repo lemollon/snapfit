@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { formChecks, users } from '@/lib/db/schema';
+import { formChecks, users, trainerClients } from '@/lib/db/schema';
 import { eq, desc, and } from 'drizzle-orm';
 import OpenAI from 'openai';
 
@@ -32,6 +32,20 @@ export async function GET(request: NextRequest) {
 
     let checks;
     if (isTrainer && clientId) {
+      // Verify this trainer has access to this client
+      const [relationship] = await db.select()
+        .from(trainerClients)
+        .where(and(
+          eq(trainerClients.trainerId, session.user.id),
+          eq(trainerClients.clientId, clientId),
+          eq(trainerClients.status, 'active')
+        ))
+        .limit(1);
+
+      if (!relationship) {
+        return NextResponse.json({ error: 'Access denied - not your client' }, { status: 403 });
+      }
+
       // Trainer viewing client's form checks
       checks = await db.select()
         .from(formChecks)

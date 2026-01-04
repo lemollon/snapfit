@@ -127,6 +127,25 @@ export async function POST(request: NextRequest) {
       // Schedule check-ins for clients
       const { templateId, clientIds, scheduledFor } = body;
 
+      if (!Array.isArray(clientIds) || clientIds.length === 0) {
+        return NextResponse.json({ error: 'At least one client is required' }, { status: 400 });
+      }
+
+      // Verify all clients belong to this trainer
+      const validClients = await db.select({ clientId: trainerClients.clientId })
+        .from(trainerClients)
+        .where(and(
+          eq(trainerClients.trainerId, session.user.id),
+          eq(trainerClients.status, 'active')
+        ));
+
+      const validClientIds = new Set(validClients.map(c => c.clientId));
+      const invalidClients = clientIds.filter((id: string) => !validClientIds.has(id));
+
+      if (invalidClients.length > 0) {
+        return NextResponse.json({ error: 'Some clients are not assigned to you' }, { status: 403 });
+      }
+
       const scheduled = [];
       for (const clientId of clientIds) {
         const [checkIn] = await db.insert(scheduledCheckIns).values({

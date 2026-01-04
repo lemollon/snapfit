@@ -60,6 +60,30 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { photoUrl, mealType, foodName, calories, protein, carbs, fat, fiber, analysis, notes } = body;
 
+    // Validate mealType
+    const validMealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
+    if (mealType && !validMealTypes.includes(mealType)) {
+      return NextResponse.json({ error: 'Invalid meal type' }, { status: 400 });
+    }
+
+    // Validate numeric fields are non-negative
+    const numericFields = { calories, protein, carbs, fat, fiber };
+    for (const [field, value] of Object.entries(numericFields)) {
+      if (value !== undefined && value !== null) {
+        if (typeof value !== 'number' || value < 0 || value > 50000) {
+          return NextResponse.json({ error: `Invalid ${field} value` }, { status: 400 });
+        }
+      }
+    }
+
+    // Validate string lengths
+    if (foodName && foodName.length > 500) {
+      return NextResponse.json({ error: 'Food name too long (max 500 chars)' }, { status: 400 });
+    }
+    if (notes && notes.length > 2000) {
+      return NextResponse.json({ error: 'Notes too long (max 2000 chars)' }, { status: 400 });
+    }
+
     const [newLog] = await db.insert(foodLogs).values({
       userId,
       photoUrl,

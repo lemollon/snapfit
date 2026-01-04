@@ -28,16 +28,19 @@ export async function GET() {
       f.senderId === userId ? f.receiverId : f.senderId
     );
 
-    const friends = await db.query.users.findMany({
-      where: or(...friendIds.map(id => eq(users.id, id))),
-      columns: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        isTrainer: true,
-      },
-    });
+    // Handle empty array case to avoid or() with no arguments
+    const friends = friendIds.length > 0
+      ? await db.query.users.findMany({
+          where: or(...friendIds.map(id => eq(users.id, id))),
+          columns: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            isTrainer: true,
+          },
+        })
+      : [];
 
     // Get pending requests (received)
     const pendingRequests = await db.query.friendships.findMany({

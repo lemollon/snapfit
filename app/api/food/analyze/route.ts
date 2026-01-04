@@ -1,12 +1,24 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import Anthropic from '@anthropic-ai/sdk';
 
 export async function POST(req: Request) {
   try {
+    // Require authentication to prevent API abuse
+    const session = await getServerSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     const { imageBase64 } = await req.json();
 
     if (!imageBase64) {
       return NextResponse.json({ error: 'No image provided' }, { status: 400 });
+    }
+
+    // Validate image size (max 10MB base64)
+    if (imageBase64.length > 10 * 1024 * 1024 * 1.37) {
+      return NextResponse.json({ error: 'Image too large (max 10MB)' }, { status: 400 });
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
