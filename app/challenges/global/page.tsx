@@ -8,6 +8,7 @@ import {
   ChevronRight, Star, Crown, Medal, TrendingUp, Gift, Calendar,
   CheckCircle, Lock, Share2, Loader2
 } from 'lucide-react';
+import SocialShareModal from '@/components/SocialShareModal';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=1200&auto=format&fit=crop&q=80';
@@ -145,6 +146,19 @@ export default function GlobalChallengesPage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(false);
   const [currentUserPosition, setCurrentUserPosition] = useState<LeaderboardEntry | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareContent, setShareContent] = useState<{ title: string; subtitle: string } | null>(null);
+
+  const handleShare = (challenge?: GlobalChallenge) => {
+    const c = challenge || selectedChallenge;
+    if (c) {
+      setShareContent({
+        title: c.name,
+        subtitle: `Join me in the ${c.name}! ${c.participantCount.toLocaleString()} people are already participating.`,
+      });
+      setShowShareModal(true);
+    }
+  };
 
   // Fetch leaderboard when challenge is selected
   useEffect(() => {
@@ -261,7 +275,10 @@ export default function GlobalChallengesPage() {
             <ArrowLeft className="w-5 h-5 text-white" />
           </Link>
 
-          <button className="p-3 bg-white/10 backdrop-blur-xl rounded-2xl hover:bg-white/20 transition-all">
+          <button
+            onClick={() => handleShare(challenges[0])}
+            className="p-3 bg-white/10 backdrop-blur-xl rounded-2xl hover:bg-white/20 transition-all"
+          >
             <Share2 className="w-5 h-5 text-white" />
           </button>
         </div>
@@ -685,7 +702,10 @@ export default function GlobalChallengesPage() {
                   >
                     Close
                   </button>
-                  <button className="flex-1 py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white">
+                  <button
+                    onClick={() => handleShare()}
+                    className="flex-1 py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white"
+                  >
                     <Share2 className="w-5 h-5 inline mr-2" />
                     Share
                   </button>
@@ -694,6 +714,19 @@ export default function GlobalChallengesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Share Modal */}
+      {shareContent && (
+        <SocialShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          content={{
+            type: 'challenge',
+            title: shareContent.title,
+            subtitle: shareContent.subtitle,
+          }}
+        />
       )}
     </div>
   );

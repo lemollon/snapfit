@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import {
   ArrowLeft, Palette, Type, Globe, Image, Upload, Eye, Save,
   Crown, Sparkles, Check, X, ExternalLink, Instagram, Youtube,
-  Twitter, Smartphone, Monitor, Sun, Moon
+  Twitter, Smartphone, Monitor, Sun, Moon, Loader2
 } from 'lucide-react';
 
 // Hero image
@@ -48,9 +49,11 @@ const FONT_OPTIONS = [
 ];
 
 export default function BrandingPage() {
+  const { data: session } = useSession();
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const [settings, setSettings] = useState<BrandingSettings>({
-    businessName: 'Elite Fitness Coaching',
-    tagline: 'Transform Your Body, Transform Your Life',
+    businessName: '',
+    tagline: '',
     logoUrl: '',
     primaryColor: '#8B5CF6',
     secondaryColor: '#EC4899',
@@ -67,7 +70,31 @@ export default function BrandingPage() {
   const [previewMode, setPreviewMode] = useState<'mobile' | 'desktop'>('mobile');
   const [activeTab, setActiveTab] = useState<'colors' | 'typography' | 'domain' | 'social'>('colors');
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [showUpgrade, setShowUpgrade] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+
+  // Load existing branding settings
+  useEffect(() => {
+    const fetchBranding = async () => {
+      try {
+        const res = await fetch('/api/trainer/branding');
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(prev => ({ ...prev, ...data }));
+        }
+      } catch (error) {
+        console.error('Failed to load branding:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (session?.user) {
+      fetchBranding();
+    } else {
+      setIsLoading(false);
+    }
+  }, [session]);
 
   const updateSetting = <K extends keyof BrandingSettings>(
     key: K,
@@ -85,11 +112,66 @@ export default function BrandingPage() {
     });
   };
 
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingLogo(true);
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64Image = await base64Promise;
+
+      // Upload to Cloudinary
+      const uploadRes = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          image: base64Image,
+          folder: 'avatars',
+        }),
+      });
+
+      if (uploadRes.ok) {
+        const uploadData = await uploadRes.json();
+        if (uploadData.data?.url) {
+          setSettings(prev => ({ ...prev, logoUrl: uploadData.data.url }));
+        }
+      } else {
+        alert('Failed to upload logo');
+      }
+    } catch (error) {
+      console.error('Logo upload failed:', error);
+      alert('Failed to upload logo');
+    } finally {
+      setUploadingLogo(false);
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
-    // Simulate save
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setIsSaving(false);
+    try {
+      const res = await fetch('/api/trainer/branding', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to save branding');
+      }
+    } catch (error) {
+      console.error('Save failed:', error);
+      alert(error instanceof Error ? error.message : 'Failed to save branding settings');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -203,9 +285,24 @@ export default function BrandingPage() {
                     <Image className="w-8 h-8 text-white/30" />
                   )}
                 </div>
-                <button className="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white flex items-center gap-2 hover:bg-white/10 transition-all">
-                  <Upload className="w-4 h-4" />
-                  Upload Logo
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => logoInputRef.current?.click()}
+                  disabled={uploadingLogo}
+                  className="px-4 py-3 bg-white/5 border border-white/10 rounded-2xl text-white flex items-center gap-2 hover:bg-white/10 transition-all disabled:opacity-50"
+                >
+                  {uploadingLogo ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4" />
+                  )}
+                  {uploadingLogo ? 'Uploading...' : 'Upload Logo'}
                 </button>
               </div>
             </div>

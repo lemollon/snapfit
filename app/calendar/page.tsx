@@ -1177,7 +1177,10 @@ export default function CalendarPage() {
                       <ClipboardCheck className="w-5 h-5 mx-auto mb-1" />
                       Daily Log
                     </button>
-                    <button className="p-3 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 rounded-xl text-sm font-medium transition-colors border border-pink-500/20">
+                    <button
+                      onClick={() => router.push('/body/photos')}
+                      className="p-3 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 rounded-xl text-sm font-medium transition-colors border border-pink-500/20"
+                    >
                       <Camera className="w-5 h-5 mx-auto mb-1" />
                       Photo
                     </button>

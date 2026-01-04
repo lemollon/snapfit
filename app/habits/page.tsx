@@ -872,7 +872,10 @@ export default function HabitsPage() {
                   <Bell className="w-5 h-5 text-white/60" />
                   <span className="text-white">Reminder</span>
                 </div>
-                <button className="px-3 py-1 bg-white/10 rounded-lg text-sm text-white/60">
+                <button
+                  onClick={() => alert('Reminders coming soon! Enable notifications in your device settings.')}
+                  className="px-3 py-1 bg-white/10 rounded-lg text-sm text-white/60 hover:bg-white/20 transition-colors"
+                >
                   Off
                 </button>
               </div>

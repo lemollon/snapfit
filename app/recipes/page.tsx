@@ -177,6 +177,7 @@ export default function RecipesPage() {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [loggingMeal, setLoggingMeal] = useState(false);
   const [mealLogged, setMealLogged] = useState(false);
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
 
   // Fetch recipes from API
   useEffect(() => {
@@ -296,7 +297,8 @@ export default function RecipesPage() {
     const matchesCategory = selectedCategory === 'all' || recipe.category === selectedCategory;
     const matchesDiet = selectedDiet === 'All' ||
       recipe.tags.some(tag => tag.toLowerCase().includes(selectedDiet.toLowerCase().replace('-', '')));
-    return matchesSearch && matchesCategory && matchesDiet;
+    const matchesSaved = !showSavedOnly || recipe.isSaved;
+    return matchesSearch && matchesCategory && matchesDiet && matchesSaved;
   });
 
   const featuredRecipes = recipes.filter(r => r.isFeatured);
@@ -343,8 +345,13 @@ export default function RecipesPage() {
           </Link>
 
           <div className="flex items-center gap-2">
-            <button className="p-3 bg-white/10 backdrop-blur-xl rounded-2xl hover:bg-white/20 transition-all relative">
-              <Bookmark className="w-5 h-5 text-white" />
+            <button
+              onClick={() => setShowSavedOnly(!showSavedOnly)}
+              className={`p-3 backdrop-blur-xl rounded-2xl transition-all relative ${
+                showSavedOnly ? 'bg-violet-500' : 'bg-white/10 hover:bg-white/20'
+              }`}
+            >
+              <Bookmark className={`w-5 h-5 ${showSavedOnly ? 'text-white fill-white' : 'text-white'}`} />
               {savedRecipes.length > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-violet-500 rounded-full text-xs flex items-center justify-center text-white">
                   {savedRecipes.length}

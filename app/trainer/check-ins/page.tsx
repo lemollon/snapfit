@@ -288,7 +288,10 @@ export default function CheckInsPage() {
                     <span className={`text-sm ${template.isActive ? 'text-green-400' : 'text-zinc-500'}`}>
                       {template.isActive ? 'Active' : 'Inactive'}
                     </span>
-                    <button className="text-orange-400 text-sm font-medium">
+                    <button
+                      onClick={() => alert(`Schedule "${template.name}" check-in for your clients from the Clients page.`)}
+                      className="text-orange-400 text-sm font-medium hover:text-orange-300 transition-colors"
+                    >
                       Schedule →
                     </button>
                   </div>
