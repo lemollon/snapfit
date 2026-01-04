@@ -169,6 +169,7 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       const res = await fetch('/api/profile');
+      if (!res.ok) throw new Error('Failed to fetch profile');
       const data = await res.json();
       if (data.user) {
         setProfile(data.user);
@@ -188,6 +189,7 @@ export default function ProfilePage() {
       }
     } catch (error) {
       console.error('Failed to fetch profile:', error);
+      toast.error('Failed to load profile', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -196,6 +198,7 @@ export default function ProfilePage() {
   const fetchAchievements = async () => {
     try {
       const res = await fetch('/api/achievements');
+      if (!res.ok) throw new Error('Failed to fetch achievements');
       const data = await res.json();
       setAchievements(data.achievements || []);
     } catch (error) {
@@ -206,6 +209,7 @@ export default function ProfilePage() {
   const fetchWeightLogs = async () => {
     try {
       const res = await fetch('/api/body/weight?limit=30');
+      if (!res.ok) throw new Error('Failed to fetch weight logs');
       const data = await res.json();
       setWeightLogs(data.logs || []);
     } catch (error) {
@@ -233,13 +237,16 @@ export default function ProfilePage() {
           height: editForm.height ? parseFloat(editForm.height) : null,
         }),
       });
+      if (!res.ok) throw new Error('Failed to save profile');
       const data = await res.json();
       if (data.user) {
         setProfile(data.user);
         setEditing(false);
+        toast.success('Profile saved', 'Your profile has been updated.');
       }
     } catch (error) {
       console.error('Failed to save profile:', error);
+      toast.error('Failed to save profile', 'Please try again.');
     } finally {
       setSaving(false);
     }

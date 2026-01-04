@@ -132,6 +132,7 @@ export default function ProgressPhotosPage() {
         await fetchPhotos();
         setShowUpload(false);
         setNewPhoto({ type: 'front', notes: '' });
+        toast.success('Photo uploaded', 'Your progress photo has been saved.');
       } else {
         throw new Error('Failed to save photo record');
       }

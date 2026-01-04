@@ -115,6 +115,10 @@ export default function BodyTrackingPage() {
         fetch('/api/profile'),
       ]);
 
+      if (!weightRes.ok || !measurementRes.ok || !profileRes.ok) {
+        throw new Error('Failed to fetch data');
+      }
+
       const [weightData, measurementData, profileData] = await Promise.all([
         weightRes.json(),
         measurementRes.json(),
@@ -145,6 +149,7 @@ export default function BodyTrackingPage() {
           notes: newWeight.notes || undefined,
         }),
       });
+      if (!res.ok) throw new Error('Failed to save weight');
       const data = await res.json();
       if (data.log) {
         setWeightLogs([data.log, ...weightLogs]);
@@ -184,6 +189,7 @@ export default function BodyTrackingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(measurementData),
       });
+      if (!res.ok) throw new Error('Failed to save measurements');
       const data = await res.json();
       if (data.measurement) {
         setMeasurements([data.measurement, ...measurements]);

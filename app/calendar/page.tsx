@@ -308,6 +308,10 @@ export default function CalendarPage() {
         setWorkoutForm({ title: '', description: '', duration: 45 });
         setMealForm({ name: '', mealType: 'breakfast', targetCalories: 0, targetProtein: 0 });
         setFoodForm({ mealType: 'breakfast', foodName: '', calories: 0, protein: 0, carbs: 0, fat: 0 });
+        const typeLabels = { workout: 'Workout', meal: 'Meal', food: 'Meal', daily: 'Daily log', photo: 'Photo' };
+        toast.success(`${typeLabels[addType]} saved`, 'Your entry has been added to the calendar.');
+      } else {
+        throw new Error('Failed to save entry');
       }
     } catch (error) {
       console.error('Failed to save:', error);
@@ -319,7 +323,7 @@ export default function CalendarPage() {
 
   const handleCompleteWorkout = async (id: string, complete: boolean) => {
     try {
-      await fetch('/api/calendar', {
+      const res = await fetch('/api/calendar', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -328,7 +332,12 @@ export default function CalendarPage() {
           status: complete ? 'completed' : 'skipped',
         }),
       });
+      if (!res.ok) throw new Error('Failed to update workout');
       fetchCalendarData();
+      toast.success(
+        complete ? 'Workout completed!' : 'Workout skipped',
+        complete ? 'Great job on completing your workout!' : 'Workout has been marked as skipped.'
+      );
     } catch (error) {
       console.error('Failed to update workout:', error);
       toast.error('Failed to update workout', 'Please try again.');

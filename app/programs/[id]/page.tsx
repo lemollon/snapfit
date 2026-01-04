@@ -114,6 +114,9 @@ export default function ProgramDetailPage() {
       });
       if (res.ok) {
         await fetchProgram();
+        toast.success('Program unlocked!', 'You now have full access to this program.');
+      } else {
+        throw new Error('Failed to purchase');
       }
     } catch (error) {
       console.error('Failed to purchase program:', error);

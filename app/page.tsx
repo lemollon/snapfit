@@ -540,6 +540,9 @@ function SnapFitContent() {
       const res = await fetch(`/api/workouts/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setSavedWorkouts((prev) => prev.filter((w) => w.id !== id));
+        toast.success('Workout deleted', 'The workout has been removed from your history.');
+      } else {
+        throw new Error('Failed to delete');
       }
     } catch (err) {
       console.error('Failed to delete workout:', err);
@@ -652,12 +655,17 @@ function SnapFitContent() {
 
   const respondToFriendRequest = async (friendId: string, action: 'accept' | 'reject') => {
     try {
-      await fetch(`/api/friends/${friendId}`, {
+      const res = await fetch(`/api/friends/${friendId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
+      if (!res.ok) throw new Error('Failed to respond');
       fetchFriends();
+      toast.success(
+        action === 'accept' ? 'Friend added!' : 'Request declined',
+        action === 'accept' ? 'You are now friends!' : 'The request has been declined.'
+      );
     } catch (err) {
       console.error('Failed to respond to friend request:', err);
       toast.error('Failed to respond', 'Please try again.');
@@ -683,6 +691,9 @@ function SnapFitContent() {
           endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         });
         fetchChallenges();
+        toast.success('Challenge created!', 'Your new challenge is ready. Invite friends to join!');
+      } else {
+        throw new Error('Failed to create challenge');
       }
     } catch (err) {
       console.error('Failed to create challenge:', err);
@@ -695,6 +706,9 @@ function SnapFitContent() {
       const res = await fetch(`/api/challenges/${challengeId}`, { method: 'POST' });
       if (res.ok) {
         fetchChallenges();
+        toast.success('Joined challenge!', 'Good luck on your challenge!');
+      } else {
+        throw new Error('Failed to join challenge');
       }
     } catch (err) {
       console.error('Failed to join challenge:', err);

@@ -91,6 +91,9 @@ export default function ReportsPage() {
       });
       if (res.ok) {
         await fetchReports();
+        toast.success('Report generated!', 'Your weekly progress report is ready to view.');
+      } else {
+        throw new Error('Failed to generate report');
       }
     } catch (error) {
       console.error('Failed to generate report:', error);
