@@ -343,6 +343,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to fetch workouts:', err);
+      toast.error('Failed to load workouts', 'Please try refreshing the page.');
     }
   };
 
@@ -362,6 +363,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to fetch food logs:', err);
+      toast.error('Failed to load food logs', 'Please try refreshing the page.');
     }
   };
 
@@ -376,6 +378,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to fetch friends:', err);
+      toast.error('Failed to load friends', 'Please try refreshing the page.');
     } finally {
       setFriendsLoading(false);
     }
@@ -391,6 +394,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to fetch challenges:', err);
+      toast.error('Failed to load challenges', 'Please try refreshing the page.');
     } finally {
       setChallengesLoading(false);
     }
@@ -527,6 +531,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to save workout:', err);
+      toast.error('Failed to save workout', 'Please try again.');
     }
   };
 
@@ -538,6 +543,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to delete workout:', err);
+      toast.error('Failed to delete workout', 'Please try again.');
     }
   };
 
@@ -575,6 +581,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to analyze food:', err);
+      toast.error('Failed to analyze food', 'Please try again with a clearer photo.');
     } finally {
       setAnalyzingFood(false);
     }
@@ -615,6 +622,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to save food log:', err);
+      toast.error('Failed to save meal', 'Please try again.');
     }
   };
 
@@ -638,6 +646,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to send friend request:', err);
+      toast.error('Failed to send request', 'Please check your connection and try again.');
     }
   };
 
@@ -651,6 +660,7 @@ function SnapFitContent() {
       fetchFriends();
     } catch (err) {
       console.error('Failed to respond to friend request:', err);
+      toast.error('Failed to respond', 'Please try again.');
     }
   };
 
@@ -676,6 +686,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to create challenge:', err);
+      toast.error('Failed to create challenge', 'Please try again.');
     }
   };
 
@@ -687,6 +698,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to join challenge:', err);
+      toast.error('Failed to join challenge', 'Please try again.');
     }
   };
 

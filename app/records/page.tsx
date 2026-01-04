@@ -10,6 +10,7 @@ import {
   Calendar, Award, Sparkles, PartyPopper, Loader2
 } from 'lucide-react';
 import Celebration, { useCelebration } from '@/components/Celebration';
+import { useToast } from '@/components/Toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { staggerContainer, listItem, cardHover, cardTap, fadeInUp, popIn } from '@/lib/animations';
 
@@ -67,6 +68,7 @@ const CATEGORY_CONFIG = {
 
 export default function RecordsPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const [records, setRecords] = useState<PersonalRecord[]>(SAMPLE_RECORDS);
   const [history, setHistory] = useState<PRHistory[]>(SAMPLE_HISTORY);
   const [loading, setLoading] = useState(true);
@@ -130,6 +132,7 @@ export default function RecordsPage() {
         }
       } catch (error) {
         console.error('Error fetching records:', error);
+        toast.error('Failed to load records', 'Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
@@ -191,6 +194,7 @@ export default function RecordsPage() {
         }
       } catch (error) {
         console.error('Error saving PR:', error);
+        toast.error('Failed to save PR', 'Please try again.');
       }
     }
 

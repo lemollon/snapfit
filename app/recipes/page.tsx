@@ -220,6 +220,7 @@ export default function RecipesPage() {
         }
       } catch (error) {
         console.error('Error fetching recipes:', error);
+        toast.error('Failed to load recipes', 'Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
@@ -244,6 +245,7 @@ export default function RecipesPage() {
         });
       } catch (error) {
         console.error('Error saving recipe:', error);
+        toast.error('Failed to save recipe', 'Please try again.');
         // Revert on error
         setRecipes(recipes.map(r =>
           r.id === recipeId ? { ...r, isSaved: !r.isSaved } : r

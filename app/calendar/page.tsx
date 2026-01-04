@@ -210,6 +210,7 @@ export default function CalendarPage() {
       setTimelineHasMore(data.pagination.hasMore);
     } catch (error) {
       console.error('Failed to fetch timeline:', error);
+      toast.error('Failed to load timeline', 'Please try again.');
     } finally {
       setTimelineLoading(false);
       setLoading(false);
@@ -231,6 +232,7 @@ export default function CalendarPage() {
       setSearchResults(data.results || []);
     } catch (error) {
       console.error('Search failed:', error);
+      toast.error('Search failed', 'Please try again.');
     } finally {
       setSearchLoading(false);
     }
@@ -306,6 +308,7 @@ export default function CalendarPage() {
       }
     } catch (error) {
       console.error('Failed to save:', error);
+      toast.error('Failed to save entry', 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -325,6 +328,7 @@ export default function CalendarPage() {
       fetchCalendarData();
     } catch (error) {
       console.error('Failed to update workout:', error);
+      toast.error('Failed to update workout', 'Please try again.');
     }
   };
 

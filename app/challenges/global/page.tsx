@@ -9,6 +9,7 @@ import {
   CheckCircle, Lock, Share2, Loader2
 } from 'lucide-react';
 import SocialShareModal from '@/components/SocialShareModal';
+import { useToast } from '@/components/Toast';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=1200&auto=format&fit=crop&q=80';
@@ -139,6 +140,7 @@ const TYPE_CONFIG = {
 
 export default function GlobalChallengesPage() {
   const { data: session } = useSession();
+  const toast = useToast();
   const [challenges, setChallenges] = useState<GlobalChallenge[]>(SAMPLE_CHALLENGES);
   const [selectedChallenge, setSelectedChallenge] = useState<GlobalChallenge | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'upcoming' | 'completed'>('active');
@@ -179,7 +181,7 @@ export default function GlobalChallengesPage() {
         }
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
-        // Keep empty leaderboard on error
+        toast.error('Failed to load leaderboard', 'Please try again.');
       } finally {
         setLeaderboardLoading(false);
       }
@@ -211,7 +213,7 @@ export default function GlobalChallengesPage() {
         }
       } catch (error) {
         console.error('Error fetching challenges:', error);
-        // Keep sample data on error
+        toast.error('Failed to load challenges', 'Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
@@ -237,6 +239,13 @@ export default function GlobalChallengesPage() {
       });
     } catch (error) {
       console.error('Error joining challenge:', error);
+      toast.error('Failed to join challenge', 'Please try again.');
+      // Revert optimistic update
+      setChallenges(challenges.map(c =>
+        c.id === challengeId
+          ? { ...c, isJoined: false, progress: undefined, participantCount: c.participantCount - 1 }
+          : c
+      ));
     }
   };
 

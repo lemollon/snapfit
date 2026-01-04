@@ -7,6 +7,7 @@ import {
   Dumbbell, Target, Scale, Ruler, ChevronRight, ChevronLeft,
   User, Activity, Heart, Zap, Trophy, Flame, Check, Loader2
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 const FITNESS_GOALS = [
   { id: 'lose_weight', label: 'Lose Weight', icon: Scale, color: 'from-blue-500 to-cyan-500' },
@@ -34,6 +35,7 @@ const ACTIVITY_LEVELS = [
 export default function OnboardingPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -90,9 +92,11 @@ export default function OnboardingPage() {
         router.push('/');
       } else {
         console.error('Failed to save profile');
+        toast.error('Failed to save profile', 'Please try again.');
       }
     } catch (error) {
       console.error('Error saving profile:', error);
+      toast.error('Failed to save profile', 'Please check your connection and try again.');
     } finally {
       setLoading(false);
     }

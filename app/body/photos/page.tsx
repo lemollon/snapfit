@@ -71,6 +71,7 @@ export default function ProgressPhotosPage() {
       }
     } catch (error) {
       console.error('Failed to fetch photos:', error);
+      toast.error('Failed to load photos', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }

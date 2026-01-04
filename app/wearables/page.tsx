@@ -154,6 +154,7 @@ export default function WearablesPage() {
         }
       } catch (error) {
         console.error('Error fetching wearable connections:', error);
+        toast.error('Failed to load devices', 'Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
@@ -226,7 +227,13 @@ export default function WearablesPage() {
         });
       } catch (error) {
         console.error('Error disconnecting device:', error);
-        // Could revert here but connection UI is already updated
+        toast.error('Failed to disconnect', 'Please try again.');
+        // Revert the disconnect
+        setDevices(devices.map(d =>
+          d.id === deviceId
+            ? { ...d, isConnected: true }
+            : d
+        ));
       }
     }
   };

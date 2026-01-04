@@ -21,6 +21,7 @@ import {
   Award,
   Target,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface ProgramWeek {
   id: string;
@@ -66,6 +67,7 @@ export default function ProgramDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
   const programId = params.id as string;
 
   const [program, setProgram] = useState<Program | null>(null);
@@ -98,6 +100,7 @@ export default function ProgramDetailPage() {
       }
     } catch (error) {
       console.error('Failed to fetch program:', error);
+      toast.error('Failed to load program', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -114,6 +117,7 @@ export default function ProgramDetailPage() {
       }
     } catch (error) {
       console.error('Failed to purchase program:', error);
+      toast.error('Failed to purchase program', 'Please try again.');
     } finally {
       setPurchasing(false);
     }
@@ -130,6 +134,7 @@ export default function ProgramDetailPage() {
       setActiveWeek(weekNumber);
     } catch (error) {
       console.error('Failed to update progress:', error);
+      toast.error('Failed to update progress', 'Please try again.');
     }
   };
 

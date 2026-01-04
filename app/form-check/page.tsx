@@ -55,6 +55,7 @@ export default function FormCheckPage() {
       setFormChecks(data.formChecks || []);
     } catch (error) {
       console.error('Failed to fetch form checks:', error);
+      toast.error('Failed to load form checks', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }

@@ -9,6 +9,7 @@ import {
   ShoppingCart, ChevronRight, Loader2, Crown, Sparkles,
   Play, Users, Flame, Target
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Premium stock image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1581009146145-b5ef050c149a?w=1200&auto=format&fit=crop&q=80';
@@ -44,6 +45,7 @@ const CATEGORIES = [
 export default function ProgramsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
 
   const [programs, setPrograms] = useState<Program[]>([]);
   const [ownedPrograms, setOwnedPrograms] = useState<any[]>([]);
@@ -73,6 +75,7 @@ export default function ProgramsPage() {
       setPrograms(data.programs || []);
     } catch (error) {
       console.error('Failed to fetch programs:', error);
+      toast.error('Failed to load programs', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -85,6 +88,7 @@ export default function ProgramsPage() {
       setOwnedPrograms(data.purchases || []);
     } catch (error) {
       console.error('Failed to fetch owned programs:', error);
+      toast.error('Failed to load your programs', 'Please try again.');
     }
   };
 
