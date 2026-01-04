@@ -69,6 +69,10 @@ export default function CheckInsPage() {
         fetch('/api/trainer/check-ins?type=pending'),
       ]);
 
+      if (!templatesRes.ok || !pendingRes.ok) {
+        throw new Error('Failed to fetch check-in data');
+      }
+
       const templatesData = await templatesRes.json();
       const pendingData = await pendingRes.json();
 
@@ -76,13 +80,17 @@ export default function CheckInsPage() {
       setPending(pendingData.pending || []);
     } catch (error) {
       console.error('Failed to fetch check-in data:', error);
+      toast.error('Failed to load check-ins', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
   };
 
   const createTemplate = async () => {
-    if (!templateName.trim()) return;
+    if (!templateName.trim()) {
+      toast.error('Name required', 'Please enter a template name.');
+      return;
+    }
 
     try {
       const res = await fetch('/api/trainer/check-ins', {
@@ -99,29 +107,35 @@ export default function CheckInsPage() {
         }),
       });
 
+      if (!res.ok) throw new Error('Failed to create template');
       const data = await res.json();
       if (data.template) {
         setTemplates([data.template, ...templates]);
         setShowCreate(false);
         setTemplateName('');
+        toast.success('Template created', 'Your check-in template is ready to use.');
       }
     } catch (error) {
       console.error('Failed to create template:', error);
+      toast.error('Failed to create template', 'Please try again.');
     }
   };
 
   const reviewCheckIn = async (responseId: string, notes: string) => {
     try {
-      await fetch('/api/trainer/check-ins', {
+      const res = await fetch('/api/trainer/check-ins', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ responseId, trainerNotes: notes }),
       });
 
+      if (!res.ok) throw new Error('Failed to review check-in');
       setSelectedResponse(null);
       fetchData();
+      toast.success('Review saved', 'Your feedback has been sent to the client.');
     } catch (error) {
       console.error('Failed to review check-in:', error);
+      toast.error('Failed to save review', 'Please try again.');
     }
   };
 

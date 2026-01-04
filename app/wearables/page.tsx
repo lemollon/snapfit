@@ -42,6 +42,7 @@ interface DailyMetric {
   source?: string;
 }
 
+// Default available devices - actual connection status comes from API
 const AVAILABLE_DEVICES: WearableDevice[] = [
   {
     id: '1',
@@ -49,10 +50,7 @@ const AVAILABLE_DEVICES: WearableDevice[] = [
     name: 'Apple Health',
     logo: '🍎',
     color: 'from-gray-600 to-gray-800',
-    isConnected: true,
-    lastSync: '2 min ago',
-    deviceName: 'Apple Watch Series 9',
-    batteryLevel: 72,
+    isConnected: false,
     syncSettings: { steps: true, heartRate: true, sleep: true, workouts: true, weight: true },
   },
   {
@@ -70,10 +68,7 @@ const AVAILABLE_DEVICES: WearableDevice[] = [
     name: 'Garmin Connect',
     logo: '⌚',
     color: 'from-blue-500 to-cyan-600',
-    isConnected: true,
-    lastSync: '1 hour ago',
-    deviceName: 'Garmin Forerunner 955',
-    batteryLevel: 45,
+    isConnected: false,
     syncSettings: { steps: true, heartRate: true, sleep: true, workouts: true, weight: false },
   },
   {
@@ -105,13 +100,14 @@ const AVAILABLE_DEVICES: WearableDevice[] = [
   },
 ];
 
-const DAILY_METRICS: DailyMetric[] = [
-  { label: 'Steps', value: '8,432', unit: 'steps', icon: Footprints, color: 'from-green-500 to-emerald-600', trend: 12, source: 'Apple Watch' },
-  { label: 'Heart Rate', value: '68', unit: 'bpm', icon: Heart, color: 'from-red-500 to-rose-600', trend: -3, source: 'Apple Watch' },
-  { label: 'Sleep', value: '7.5', unit: 'hours', icon: Moon, color: 'from-violet-500 to-purple-600', trend: 8, source: 'Apple Watch' },
-  { label: 'Active Cal', value: '485', unit: 'kcal', icon: Zap, color: 'from-orange-500 to-amber-600', trend: 15, source: 'Garmin' },
-  { label: 'HRV', value: '45', unit: 'ms', icon: Activity, color: 'from-blue-500 to-cyan-600', trend: 5, source: 'Garmin' },
-  { label: 'Resting HR', value: '52', unit: 'bpm', icon: Heart, color: 'from-pink-500 to-rose-600', trend: -2, source: 'Garmin' },
+// Metrics will be populated when devices are connected
+const DEFAULT_METRICS: DailyMetric[] = [
+  { label: 'Steps', value: '--', unit: 'steps', icon: Footprints, color: 'from-green-500 to-emerald-600' },
+  { label: 'Heart Rate', value: '--', unit: 'bpm', icon: Heart, color: 'from-red-500 to-rose-600' },
+  { label: 'Sleep', value: '--', unit: 'hours', icon: Moon, color: 'from-violet-500 to-purple-600' },
+  { label: 'Active Cal', value: '--', unit: 'kcal', icon: Zap, color: 'from-orange-500 to-amber-600' },
+  { label: 'HRV', value: '--', unit: 'ms', icon: Activity, color: 'from-blue-500 to-cyan-600' },
+  { label: 'Resting HR', value: '--', unit: 'bpm', icon: Heart, color: 'from-pink-500 to-rose-600' },
 ];
 
 export default function WearablesPage() {
@@ -154,6 +150,7 @@ export default function WearablesPage() {
         }
       } catch (error) {
         console.error('Error fetching wearable connections:', error);
+        toast.error('Failed to load devices', 'Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
@@ -226,7 +223,13 @@ export default function WearablesPage() {
         });
       } catch (error) {
         console.error('Error disconnecting device:', error);
-        // Could revert here but connection UI is already updated
+        toast.error('Failed to disconnect', 'Please try again.');
+        // Revert the disconnect
+        setDevices(devices.map(d =>
+          d.id === deviceId
+            ? { ...d, isConnected: true }
+            : d
+        ));
       }
     }
   };
@@ -241,12 +244,53 @@ export default function WearablesPage() {
     setIsSyncing(false);
   };
 
-  const toggleSyncSetting = (deviceId: string, setting: keyof WearableDevice['syncSettings']) => {
+  const toggleSyncSetting = async (deviceId: string, setting: keyof WearableDevice['syncSettings']) => {
+    const device = devices.find(d => d.id === deviceId);
+    if (!device) return;
+
+    const newValue = !device.syncSettings[setting];
+
+    // Optimistically update UI
     setDevices(devices.map(d =>
       d.id === deviceId
-        ? { ...d, syncSettings: { ...d.syncSettings, [setting]: !d.syncSettings[setting] } }
+        ? { ...d, syncSettings: { ...d.syncSettings, [setting]: newValue } }
         : d
     ));
+
+    // Save to API
+    try {
+      const settingMap: Record<string, string> = {
+        steps: 'syncSteps',
+        heartRate: 'syncHeartRate',
+        sleep: 'syncSleep',
+        workouts: 'syncWorkouts',
+        weight: 'syncWeight',
+      };
+
+      const res = await fetch('/api/wearables', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId,
+          [settingMap[setting]]: newValue,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to save setting');
+      }
+
+      toast.success('Setting saved', `${setting} sync ${newValue ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Failed to save sync setting:', error);
+      toast.error('Failed to save', 'Please try again.');
+      // Revert on error
+      setDevices(devices.map(d =>
+        d.id === deviceId
+          ? { ...d, syncSettings: { ...d.syncSettings, [setting]: !newValue } }
+          : d
+      ));
+    }
   };
 
   return (
@@ -337,7 +381,7 @@ export default function WearablesPage() {
             </h2>
 
             <div className="grid grid-cols-2 gap-3">
-              {DAILY_METRICS.map((metric, index) => {
+              {DEFAULT_METRICS.map((metric, index) => {
                 const Icon = metric.icon;
                 return (
                   <div

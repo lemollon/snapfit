@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Play, Pause, RotateCcw, Settings, Volume2, VolumeX,
   Timer, Zap, Flame, Clock, Target, Infinity, Plus, Minus, Save,
-  ChevronDown, ChevronUp, Trophy, X, Check, Star, Bookmark
+  ChevronDown, ChevronUp, Trophy, X, Check, Star, Bookmark, Loader2
 } from 'lucide-react';
 import { useCelebration } from '@/components/Celebration';
+import { useToast } from '@/components/Toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { popIn, scaleIn } from '@/lib/animations';
 
@@ -47,6 +49,9 @@ const DEFAULT_PRESETS: TimerPreset[] = [
 ];
 
 export default function TimerPage() {
+  const { data: session } = useSession();
+  const toast = useToast();
+
   // Timer state
   const [mode, setMode] = useState<TimerMode>('tabata');
   const [isRunning, setIsRunning] = useState(false);
@@ -65,12 +70,39 @@ export default function TimerPage() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [presets, setPresets] = useState<TimerPreset[]>(DEFAULT_PRESETS);
+  const [presetsLoading, setPresetsLoading] = useState(false);
+  const [savingPreset, setSavingPreset] = useState(false);
   const [showPresets, setShowPresets] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [presetName, setPresetName] = useState('');
 
   // Premium celebration animations
   const { celebrate, CelebrationComponent } = useCelebration();
+
+  // Load user presets from API on mount
+  useEffect(() => {
+    const fetchPresets = async () => {
+      if (!session?.user) return;
+
+      setPresetsLoading(true);
+      try {
+        const res = await fetch('/api/timer/presets');
+        if (res.ok) {
+          const userPresets = await res.json();
+          // Combine default presets with user presets
+          if (userPresets.length > 0) {
+            setPresets([...DEFAULT_PRESETS, ...userPresets]);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading presets:', error);
+      } finally {
+        setPresetsLoading(false);
+      }
+    };
+
+    fetchPresets();
+  }, [session]);
 
   // Refs
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -279,7 +311,7 @@ export default function TimerPage() {
   };
 
   // Save current as preset
-  const savePreset = () => {
+  const savePreset = async () => {
     if (!presetName.trim()) return;
 
     const newPreset: TimerPreset = {
@@ -293,16 +325,78 @@ export default function TimerPage() {
       isFavorite: false,
     };
 
-    setPresets([...presets, newPreset]);
-    setPresetName('');
-    setShowSaveModal(false);
+    // If not logged in, only save locally
+    if (!session?.user) {
+      setPresets([...presets, newPreset]);
+      setPresetName('');
+      setShowSaveModal(false);
+      toast.warning('Preset saved locally', 'Log in to save presets permanently.');
+      return;
+    }
+
+    // Save to API
+    setSavingPreset(true);
+    try {
+      const res = await fetch('/api/timer/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: presetName,
+          type: mode,
+          rounds,
+          workDuration,
+          restDuration,
+          totalDuration,
+        }),
+      });
+
+      if (!res.ok) throw new Error('Failed to save preset');
+
+      const savedPreset = await res.json();
+      setPresets([...presets, savedPreset]);
+      setPresetName('');
+      setShowSaveModal(false);
+      toast.success('Preset saved!', 'Your timer preset has been saved.');
+    } catch (error) {
+      console.error('Error saving preset:', error);
+      toast.error('Failed to save preset', 'Please try again.');
+      // Still save locally as fallback
+      setPresets([...presets, newPreset]);
+    } finally {
+      setSavingPreset(false);
+    }
   };
 
   // Toggle favorite
-  const toggleFavorite = (id: string) => {
+  const toggleFavorite = async (id: string) => {
+    const preset = presets.find(p => p.id === id);
+    if (!preset) return;
+
+    const newFavorite = !preset.isFavorite;
+
+    // Optimistic update
     setPresets(presets.map(p =>
-      p.id === id ? { ...p, isFavorite: !p.isFavorite } : p
+      p.id === id ? { ...p, isFavorite: newFavorite } : p
     ));
+
+    // Only persist for user presets (not default presets)
+    if (session?.user && !DEFAULT_PRESETS.some(dp => dp.id === id)) {
+      try {
+        const res = await fetch('/api/timer/presets', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, isFavorite: newFavorite }),
+        });
+        if (!res.ok) throw new Error('Failed to update favorite');
+      } catch (error) {
+        console.error('Error updating favorite:', error);
+        // Revert on error
+        setPresets(presets.map(p =>
+          p.id === id ? { ...p, isFavorite: !newFavorite } : p
+        ));
+        toast.error('Failed to save', 'Could not update favorite status.');
+      }
+    }
   };
 
   // Get progress percentage
@@ -711,11 +805,15 @@ export default function TimerPage() {
 
             <button
               onClick={savePreset}
-              disabled={!presetName.trim()}
+              disabled={!presetName.trim() || savingPreset}
               className="w-full py-4 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:from-violet-600 hover:to-purple-700"
             >
-              <Save className="w-5 h-5 inline mr-2" />
-              Save Preset
+              {savingPreset ? (
+                <Loader2 className="w-5 h-5 inline mr-2 animate-spin" />
+              ) : (
+                <Save className="w-5 h-5 inline mr-2" />
+              )}
+              {savingPreset ? 'Saving...' : 'Save Preset'}
             </button>
           </div>
         </div>

@@ -39,6 +39,7 @@ import {
   List,
   Sparkles,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface CalendarData {
   events: any[];
@@ -108,6 +109,7 @@ function isSameDay(date1: Date, date2: Date): boolean {
 export default function CalendarPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [view, setView] = useState<'day' | 'week' | 'month' | 'timeline'>('month');
@@ -168,10 +170,12 @@ export default function CalendarPage() {
       }
 
       const res = await fetch(`/api/calendar?start=${formatDate(start)}&end=${formatDate(end)}&view=${view}`);
+      if (!res.ok) throw new Error('Failed to fetch calendar');
       const data = await res.json();
       setCalendarData(data);
     } catch (error) {
       console.error('Failed to fetch calendar data:', error);
+      toast.error('Failed to load calendar', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -183,6 +187,7 @@ export default function CalendarPage() {
       const res = await fetch(
         `/api/calendar/timeline?page=${page}&limit=20&filter=${timelineFilter}`
       );
+      if (!res.ok) throw new Error('Failed to fetch timeline');
       const data = await res.json();
 
       if (reset) {
@@ -207,6 +212,7 @@ export default function CalendarPage() {
       setTimelineHasMore(data.pagination.hasMore);
     } catch (error) {
       console.error('Failed to fetch timeline:', error);
+      toast.error('Failed to load timeline', 'Please try again.');
     } finally {
       setTimelineLoading(false);
       setLoading(false);
@@ -224,10 +230,12 @@ export default function CalendarPage() {
       const res = await fetch(
         `/api/calendar/search?q=${encodeURIComponent(query)}&type=${searchType}`
       );
+      if (!res.ok) throw new Error('Search failed');
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch (error) {
       console.error('Search failed:', error);
+      toast.error('Search failed', 'Please try again.');
     } finally {
       setSearchLoading(false);
     }
@@ -300,9 +308,14 @@ export default function CalendarPage() {
         setWorkoutForm({ title: '', description: '', duration: 45 });
         setMealForm({ name: '', mealType: 'breakfast', targetCalories: 0, targetProtein: 0 });
         setFoodForm({ mealType: 'breakfast', foodName: '', calories: 0, protein: 0, carbs: 0, fat: 0 });
+        const typeLabels = { workout: 'Workout', meal: 'Meal', food: 'Meal', daily: 'Daily log', photo: 'Photo' };
+        toast.success(`${typeLabels[addType]} saved`, 'Your entry has been added to the calendar.');
+      } else {
+        throw new Error('Failed to save entry');
       }
     } catch (error) {
       console.error('Failed to save:', error);
+      toast.error('Failed to save entry', 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -310,7 +323,7 @@ export default function CalendarPage() {
 
   const handleCompleteWorkout = async (id: string, complete: boolean) => {
     try {
-      await fetch('/api/calendar', {
+      const res = await fetch('/api/calendar', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -319,9 +332,15 @@ export default function CalendarPage() {
           status: complete ? 'completed' : 'skipped',
         }),
       });
+      if (!res.ok) throw new Error('Failed to update workout');
       fetchCalendarData();
+      toast.success(
+        complete ? 'Workout completed!' : 'Workout skipped',
+        complete ? 'Great job on completing your workout!' : 'Workout has been marked as skipped.'
+      );
     } catch (error) {
       console.error('Failed to update workout:', error);
+      toast.error('Failed to update workout', 'Please try again.');
     }
   };
 

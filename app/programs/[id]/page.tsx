@@ -21,6 +21,7 @@ import {
   Award,
   Target,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface ProgramWeek {
   id: string;
@@ -66,6 +67,7 @@ export default function ProgramDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
+  const toast = useToast();
   const programId = params.id as string;
 
   const [program, setProgram] = useState<Program | null>(null);
@@ -98,6 +100,7 @@ export default function ProgramDetailPage() {
       }
     } catch (error) {
       console.error('Failed to fetch program:', error);
+      toast.error('Failed to load program', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -111,9 +114,13 @@ export default function ProgramDetailPage() {
       });
       if (res.ok) {
         await fetchProgram();
+        toast.success('Program unlocked!', 'You now have full access to this program.');
+      } else {
+        throw new Error('Failed to purchase');
       }
     } catch (error) {
       console.error('Failed to purchase program:', error);
+      toast.error('Failed to purchase program', 'Please try again.');
     } finally {
       setPurchasing(false);
     }
@@ -121,15 +128,18 @@ export default function ProgramDetailPage() {
 
   const handleStartWeek = async (weekNumber: number) => {
     try {
-      await fetch(`/api/programs/${programId}/progress`, {
+      const res = await fetch(`/api/programs/${programId}/progress`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentWeek: weekNumber }),
       });
+      if (!res.ok) throw new Error('Failed to update progress');
       setPurchaseInfo(prev => prev ? { ...prev, currentWeek: weekNumber } : null);
       setActiveWeek(weekNumber);
+      toast.success('Progress updated', 'You\'re now on week ' + weekNumber + '.');
     } catch (error) {
       console.error('Failed to update progress:', error);
+      toast.error('Failed to update progress', 'Please try again.');
     }
   };
 

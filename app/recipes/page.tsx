@@ -35,127 +35,6 @@ interface Recipe {
   isFeatured?: boolean;
 }
 
-const SAMPLE_RECIPES: Recipe[] = [
-  {
-    id: '1',
-    name: 'High Protein Chicken Bowl',
-    description: 'Lean grilled chicken with quinoa and roasted vegetables',
-    imageUrl: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&auto=format&fit=crop&q=80',
-    category: 'lunch',
-    cuisine: 'American',
-    tags: ['high-protein', 'meal-prep', 'gluten-free'],
-    prepTime: 15,
-    cookTime: 25,
-    servings: 2,
-    difficulty: 'easy',
-    calories: 485,
-    protein: 42,
-    carbs: 38,
-    fat: 16,
-    rating: 4.8,
-    ratingCount: 234,
-    isSaved: true,
-    isFeatured: true,
-  },
-  {
-    id: '2',
-    name: 'Greek Yogurt Protein Parfait',
-    description: 'Creamy Greek yogurt layered with berries and granola',
-    imageUrl: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&auto=format&fit=crop&q=80',
-    category: 'breakfast',
-    tags: ['high-protein', 'quick', 'vegetarian'],
-    prepTime: 5,
-    cookTime: 0,
-    servings: 1,
-    difficulty: 'easy',
-    calories: 320,
-    protein: 28,
-    carbs: 42,
-    fat: 8,
-    rating: 4.9,
-    ratingCount: 567,
-    isSaved: false,
-  },
-  {
-    id: '3',
-    name: 'Salmon with Asparagus',
-    description: 'Omega-3 rich salmon with lemon butter asparagus',
-    imageUrl: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=400&auto=format&fit=crop&q=80',
-    category: 'dinner',
-    cuisine: 'Mediterranean',
-    tags: ['keto', 'high-protein', 'omega-3'],
-    prepTime: 10,
-    cookTime: 20,
-    servings: 2,
-    difficulty: 'medium',
-    calories: 520,
-    protein: 45,
-    carbs: 8,
-    fat: 35,
-    rating: 4.7,
-    ratingCount: 189,
-    isSaved: true,
-  },
-  {
-    id: '4',
-    name: 'Protein Smoothie Bowl',
-    description: 'Thick smoothie bowl topped with seeds and fruits',
-    imageUrl: 'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=400&auto=format&fit=crop&q=80',
-    category: 'breakfast',
-    tags: ['vegan', 'high-protein', 'post-workout'],
-    prepTime: 10,
-    cookTime: 0,
-    servings: 1,
-    difficulty: 'easy',
-    calories: 380,
-    protein: 25,
-    carbs: 48,
-    fat: 12,
-    rating: 4.6,
-    ratingCount: 412,
-    isSaved: false,
-  },
-  {
-    id: '5',
-    name: 'Turkey Meatball Zucchini Boats',
-    description: 'Low-carb zucchini filled with seasoned turkey meatballs',
-    imageUrl: 'https://images.unsplash.com/photo-1529059356448-c8b4c4b4c40d?w=400&auto=format&fit=crop&q=80',
-    category: 'dinner',
-    tags: ['keto', 'low-carb', 'high-protein'],
-    prepTime: 20,
-    cookTime: 30,
-    servings: 4,
-    difficulty: 'medium',
-    calories: 340,
-    protein: 38,
-    carbs: 12,
-    fat: 18,
-    rating: 4.5,
-    ratingCount: 156,
-    isSaved: false,
-  },
-  {
-    id: '6',
-    name: 'Overnight Protein Oats',
-    description: 'Make-ahead oats with protein powder and chia seeds',
-    imageUrl: 'https://images.unsplash.com/photo-1517673132405-a56a62b18caf?w=400&auto=format&fit=crop&q=80',
-    category: 'breakfast',
-    tags: ['meal-prep', 'high-protein', 'vegetarian'],
-    prepTime: 5,
-    cookTime: 0,
-    servings: 1,
-    difficulty: 'easy',
-    calories: 420,
-    protein: 32,
-    carbs: 52,
-    fat: 14,
-    rating: 4.8,
-    ratingCount: 678,
-    isSaved: true,
-    isFeatured: true,
-  },
-];
-
 const CATEGORIES = [
   { id: 'all', name: 'All', icon: Utensils },
   { id: 'breakfast', name: 'Breakfast', icon: Coffee },
@@ -170,7 +49,7 @@ const DIET_FILTERS = ['All', 'High-Protein', 'Keto', 'Vegan', 'Vegetarian', 'Glu
 export default function RecipesPage() {
   const { data: session } = useSession();
   const toast = useToast();
-  const [recipes, setRecipes] = useState<Recipe[]>(SAMPLE_RECIPES);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -191,35 +70,36 @@ export default function RecipesPage() {
         if (searchQuery) params.append('search', searchQuery);
 
         const response = await fetch(`/api/recipes?${params.toString()}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.recipes && data.recipes.length > 0) {
-            const transformedRecipes = data.recipes.map((r: any) => ({
-              id: r.id,
-              name: r.name,
-              description: r.description,
-              imageUrl: r.imageUrl,
-              category: r.category,
-              cuisine: r.cuisine,
-              tags: r.tags || [],
-              prepTime: r.prepTime,
-              cookTime: r.cookTime,
-              servings: r.servings,
-              difficulty: r.difficulty || 'medium',
-              calories: r.calories,
-              protein: r.protein,
-              carbs: r.carbs,
-              fat: r.fat,
-              rating: r.rating || 4.5,
-              ratingCount: r.ratingCount || 0,
-              isSaved: data.savedRecipeIds?.includes(r.id) || false,
-              isFeatured: r.isFeatured,
-            }));
-            setRecipes(transformedRecipes);
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch recipes');
         }
+        const data = await response.json();
+        const transformedRecipes = (data.recipes || []).map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          imageUrl: r.imageUrl,
+          category: r.category,
+          cuisine: r.cuisine,
+          tags: r.tags || [],
+          prepTime: r.prepTime,
+          cookTime: r.cookTime,
+          servings: r.servings,
+          difficulty: r.difficulty || 'medium',
+          calories: r.calories,
+          protein: r.protein,
+          carbs: r.carbs,
+          fat: r.fat,
+          rating: r.rating || 4.5,
+          ratingCount: r.ratingCount || 0,
+          isSaved: data.savedRecipeIds?.includes(r.id) || false,
+          isFeatured: r.isFeatured,
+        }));
+        setRecipes(transformedRecipes);
       } catch (error) {
         console.error('Error fetching recipes:', error);
+        toast.error('Failed to load recipes', 'Please try refreshing the page.');
+        setRecipes([]);
       } finally {
         setLoading(false);
       }
@@ -237,13 +117,15 @@ export default function RecipesPage() {
     // Save to API if logged in
     if (session?.user) {
       try {
-        await fetch('/api/recipes/save', {
+        const res = await fetch('/api/recipes/save', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ recipeId }),
         });
+        if (!res.ok) throw new Error('Failed to save recipe');
       } catch (error) {
         console.error('Error saving recipe:', error);
+        toast.error('Failed to save recipe', 'Please try again.');
         // Revert on error
         setRecipes(recipes.map(r =>
           r.id === recipeId ? { ...r, isSaved: !r.isSaved } : r
@@ -509,6 +391,17 @@ export default function RecipesPage() {
             {filteredRecipes.length} Recipes
           </h2>
 
+          {filteredRecipes.length === 0 ? (
+            <div className="text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+              <ChefHat className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              <p className="text-white/60 mb-2">No recipes found</p>
+              {searchQuery || selectedDiet !== 'All' || selectedCategory !== 'all' ? (
+                <p className="text-white/40 text-sm">Try adjusting your filters or search</p>
+              ) : (
+                <p className="text-white/40 text-sm">Check back later for new recipes</p>
+              )}
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-3">
             {filteredRecipes.map((recipe) => (
               <div
@@ -547,6 +440,7 @@ export default function RecipesPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Macro Summary Card */}

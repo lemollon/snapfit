@@ -21,6 +21,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface WorkoutTemplate {
   id: string;
@@ -50,11 +52,16 @@ const CATEGORIES = ['strength', 'cardio', 'hiit', 'flexibility', 'full-body', 'u
 export default function TrainerTemplatesPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandedTemplate, setExpandedTemplate] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; templateId: string | null }>({
+    isOpen: false,
+    templateId: null,
+  });
 
   const [newTemplate, setNewTemplate] = useState({
     name: '',
@@ -84,10 +91,12 @@ export default function TrainerTemplatesPage() {
   const fetchTemplates = async () => {
     try {
       const res = await fetch('/api/trainer/templates');
+      if (!res.ok) throw new Error('Failed to fetch templates');
       const data = await res.json();
       setTemplates(data.templates || []);
     } catch (error) {
       console.error('Failed to fetch templates:', error);
+      toast.error('Failed to load templates', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -118,7 +127,10 @@ export default function TrainerTemplatesPage() {
   };
 
   const handleAddTemplate = async () => {
-    if (!newTemplate.name) return;
+    if (!newTemplate.name) {
+      toast.error('Name required', 'Please enter a template name.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/trainer/templates', {
@@ -133,6 +145,7 @@ export default function TrainerTemplatesPage() {
           exercises: newTemplate.exercises,
         }),
       });
+      if (!res.ok) throw new Error('Failed to create template');
       const data = await res.json();
       if (data.template) {
         setTemplates([data.template, ...templates]);
@@ -145,24 +158,33 @@ export default function TrainerTemplatesPage() {
           exercises: [],
         });
         setShowAddModal(false);
+        toast.success('Template created', 'Your workout template is ready to use.');
       }
     } catch (error) {
       console.error('Failed to add template:', error);
+      toast.error('Failed to create template', 'Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteTemplate = async (templateId: string) => {
-    if (!confirm('Are you sure you want to delete this template?')) return;
     try {
-      await fetch(`/api/trainer/templates?id=${templateId}`, {
+      const res = await fetch(`/api/trainer/templates?id=${templateId}`, {
         method: 'DELETE',
       });
+      if (!res.ok) throw new Error('Failed to delete template');
       setTemplates(templates.filter(t => t.id !== templateId));
+      setDeleteConfirm({ isOpen: false, templateId: null });
+      toast.success('Template deleted', 'The workout template has been removed.');
     } catch (error) {
       console.error('Failed to delete template:', error);
+      toast.error('Delete failed', 'Could not delete the template. Please try again.');
     }
+  };
+
+  const confirmDeleteTemplate = (templateId: string) => {
+    setDeleteConfirm({ isOpen: true, templateId });
   };
 
   const handleDuplicateTemplate = async (template: WorkoutTemplate) => {
@@ -180,12 +202,15 @@ export default function TrainerTemplatesPage() {
           exercises: template.exercises,
         }),
       });
+      if (!res.ok) throw new Error('Failed to duplicate template');
       const data = await res.json();
       if (data.template) {
         setTemplates([data.template, ...templates]);
+        toast.success('Template duplicated', 'A copy has been created.');
       }
     } catch (error) {
       console.error('Failed to duplicate template:', error);
+      toast.error('Failed to duplicate', 'Please try again.');
     } finally {
       setSaving(false);
     }
@@ -328,7 +353,7 @@ export default function TrainerTemplatesPage() {
                     Duplicate
                   </button>
                   <button
-                    onClick={() => handleDeleteTemplate(template.id)}
+                    onClick={() => confirmDeleteTemplate(template.id)}
                     className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -507,6 +532,17 @@ export default function TrainerTemplatesPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, templateId: null })}
+        onConfirm={() => deleteConfirm.templateId && handleDeleteTemplate(deleteConfirm.templateId)}
+        title="Delete Template?"
+        message="This workout template will be permanently removed. This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

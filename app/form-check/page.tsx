@@ -51,10 +51,15 @@ export default function FormCheckPage() {
   const fetchFormChecks = async () => {
     try {
       const res = await fetch('/api/form-check');
-      const data = await res.json();
-      setFormChecks(data.formChecks || []);
+      if (res.ok) {
+        const data = await res.json();
+        setFormChecks(data.formChecks || []);
+      } else {
+        throw new Error('Failed to fetch');
+      }
     } catch (error) {
       console.error('Failed to fetch form checks:', error);
+      toast.error('Failed to load form checks', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -111,6 +116,11 @@ export default function FormCheckPage() {
           duration: 30, // Could be extracted from video metadata
         }),
       });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to create form check');
+      }
 
       const data = await res.json();
       if (data.formCheck) {

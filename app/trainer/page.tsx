@@ -11,6 +11,7 @@ import {
   Sparkles, Crown, Zap, DollarSign, Home
 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 // Premium stock image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1200&auto=format&fit=crop&q=80';
@@ -75,6 +76,10 @@ export default function TrainerDashboard() {
   const [addingClient, setAddingClient] = useState(false);
   const [selectedClient, setSelectedClient] = useState<ClientDetail | null>(null);
   const [loadingClient, setLoadingClient] = useState(false);
+  const [removeConfirm, setRemoveConfirm] = useState<{ isOpen: boolean; clientId: string | null }>({
+    isOpen: false,
+    clientId: null,
+  });
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -170,7 +175,6 @@ export default function TrainerDashboard() {
   };
 
   const removeClient = async (clientId: string) => {
-    if (!confirm('Are you sure you want to remove this client?')) return;
     try {
       const res = await fetch(`/api/trainer/clients/${clientId}`, {
         method: 'DELETE',
@@ -180,10 +184,16 @@ export default function TrainerDashboard() {
         if (selectedClient?.client.id === clientId) {
           setSelectedClient(null);
         }
+        setRemoveConfirm({ isOpen: false, clientId: null });
+        toast.success('Client removed', 'The client has been removed from your roster.');
       }
     } catch {
       toast.error('Error', 'Failed to remove client.');
     }
+  };
+
+  const confirmRemoveClient = (clientId: string) => {
+    setRemoveConfirm({ isOpen: true, clientId });
   };
 
   const formatRelativeTime = (dateStr: string | null) => {
@@ -375,7 +385,7 @@ export default function TrainerDashboard() {
                           <UserCheck className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => removeClient(client.clientId)}
+                          onClick={() => confirmRemoveClient(client.clientId)}
                           className="p-2.5 bg-red-500/20 text-red-400 rounded-xl hover:bg-red-500/30 transition-colors"
                           title="Remove"
                         >
@@ -551,7 +561,7 @@ export default function TrainerDashboard() {
                 {/* Actions */}
                 <div className="p-4 border-t border-white/10">
                   <button
-                    onClick={() => removeClient(selectedClient.client.id)}
+                    onClick={() => confirmRemoveClient(selectedClient.client.id)}
                     className="w-full py-3 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 flex items-center justify-center gap-2 transition-colors border border-red-500/20 font-medium"
                   >
                     <UserMinus className="w-4 h-4" />
@@ -631,6 +641,17 @@ export default function TrainerDashboard() {
           </div>
         </div>
       )}
+
+      {/* Remove Client Confirmation Modal */}
+      <ConfirmModal
+        isOpen={removeConfirm.isOpen}
+        onClose={() => setRemoveConfirm({ isOpen: false, clientId: null })}
+        onConfirm={() => removeConfirm.clientId && removeClient(removeConfirm.clientId)}
+        title="Remove Client?"
+        message="This will remove the client from your roster. They will no longer have access to your training content."
+        confirmText="Remove"
+        variant="danger"
+      />
     </div>
   );
 }

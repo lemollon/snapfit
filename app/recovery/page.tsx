@@ -8,6 +8,7 @@ import {
   ArrowLeft, Moon, Battery, Brain, Heart, Zap, Activity,
   TrendingUp, Loader2, Check, Sparkles, Clock, Lightbulb
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 // Premium stock image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=1200&auto=format&fit=crop&q=80';
@@ -29,6 +30,7 @@ interface RecoveryLog {
 export default function RecoveryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -58,6 +60,7 @@ export default function RecoveryPage() {
   const fetchRecoveryData = async () => {
     try {
       const res = await fetch('/api/recovery?days=14');
+      if (!res.ok) throw new Error('Failed to fetch recovery data');
       const data = await res.json();
       setLogs(data.logs || []);
       setTodayLog(data.todayLog);
@@ -74,6 +77,7 @@ export default function RecoveryPage() {
       }
     } catch (error) {
       console.error('Failed to fetch recovery data:', error);
+      toast.error('Failed to load recovery data', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -96,14 +100,17 @@ export default function RecoveryPage() {
         }),
       });
 
+      if (!res.ok) throw new Error('Failed to save recovery data');
       const data = await res.json();
       if (data.log) {
         setTodayLog(data.log);
         setHasLoggedToday(true);
         fetchRecoveryData();
+        toast.success('Recovery logged', 'Your recovery data has been saved.');
       }
     } catch (error) {
       console.error('Failed to save recovery data:', error);
+      toast.error('Failed to save recovery data', 'Please try again.');
     } finally {
       setSaving(false);
     }

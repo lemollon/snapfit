@@ -23,6 +23,7 @@ import {
   Zap,
   Activity,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
 
 interface WeeklyReport {
   id: string;
@@ -53,6 +54,7 @@ interface WeeklyReport {
 export default function ReportsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [reports, setReports] = useState<WeeklyReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
@@ -75,6 +77,7 @@ export default function ReportsPage() {
       }
     } catch (error) {
       console.error('Failed to fetch reports:', error);
+      toast.error('Failed to load reports', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -88,9 +91,13 @@ export default function ReportsPage() {
       });
       if (res.ok) {
         await fetchReports();
+        toast.success('Report generated!', 'Your weekly progress report is ready to view.');
+      } else {
+        throw new Error('Failed to generate report');
       }
     } catch (error) {
       console.error('Failed to generate report:', error);
+      toast.error('Failed to generate report', 'Please try again.');
     } finally {
       setGenerating(false);
     }

@@ -269,7 +269,10 @@ function SnapFitContent() {
       }
 
       fetch('/api/profile')
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch profile');
+          return res.json();
+        })
         .then(data => {
           if (data.user && !data.user.onboardingCompleted) {
             router.push('/onboarding');
@@ -343,6 +346,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to fetch workouts:', err);
+      toast.error('Failed to load workouts', 'Please try refreshing the page.');
     }
   };
 
@@ -362,6 +366,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to fetch food logs:', err);
+      toast.error('Failed to load food logs', 'Please try refreshing the page.');
     }
   };
 
@@ -376,6 +381,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to fetch friends:', err);
+      toast.error('Failed to load friends', 'Please try refreshing the page.');
     } finally {
       setFriendsLoading(false);
     }
@@ -391,6 +397,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to fetch challenges:', err);
+      toast.error('Failed to load challenges', 'Please try refreshing the page.');
     } finally {
       setChallengesLoading(false);
     }
@@ -434,6 +441,16 @@ function SnapFitContent() {
     setError(null);
   };
 
+  // Helper to get supported MIME type for Anthropic API
+  const getSupportedMediaType = (fileType: string): 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp' => {
+    const supportedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (supportedTypes.includes(fileType)) {
+      return fileType as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp';
+    }
+    // For unsupported types (HEIC, HEIF, empty) or unknown, default to jpeg
+    return 'image/jpeg';
+  };
+
   const generateWorkout = async () => {
     if (photos.length === 0) return;
 
@@ -453,7 +470,7 @@ function SnapFitContent() {
           type: 'image' as const,
           source: {
             type: 'base64' as const,
-            media_type: photo.file.type as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
+            media_type: getSupportedMediaType(photo.file.type),
             data: base64,
           },
         };
@@ -527,6 +544,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to save workout:', err);
+      toast.error('Failed to save workout', 'Please try again.');
     }
   };
 
@@ -535,9 +553,13 @@ function SnapFitContent() {
       const res = await fetch(`/api/workouts/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setSavedWorkouts((prev) => prev.filter((w) => w.id !== id));
+        toast.success('Workout deleted', 'The workout has been removed from your history.');
+      } else {
+        throw new Error('Failed to delete');
       }
     } catch (err) {
       console.error('Failed to delete workout:', err);
+      toast.error('Failed to delete workout', 'Please try again.');
     }
   };
 
@@ -575,6 +597,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to analyze food:', err);
+      toast.error('Failed to analyze food', 'Please try again with a clearer photo.');
     } finally {
       setAnalyzingFood(false);
     }
@@ -615,6 +638,7 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to save food log:', err);
+      toast.error('Failed to save meal', 'Please try again.');
     }
   };
 
@@ -638,19 +662,26 @@ function SnapFitContent() {
       }
     } catch (err) {
       console.error('Failed to send friend request:', err);
+      toast.error('Failed to send request', 'Please check your connection and try again.');
     }
   };
 
   const respondToFriendRequest = async (friendId: string, action: 'accept' | 'reject') => {
     try {
-      await fetch(`/api/friends/${friendId}`, {
+      const res = await fetch(`/api/friends/${friendId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action }),
       });
+      if (!res.ok) throw new Error('Failed to respond');
       fetchFriends();
+      toast.success(
+        action === 'accept' ? 'Friend added!' : 'Request declined',
+        action === 'accept' ? 'You are now friends!' : 'The request has been declined.'
+      );
     } catch (err) {
       console.error('Failed to respond to friend request:', err);
+      toast.error('Failed to respond', 'Please try again.');
     }
   };
 
@@ -673,9 +704,13 @@ function SnapFitContent() {
           endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         });
         fetchChallenges();
+        toast.success('Challenge created!', 'Your new challenge is ready. Invite friends to join!');
+      } else {
+        throw new Error('Failed to create challenge');
       }
     } catch (err) {
       console.error('Failed to create challenge:', err);
+      toast.error('Failed to create challenge', 'Please try again.');
     }
   };
 
@@ -684,9 +719,13 @@ function SnapFitContent() {
       const res = await fetch(`/api/challenges/${challengeId}`, { method: 'POST' });
       if (res.ok) {
         fetchChallenges();
+        toast.success('Joined challenge!', 'Good luck on your challenge!');
+      } else {
+        throw new Error('Failed to join challenge');
       }
     } catch (err) {
       console.error('Failed to join challenge:', err);
+      toast.error('Failed to join challenge', 'Please try again.');
     }
   };
 
@@ -1840,8 +1879,12 @@ function SnapFitContent() {
                   // Add actual days
                   for (let day = 1; day <= lastDay.getDate(); day++) {
                     const isToday = day === today.getDate();
-                    const hasWorkout = [2, 4, 6, 9, 11, 13, 16, 18, 20, 23, 25, 27, 30].includes(day);
-                    const hasMeal = [1, 3, 5, 7, 8, 10, 12, 14, 15, 17, 19, 21, 22, 24, 26, 28, 29].includes(day);
+                    const currentDate = new Date(today.getFullYear(), today.getMonth(), day);
+                    const dateStr = currentDate.toDateString();
+
+                    // Check if there are actual workouts or food logs for this day
+                    const hasWorkout = savedWorkouts.some((w: SavedWorkout) => new Date(w.createdAt).toDateString() === dateStr);
+                    const hasMeal = foodLogs.some((f: FoodLog) => new Date(f.loggedAt).toDateString() === dateStr);
 
                     days.push(
                       <button
@@ -1877,52 +1920,57 @@ function SnapFitContent() {
 
             {/* Today's Schedule */}
             <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5 mb-6`}>
-              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Today&apos;s Schedule</h3>
+              <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Today&apos;s Activity</h3>
 
               <div className="space-y-3">
-                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-orange-50'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
-                    <Dumbbell className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Morning Workout</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>7:00 AM - Upper Body Strength</p>
-                  </div>
-                  <Check className="w-5 h-5 text-green-500" />
-                </div>
+                {(() => {
+                  const todayStr = new Date().toDateString();
+                  const todayWorkouts = savedWorkouts.filter((w: SavedWorkout) => new Date(w.createdAt).toDateString() === todayStr);
+                  const todayMeals = foodLogs.filter((f: FoodLog) => new Date(f.loggedAt).toDateString() === todayStr);
 
-                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-green-50'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
-                    <UtensilsCrossed className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Breakfast</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>8:30 AM - Protein Oats & Berries</p>
-                  </div>
-                  <Check className="w-5 h-5 text-green-500" />
-                </div>
+                  if (todayWorkouts.length === 0 && todayMeals.length === 0) {
+                    return (
+                      <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        <Clock className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                        <p>No activity logged today</p>
+                        <p className="text-sm opacity-75">Start a workout or log a meal!</p>
+                      </div>
+                    );
+                  }
 
-                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-blue-50'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center">
-                    <UtensilsCrossed className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Lunch</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>12:30 PM - Planned</p>
-                  </div>
-                  <Clock className="w-5 h-5 text-blue-500" />
-                </div>
-
-                <div className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-purple-50'}`}>
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center">
-                    <Dumbbell className="w-6 h-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Evening Cardio</p>
-                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>6:00 PM - 30 min HIIT</p>
-                  </div>
-                  <Clock className="w-5 h-5 text-purple-500" />
-                </div>
+                  return (
+                    <>
+                      {todayWorkouts.map((workout: SavedWorkout) => (
+                        <div key={workout.id} className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-orange-50'}`}>
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center">
+                            <Dumbbell className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{workout.title || 'Workout'}</p>
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {new Date(workout.createdAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {workout.duration} min
+                            </p>
+                          </div>
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                      ))}
+                      {todayMeals.map((meal: FoodLog) => (
+                        <div key={meal.id} className={`flex items-center gap-4 p-3 rounded-xl ${darkMode ? 'bg-gray-700/50' : 'bg-green-50'}`}>
+                          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center">
+                            <UtensilsCrossed className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="flex-1">
+                            <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{meal.foodName || meal.mealType}</p>
+                            <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {new Date(meal.loggedAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} - {meal.calories || 0} cal
+                            </p>
+                          </div>
+                          <Check className="w-5 h-5 text-green-500" />
+                        </div>
+                      ))}
+                    </>
+                  );
+                })()}
               </div>
             </div>
 
@@ -1930,29 +1978,42 @@ function SnapFitContent() {
             <div className={`rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-white'} shadow-lg p-5 mb-6`}>
               <h3 className={`text-lg font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>This Week</h3>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mx-auto mb-2">
-                    <Flame className="w-7 h-7 text-white" />
+              {(() => {
+                const oneWeekAgo = new Date();
+                oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+                const weeklyMeals = foodLogs.filter((f: FoodLog) => new Date(f.loggedAt) > oneWeekAgo).length;
+                const weeklyWorkoutMinutes = savedWorkouts
+                  .filter((w: SavedWorkout) => new Date(w.createdAt) > oneWeekAgo)
+                  .reduce((acc: number, w: SavedWorkout) => acc + (w.duration || 0), 0);
+                // Estimate calories burned: ~8 cal/min for moderate exercise
+                const estimatedCaloriesBurned = weeklyWorkoutMinutes * 8;
+
+                return (
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center mx-auto mb-2">
+                        <Flame className="w-7 h-7 text-white" />
+                      </div>
+                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{weeklyProgress}</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Workouts</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-2">
+                        <UtensilsCrossed className="w-7 h-7 text-white" />
+                      </div>
+                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{weeklyMeals}</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Meals Logged</p>
+                    </div>
+                    <div className="text-center">
+                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mx-auto mb-2">
+                        <Zap className="w-7 h-7 text-white" />
+                      </div>
+                      <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{estimatedCaloriesBurned.toLocaleString()}</p>
+                      <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Calories Burned</p>
+                    </div>
                   </div>
-                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>5</p>
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Workouts</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center mx-auto mb-2">
-                    <UtensilsCrossed className="w-7 h-7 text-white" />
-                  </div>
-                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>18</p>
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Meals Logged</p>
-                </div>
-                <div className="text-center">
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center mx-auto mb-2">
-                    <Zap className="w-7 h-7 text-white" />
-                  </div>
-                  <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>1,850</p>
-                  <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Calories Burned</p>
-                </div>
-              </div>
+                );
+              })()}
             </div>
 
             {/* Upcoming Events */}
@@ -2049,7 +2110,7 @@ function SnapFitContent() {
                     <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>Day Streak</p>
                   </div>
                   <div className="text-center">
-                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>0</p>
+                    <p className={`text-lg font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{(totalWorkouts * 10) + (foodLogs.length * 5)}</p>
                     <p className={`text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>XP Points</p>
                   </div>
                   <div className="text-center">
@@ -2192,6 +2253,17 @@ function SnapFitContent() {
                     <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>Apple, Garmin, Whoop & more</p>
                   </div>
                   <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs rounded-full font-medium">New</span>
+                </Link>
+
+                <Link href="/reports" className={`flex items-center gap-4 p-4 border-b ${darkMode ? 'border-gray-700 hover:bg-gray-700/50' : 'border-gray-100 hover:bg-gray-50'} transition-colors`}>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-fuchsia-400 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/20">
+                    <BarChart3 className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className={`font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>Weekly Reports</p>
+                    <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>AI-generated progress analysis</p>
+                  </div>
+                  <span className="px-2 py-0.5 bg-gradient-to-r from-fuchsia-500 to-purple-500 text-white text-xs rounded-full font-medium">AI</span>
                 </Link>
 
                 <Link href="/challenges/global" className={`flex items-center gap-4 p-4 ${darkMode ? 'hover:bg-gray-700/50' : 'hover:bg-gray-50'} transition-colors`}>

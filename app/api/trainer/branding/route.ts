@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
         fontFamily: 'Inter',
         customDomain: '',
         instagramHandle: '',
+        tiktokHandle: '',
         youtubeHandle: '',
         twitterHandle: '',
         hideSnapfitBranding: false,
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
       businessName, tagline, logoUrl, logoLightUrl, faviconUrl,
       primaryColor, secondaryColor, accentColor, backgroundColor,
       fontFamily, headingFont, customDomain, emailFromName, emailFooter,
-      instagramHandle, tiktokHandle, youtubeHandle, hideSnapfitBranding, customCss
+      instagramHandle, tiktokHandle, youtubeHandle, twitterHandle, hideSnapfitBranding, customCss
     } = body;
 
     // Check if branding exists
@@ -97,6 +98,7 @@ export async function POST(request: NextRequest) {
           instagramHandle,
           tiktokHandle,
           youtubeHandle,
+          twitterHandle,
           hideSnapfitBranding,
           customCss,
           updatedAt: new Date(),
@@ -128,6 +130,7 @@ export async function POST(request: NextRequest) {
           instagramHandle,
           tiktokHandle,
           youtubeHandle,
+          twitterHandle,
           hideSnapfitBranding: hideSnapfitBranding || false,
           customCss,
         })

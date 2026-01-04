@@ -10,6 +10,7 @@ import {
   Calendar, Award, Sparkles, PartyPopper, Loader2
 } from 'lucide-react';
 import Celebration, { useCelebration } from '@/components/Celebration';
+import { useToast } from '@/components/Toast';
 import { triggerHaptic } from '@/lib/haptics';
 import { staggerContainer, listItem, cardHover, cardTap, fadeInUp, popIn } from '@/lib/animations';
 
@@ -41,23 +42,6 @@ interface PRHistory {
   achievedAt: string;
 }
 
-const SAMPLE_RECORDS: PersonalRecord[] = [
-  { id: '1', exerciseName: 'Bench Press', category: 'strength', maxWeight: 225, maxReps: 5, unit: 'lbs', achievedAt: '2025-01-02', improvement: 10, isNew: true },
-  { id: '2', exerciseName: 'Deadlift', category: 'strength', maxWeight: 405, maxReps: 3, unit: 'lbs', achievedAt: '2024-12-28' },
-  { id: '3', exerciseName: 'Squat', category: 'strength', maxWeight: 315, maxReps: 5, unit: 'lbs', achievedAt: '2024-12-20' },
-  { id: '4', exerciseName: 'Pull-ups', category: 'bodyweight', maxReps: 18, unit: 'reps', achievedAt: '2024-12-15' },
-  { id: '5', exerciseName: 'Push-ups', category: 'bodyweight', maxReps: 65, unit: 'reps', achievedAt: '2024-12-10' },
-  { id: '6', exerciseName: '5K Run', category: 'cardio', fastestTime: 1380, longestDistance: 5, unit: 'km', achievedAt: '2024-12-05' },
-  { id: '7', exerciseName: 'Clean & Jerk', category: 'olympic', maxWeight: 185, unit: 'lbs', achievedAt: '2024-11-30' },
-  { id: '8', exerciseName: 'Snatch', category: 'olympic', maxWeight: 155, unit: 'lbs', achievedAt: '2024-11-25' },
-];
-
-const SAMPLE_HISTORY: PRHistory[] = [
-  { id: '1', exerciseName: 'Bench Press', recordType: 'max_weight', previousValue: 215, newValue: 225, improvement: 4.7, achievedAt: '2025-01-02' },
-  { id: '2', exerciseName: 'Deadlift', recordType: 'max_weight', previousValue: 385, newValue: 405, improvement: 5.2, achievedAt: '2024-12-28' },
-  { id: '3', exerciseName: 'Pull-ups', recordType: 'max_reps', previousValue: 15, newValue: 18, improvement: 20, achievedAt: '2024-12-15' },
-];
-
 const CATEGORY_CONFIG = {
   strength: { icon: Dumbbell, color: 'from-violet-500 to-purple-600', label: 'Strength' },
   cardio: { icon: Timer, color: 'from-green-500 to-emerald-600', label: 'Cardio' },
@@ -67,8 +51,9 @@ const CATEGORY_CONFIG = {
 
 export default function RecordsPage() {
   const { data: session } = useSession();
-  const [records, setRecords] = useState<PersonalRecord[]>(SAMPLE_RECORDS);
-  const [history, setHistory] = useState<PRHistory[]>(SAMPLE_HISTORY);
+  const toast = useToast();
+  const [records, setRecords] = useState<PersonalRecord[]>([]);
+  const [history, setHistory] = useState<PRHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -91,45 +76,54 @@ export default function RecordsPage() {
   useEffect(() => {
     const fetchRecords = async () => {
       if (!session?.user) {
+        // Not logged in - show empty state
+        setRecords([]);
+        setHistory([]);
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch('/api/records');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.records && data.records.length > 0) {
-            const transformedRecords = data.records.map((r: any) => ({
-              id: r.id,
-              exerciseName: r.exerciseName,
-              category: r.category,
-              maxWeight: r.maxWeight,
-              maxReps: r.maxReps,
-              fastestTime: r.fastestTime,
-              longestDistance: r.longestDistance,
-              unit: r.unit,
-              achievedAt: r.updatedAt || r.createdAt,
-              improvement: r.improvement,
-              isNew: r.isNew,
-            }));
-            setRecords(transformedRecords);
-          }
-          if (data.history && data.history.length > 0) {
-            const transformedHistory = data.history.map((h: any) => ({
-              id: h.id,
-              exerciseName: h.exerciseName,
-              recordType: h.recordType,
-              previousValue: h.previousValue,
-              newValue: h.newValue,
-              improvement: h.improvementPercent || ((h.newValue - h.previousValue) / h.previousValue * 100),
-              achievedAt: h.achievedAt || h.createdAt,
-            }));
-            setHistory(transformedHistory);
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch records');
+        }
+        const data = await response.json();
+        if (data.records && data.records.length > 0) {
+          const transformedRecords = data.records.map((r: any) => ({
+            id: r.id,
+            exerciseName: r.exerciseName,
+            category: r.category,
+            maxWeight: r.maxWeight,
+            maxReps: r.maxReps,
+            fastestTime: r.fastestTime,
+            longestDistance: r.longestDistance,
+            unit: r.unit,
+            achievedAt: r.updatedAt || r.createdAt,
+            improvement: r.improvement,
+            isNew: r.isNew,
+          }));
+          setRecords(transformedRecords);
+        } else {
+          setRecords([]);
+        }
+        if (data.history && data.history.length > 0) {
+          const transformedHistory = data.history.map((h: any) => ({
+            id: h.id,
+            exerciseName: h.exerciseName,
+            recordType: h.recordType,
+            previousValue: h.previousValue,
+            newValue: h.newValue,
+            improvement: h.improvementPercent || ((h.newValue - h.previousValue) / h.previousValue * 100),
+            achievedAt: h.achievedAt || h.createdAt,
+          }));
+          setHistory(transformedHistory);
+        } else {
+          setHistory([]);
         }
       } catch (error) {
         console.error('Error fetching records:', error);
+        toast.error('Failed to load records', 'Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
@@ -176,21 +170,24 @@ export default function RecordsPage() {
           body: JSON.stringify({
             exerciseName: newPRForm.exerciseName,
             category: newPRForm.category,
-            value: newPRForm.weight ? parseInt(newPRForm.weight) : parseInt(newPRForm.reps),
-            reps: newPRForm.reps ? parseInt(newPRForm.reps) : undefined,
+            maxWeight: newPRForm.weight ? parseInt(newPRForm.weight) : undefined,
+            maxReps: newPRForm.reps ? parseInt(newPRForm.reps) : undefined,
             unit: newPRForm.unit,
-            recordType: 'max_weight',
           }),
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.isNewPR) {
-            newRecord.id = data.record.id;
-          }
+        if (!response.ok) {
+          throw new Error('Failed to save PR');
+        }
+
+        const data = await response.json();
+        if (data.record) {
+          newRecord.id = data.record.id;
+          toast.success('PR saved!', 'Your personal record has been saved.');
         }
       } catch (error) {
         console.error('Error saving PR:', error);
+        toast.error('Failed to save PR', 'Please try again.');
       }
     }
 
@@ -365,6 +362,34 @@ export default function RecordsPage() {
           </h2>
 
           <AnimatePresence mode="popLayout">
+            {filteredRecords.length === 0 && (
+              <div className="text-center py-12">
+                <Trophy className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                {!session?.user ? (
+                  <>
+                    <p className="text-white/60 mb-2">Log in to track your personal records</p>
+                    <Link
+                      href="/login"
+                      className="inline-block px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all"
+                    >
+                      Log In
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white/60 mb-2">No personal records yet</p>
+                    <p className="text-white/40 text-sm mb-4">Start logging your PRs to track your progress</p>
+                    <button
+                      onClick={() => setShowNewPRModal(true)}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Log Your First PR
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             {filteredRecords.map((record, index) => {
               const categoryConfig = CATEGORY_CONFIG[record.category];
               const CategoryIcon = categoryConfig.icon;
@@ -449,22 +474,30 @@ export default function RecordsPage() {
           </h2>
 
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5">
-            {history.map((item) => (
-              <div key={item.id} className="p-4 flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-white">{item.exerciseName}</h3>
-                  <p className="text-sm text-white/50">{formatDate(item.achievedAt)}</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-2 text-white">
-                    <span className="text-white/40">{item.previousValue}</span>
-                    <ChevronRight className="w-4 h-4 text-white/40" />
-                    <span className="font-bold text-green-400">{item.newValue}</span>
-                  </div>
-                  <p className="text-sm text-green-400">+{item.improvement.toFixed(1)}%</p>
-                </div>
+            {history.length === 0 ? (
+              <div className="p-8 text-center">
+                <Calendar className="w-10 h-10 text-white/20 mx-auto mb-2" />
+                <p className="text-white/50 text-sm">No PR history yet</p>
+                <p className="text-white/30 text-xs">Your progress improvements will appear here</p>
               </div>
-            ))}
+            ) : (
+              history.map((item) => (
+                <div key={item.id} className="p-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-white">{item.exerciseName}</h3>
+                    <p className="text-sm text-white/50">{formatDate(item.achievedAt)}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-2 text-white">
+                      <span className="text-white/40">{item.previousValue}</span>
+                      <ChevronRight className="w-4 h-4 text-white/40" />
+                      <span className="font-bold text-green-400">{item.newValue}</span>
+                    </div>
+                    <p className="text-sm text-green-400">+{item.improvement.toFixed(1)}%</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

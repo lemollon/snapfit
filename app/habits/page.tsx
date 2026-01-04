@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useCelebration } from '@/components/Celebration';
 import { useToast } from '@/components/Toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import { triggerHaptic } from '@/lib/haptics';
 import { staggerContainer, listItem, popIn, scaleIn } from '@/lib/animations';
 
@@ -51,82 +52,29 @@ const COLOR_MAP: { [key: string]: string } = {
   amber: 'from-amber-500 to-yellow-600',
 };
 
-const DEFAULT_HABITS: Habit[] = [
-  {
-    id: 'demo-1',
-    name: 'Water Intake',
-    description: 'Stay hydrated throughout the day',
-    icon: 'droplets',
-    color: 'blue',
-    type: 'quantity',
-    targetValue: 8,
-    unit: 'glasses',
-    currentStreak: 12,
-    longestStreak: 21,
-    todayValue: 5,
-    todayCompleted: false,
-  },
-  {
-    id: 'demo-2',
-    name: 'Sleep',
-    description: 'Get quality rest',
-    icon: 'moon',
-    color: 'purple',
-    type: 'duration',
-    targetValue: 8,
-    unit: 'hours',
-    currentStreak: 5,
-    longestStreak: 14,
-    todayValue: 7.5,
-    todayCompleted: false,
-  },
-  {
-    id: 'demo-3',
-    name: 'Steps',
-    description: 'Keep moving',
-    icon: 'footprints',
-    color: 'green',
-    type: 'quantity',
-    targetValue: 10000,
-    unit: 'steps',
-    currentStreak: 8,
-    longestStreak: 30,
-    todayValue: 7234,
-    todayCompleted: false,
-  },
-  {
-    id: 'demo-4',
-    name: 'Meditation',
-    description: 'Daily mindfulness practice',
-    icon: 'brain',
-    color: 'orange',
-    type: 'duration',
-    targetValue: 10,
-    unit: 'minutes',
-    currentStreak: 3,
-    longestStreak: 10,
-    todayValue: 10,
-    todayCompleted: true,
-  },
-];
+// No default demo habits - users should see empty state until they create habits
 
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export default function HabitsPage() {
   const { data: session } = useSession();
   const toast = useToast();
-  const [habits, setHabits] = useState<Habit[]>(DEFAULT_HABITS);
+  const [habits, setHabits] = useState<Habit[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedHabit, setSelectedHabit] = useState<Habit | null>(null);
-  const [weekData, setWeekData] = useState<(boolean | null)[]>([true, true, true, false, true, true, null]);
+  const [weekData, setWeekData] = useState<(boolean | null)[]>([null, null, null, null, null, null, null]);
   const [customHabitName, setCustomHabitName] = useState('');
   const [customHabitTarget, setCustomHabitTarget] = useState('');
   const [customHabitUnit, setCustomHabitUnit] = useState('');
   const [deleting, setDeleting] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; habitId: string | null }>({
+    isOpen: false,
+    habitId: null,
+  });
 
   // Premium celebration animations
   const { celebrate, CelebrationComponent } = useCelebration();
@@ -179,13 +127,14 @@ export default function HabitsPage() {
         }
       } catch (error) {
         console.error('Error fetching habits:', error);
+        toast.error('Failed to load habits', 'Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchHabits();
-  }, [session]);
+  }, [session, toast]);
 
   const completedToday = habits.filter(h => h.todayCompleted).length;
   const totalHabits = habits.length;
@@ -219,7 +168,7 @@ export default function HabitsPage() {
     // Save to API if logged in
     if (session?.user && !habitId.startsWith('demo-')) {
       try {
-        await fetch('/api/habits', {
+        const res = await fetch('/api/habits', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -228,8 +177,17 @@ export default function HabitsPage() {
             completed,
           }),
         });
+        if (!res.ok) throw new Error('Failed to update habit');
       } catch (error) {
         console.error('Error updating habit:', error);
+        // Revert optimistic update on error
+        setHabits(habits.map(h => {
+          if (h.id === habitId) {
+            return { ...h, todayValue: habit.todayValue, todayCompleted: wasCompleted };
+          }
+          return h;
+        }));
+        toast.error('Sync failed', 'Could not save habit update.');
       }
     }
   };
@@ -251,7 +209,7 @@ export default function HabitsPage() {
     // Save to API if logged in
     if (session?.user && !habitId.startsWith('demo-')) {
       try {
-        await fetch('/api/habits', {
+        const res = await fetch('/api/habits', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -260,8 +218,17 @@ export default function HabitsPage() {
             completed: newCompleted,
           }),
         });
+        if (!res.ok) throw new Error('Failed to toggle habit');
       } catch (error) {
         console.error('Error updating habit:', error);
+        // Revert optimistic update on error
+        setHabits(habits.map(h => {
+          if (h.id === habitId) {
+            return { ...h, todayCompleted: !newCompleted };
+          }
+          return h;
+        }));
+        toast.error('Sync failed', 'Could not save habit update.');
       }
     }
   };
@@ -404,11 +371,11 @@ export default function HabitsPage() {
   };
 
   const deleteHabit = async (habitId: string) => {
-    if (!confirm('Are you sure you want to delete this habit?')) return;
-
     // Optimistic update
     setHabits(habits.filter(h => h.id !== habitId));
     setShowDetailModal(false);
+    setDeleteConfirm({ isOpen: false, habitId: null });
+    toast.success('Habit deleted', 'The habit has been removed.');
 
     if (!session?.user || habitId.startsWith('demo-')) {
       return;
@@ -416,15 +383,20 @@ export default function HabitsPage() {
 
     setDeleting(true);
     try {
-      await fetch(`/api/habits?id=${habitId}`, {
+      const res = await fetch(`/api/habits?id=${habitId}`, {
         method: 'DELETE',
       });
+      if (!res.ok) throw new Error('Failed to delete habit');
     } catch (error) {
       console.error('Error deleting habit:', error);
-      // Note: We don't revert since the habit was already removed from UI
+      toast.error('Sync error', 'Habit removed locally but may not have synced.');
     } finally {
       setDeleting(false);
     }
+  };
+
+  const confirmDeleteHabit = (habitId: string) => {
+    setDeleteConfirm({ isOpen: true, habitId });
   };
 
   const getProgress = (habit: Habit): number => {
@@ -570,6 +542,35 @@ export default function HabitsPage() {
             <Target className="w-5 h-5 text-violet-400" />
             Your Habits
           </h2>
+
+          {habits.length === 0 && (
+            <div className="text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+              <Target className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              {!session?.user ? (
+                <>
+                  <p className="text-white/60 mb-2">Log in to track your habits</p>
+                  <Link
+                    href="/login"
+                    className="inline-block px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all"
+                  >
+                    Log In
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-white/60 mb-2">No habits yet</p>
+                  <p className="text-white/40 text-sm mb-4">Start building healthy routines</p>
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Add Your First Habit
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           {habits.map((habit) => {
             const IconComponent = ICON_MAP[habit.icon] || Check;
@@ -901,7 +902,7 @@ export default function HabitsPage() {
 
             <div className="flex gap-3">
               <button
-                onClick={() => selectedHabit && deleteHabit(selectedHabit.id)}
+                onClick={() => selectedHabit && confirmDeleteHabit(selectedHabit.id)}
                 disabled={deleting}
                 className="flex-1 py-3 bg-red-500/20 text-red-400 rounded-2xl font-medium hover:bg-red-500/30 transition-all disabled:opacity-50"
               >
@@ -917,6 +918,17 @@ export default function HabitsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, habitId: null })}
+        onConfirm={() => deleteConfirm.habitId && deleteHabit(deleteConfirm.habitId)}
+        title="Delete Habit?"
+        message="This habit and all its tracking history will be permanently deleted."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

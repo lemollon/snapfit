@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { db } from '@/lib/db';
 import { timerPresets } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 
 // GET - Fetch user's timer presets
 export async function GET(request: NextRequest) {
@@ -59,5 +59,50 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating timer preset:', error);
     return NextResponse.json({ error: 'Failed to create preset' }, { status: 500 });
+  }
+}
+
+// PATCH - Update timer preset (e.g., toggle favorite)
+export async function PATCH(request: NextRequest) {
+  try {
+    const session = await getServerSession();
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { id, isFavorite, name } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: 'Preset ID is required' }, { status: 400 });
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (typeof isFavorite === 'boolean') updateData.isFavorite = isFavorite;
+    if (name) updateData.name = name;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+    }
+
+    const [updated] = await db
+      .update(timerPresets)
+      .set(updateData)
+      .where(
+        and(
+          eq(timerPresets.id, id),
+          eq(timerPresets.userId, (session.user as any).id)
+        )
+      )
+      .returning();
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Preset not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    console.error('Error updating timer preset:', error);
+    return NextResponse.json({ error: 'Failed to update preset' }, { status: 500 });
   }
 }

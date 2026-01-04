@@ -60,6 +60,7 @@ export async function POST(req: Request) {
       description,
       duration,
       fitnessLevel,
+      difficulty, // Accept 'difficulty' as alias for fitnessLevel
       category,
       equipment,
       exercises,
@@ -70,6 +71,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Template name is required' }, { status: 400 });
     }
 
+    // Accept either 'fitnessLevel' or 'difficulty' from frontend
+    const level = fitnessLevel || difficulty;
+
     const [template] = await db
       .insert(workoutTemplates)
       .values({
@@ -77,7 +81,7 @@ export async function POST(req: Request) {
         name,
         description,
         duration,
-        fitnessLevel,
+        fitnessLevel: level,
         category,
         equipment,
         exercises,

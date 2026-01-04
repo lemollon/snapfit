@@ -21,6 +21,7 @@ import {
   ZoomIn,
 } from 'lucide-react';
 import { useToast } from '@/components/Toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface ProgressPhoto {
   id: string;
@@ -47,6 +48,10 @@ export default function ProgressPhotosPage() {
     type: 'front' as 'front' | 'side' | 'back',
     notes: '',
   });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; photoId: string | null }>({
+    isOpen: false,
+    photoId: null,
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -66,6 +71,7 @@ export default function ProgressPhotosPage() {
       }
     } catch (error) {
       console.error('Failed to fetch photos:', error);
+      toast.error('Failed to load photos', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
@@ -126,6 +132,7 @@ export default function ProgressPhotosPage() {
         await fetchPhotos();
         setShowUpload(false);
         setNewPhoto({ type: 'front', notes: '' });
+        toast.success('Photo uploaded', 'Your progress photo has been saved.');
       } else {
         throw new Error('Failed to save photo record');
       }
@@ -138,8 +145,6 @@ export default function ProgressPhotosPage() {
   };
 
   const handleDeletePhoto = async (photoId: string) => {
-    if (!confirm('Delete this photo?')) return;
-
     try {
       const res = await fetch(`/api/body/photos/${photoId}`, {
         method: 'DELETE',
@@ -147,10 +152,19 @@ export default function ProgressPhotosPage() {
       if (res.ok) {
         setPhotos(photos.filter(p => p.id !== photoId));
         setSelectedPhoto(null);
+        setDeleteConfirm({ isOpen: false, photoId: null });
+        toast.success('Photo deleted', 'Progress photo has been removed.');
+      } else {
+        throw new Error('Failed to delete');
       }
     } catch (error) {
       console.error('Failed to delete photo:', error);
+      toast.error('Delete failed', 'Could not delete the photo. Please try again.');
     }
+  };
+
+  const confirmDelete = (photoId: string) => {
+    setDeleteConfirm({ isOpen: true, photoId });
   };
 
   const groupPhotosByMonth = () => {
@@ -455,7 +469,7 @@ export default function ProgressPhotosPage() {
               </p>
             </div>
             <button
-              onClick={() => handleDeletePhoto(selectedPhoto.id)}
+              onClick={() => confirmDelete(selectedPhoto.id)}
               className="p-2 hover:bg-red-500/20 rounded-lg text-red-500"
             >
               <Trash2 className="w-5 h-5" />
@@ -477,6 +491,17 @@ export default function ProgressPhotosPage() {
           )}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, photoId: null })}
+        onConfirm={() => deleteConfirm.photoId && handleDeletePhoto(deleteConfirm.photoId)}
+        title="Delete Photo?"
+        message="This progress photo will be permanently deleted. This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

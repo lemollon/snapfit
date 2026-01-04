@@ -19,6 +19,8 @@ import {
   Pill,
   Dumbbell,
 } from 'lucide-react';
+import { useToast } from '@/components/Toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface Product {
   id: string;
@@ -42,10 +44,15 @@ const CATEGORIES = [
 export default function TrainerProductsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const toast = useToast();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; productId: string | null }>({
+    isOpen: false,
+    productId: null,
+  });
 
   const [newProduct, setNewProduct] = useState({
     name: '',
@@ -66,17 +73,22 @@ export default function TrainerProductsPage() {
   const fetchProducts = async () => {
     try {
       const res = await fetch('/api/trainer/products');
+      if (!res.ok) throw new Error('Failed to fetch products');
       const data = await res.json();
       setProducts(data.products || []);
     } catch (error) {
       console.error('Failed to fetch products:', error);
+      toast.error('Failed to load products', 'Please try refreshing the page.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleAddProduct = async () => {
-    if (!newProduct.name) return;
+    if (!newProduct.name) {
+      toast.error('Name required', 'Please enter a product name.');
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch('/api/trainer/products', {
@@ -90,29 +102,41 @@ export default function TrainerProductsPage() {
           productUrl: newProduct.productUrl || undefined,
         }),
       });
+      if (!res.ok) throw new Error('Failed to add product');
       const data = await res.json();
       if (data.product) {
         setProducts([data.product, ...products]);
         setNewProduct({ name: '', description: '', price: '', category: 'supplement', productUrl: '' });
         setShowAddModal(false);
+        toast.success('Product added', 'Your product has been created successfully.');
       }
     } catch (error) {
       console.error('Failed to add product:', error);
+      toast.error('Failed to add product', 'Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
   const handleDeleteProduct = async (productId: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
     try {
-      await fetch(`/api/trainer/products?id=${productId}`, {
+      const res = await fetch(`/api/trainer/products?id=${productId}`, {
         method: 'DELETE',
       });
+      if (!res.ok) {
+        throw new Error('Failed to delete product');
+      }
       setProducts(products.filter(p => p.id !== productId));
+      setDeleteConfirm({ isOpen: false, productId: null });
+      toast.success('Product deleted', 'The product has been removed.');
     } catch (error) {
       console.error('Failed to delete product:', error);
+      toast.error('Delete failed', 'Could not delete the product. Please try again.');
     }
+  };
+
+  const confirmDeleteProduct = (productId: string) => {
+    setDeleteConfirm({ isOpen: true, productId });
   };
 
   if (loading || status === 'loading') {
@@ -203,7 +227,7 @@ export default function TrainerProductsPage() {
                       </a>
                     )}
                     <button
-                      onClick={() => handleDeleteProduct(product.id)}
+                      onClick={() => confirmDeleteProduct(product.id)}
                       className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -309,6 +333,17 @@ export default function TrainerProductsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, productId: null })}
+        onConfirm={() => deleteConfirm.productId && handleDeleteProduct(deleteConfirm.productId)}
+        title="Delete Product?"
+        message="This product will be permanently removed. This action cannot be undone."
+        confirmText="Delete"
+        variant="danger"
+      />
     </div>
   );
 }

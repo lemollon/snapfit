@@ -9,6 +9,7 @@ import {
   CheckCircle, Lock, Share2, Loader2
 } from 'lucide-react';
 import SocialShareModal from '@/components/SocialShareModal';
+import { useToast } from '@/components/Toast';
 
 // Hero image
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=1200&auto=format&fit=crop&q=80';
@@ -44,91 +45,6 @@ interface LeaderboardEntry {
   badge?: string;
 }
 
-const SAMPLE_CHALLENGES: GlobalChallenge[] = [
-  {
-    id: '1',
-    name: 'January Step Challenge',
-    description: 'Walk 500,000 steps this month and earn exclusive rewards!',
-    imageUrl: 'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?w=400&auto=format&fit=crop&q=80',
-    type: 'steps',
-    goal: 500000,
-    unit: 'steps',
-    startDate: '2025-01-01',
-    endDate: '2025-01-31',
-    xpReward: 1000,
-    prizeDescription: 'Exclusive "Step Master" badge + 1000 XP',
-    participantCount: 12453,
-    isJoined: true,
-    progress: 234567,
-    rank: 1247,
-    isFeatured: true,
-    daysLeft: 28,
-  },
-  {
-    id: '2',
-    name: '30-Day Workout Warrior',
-    description: 'Complete 30 workouts in 30 days. Are you up for the challenge?',
-    imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=400&auto=format&fit=crop&q=80',
-    type: 'workouts',
-    goal: 30,
-    unit: 'workouts',
-    startDate: '2025-01-01',
-    endDate: '2025-01-31',
-    xpReward: 1500,
-    participantCount: 8234,
-    isJoined: true,
-    progress: 12,
-    rank: 892,
-    daysLeft: 28,
-  },
-  {
-    id: '3',
-    name: 'Calorie Crusher',
-    description: 'Burn 50,000 calories this month through exercise.',
-    imageUrl: 'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?w=400&auto=format&fit=crop&q=80',
-    type: 'calories',
-    goal: 50000,
-    unit: 'kcal',
-    startDate: '2025-01-01',
-    endDate: '2025-01-31',
-    xpReward: 750,
-    participantCount: 5621,
-    isJoined: false,
-    daysLeft: 28,
-  },
-  {
-    id: '4',
-    name: '7-Day Streak Sprint',
-    description: 'Maintain a 7-day workout streak to earn XP.',
-    imageUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=400&auto=format&fit=crop&q=80',
-    type: 'streak',
-    goal: 7,
-    unit: 'days',
-    startDate: '2025-01-01',
-    endDate: '2025-01-07',
-    xpReward: 300,
-    participantCount: 15789,
-    isJoined: true,
-    progress: 7,
-    isCompleted: true,
-    daysLeft: 0,
-  },
-];
-
-const SAMPLE_LEADERBOARD: LeaderboardEntry[] = [
-  { rank: 1, name: 'FitnessPro123', avatar: '💪', progress: 487234, level: 42, badge: '🏆' },
-  { rank: 2, name: 'MarathonMike', avatar: '🏃', progress: 465123, level: 38, badge: '🥈' },
-  { rank: 3, name: 'StepQueen', avatar: '👑', progress: 453890, level: 35, badge: '🥉' },
-  { rank: 4, name: 'WalkingWarrior', avatar: '⚔️', progress: 421456, level: 31 },
-  { rank: 5, name: 'HealthyHero', avatar: '🦸', progress: 398234, level: 29 },
-  { rank: 6, name: 'CardioKing', avatar: '🎯', progress: 387654, level: 27 },
-  { rank: 7, name: 'GymRat2025', avatar: '🐀', progress: 356789, level: 25 },
-  { rank: 8, name: 'FitFam', avatar: '👨‍👩‍👧', progress: 334567, level: 23 },
-  { rank: 9, name: 'MoveMore', avatar: '🚶', progress: 312456, level: 21 },
-  { rank: 10, name: 'StepCounter', avatar: '📱', progress: 298765, level: 19 },
-  { rank: 1247, name: 'You', avatar: '⭐', progress: 234567, level: 15, isCurrentUser: true },
-];
-
 const TYPE_CONFIG = {
   steps: { icon: Target, color: 'from-green-500 to-emerald-600' },
   workouts: { icon: Zap, color: 'from-violet-500 to-purple-600' },
@@ -139,7 +55,8 @@ const TYPE_CONFIG = {
 
 export default function GlobalChallengesPage() {
   const { data: session } = useSession();
-  const [challenges, setChallenges] = useState<GlobalChallenge[]>(SAMPLE_CHALLENGES);
+  const toast = useToast();
+  const [challenges, setChallenges] = useState<GlobalChallenge[]>([]);
   const [selectedChallenge, setSelectedChallenge] = useState<GlobalChallenge | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'upcoming' | 'completed'>('active');
   const [loading, setLoading] = useState(true);
@@ -179,7 +96,7 @@ export default function GlobalChallengesPage() {
         }
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
-        // Keep empty leaderboard on error
+        toast.error('Failed to load leaderboard', 'Please try again.');
       } finally {
         setLeaderboardLoading(false);
       }
@@ -192,26 +109,32 @@ export default function GlobalChallengesPage() {
   useEffect(() => {
     const fetchChallenges = async () => {
       if (!session?.user) {
+        // Not logged in - show empty state
+        setChallenges([]);
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch('/api/challenges/global');
-        if (response.ok) {
-          const data = await response.json();
-          // API returns array directly
-          if (Array.isArray(data) && data.length > 0) {
-            const apiChallenges = data.map((challenge: any) => ({
-              ...challenge,
-              daysLeft: Math.max(0, Math.ceil((new Date(challenge.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
-            }));
-            setChallenges(apiChallenges);
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch challenges');
+        }
+        const data = await response.json();
+        // API returns array directly
+        if (Array.isArray(data)) {
+          const apiChallenges = data.map((challenge: any) => ({
+            ...challenge,
+            daysLeft: Math.max(0, Math.ceil((new Date(challenge.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
+          }));
+          setChallenges(apiChallenges);
+        } else {
+          setChallenges([]);
         }
       } catch (error) {
         console.error('Error fetching challenges:', error);
-        // Keep sample data on error
+        toast.error('Failed to load challenges', 'Please try refreshing the page.');
+        setChallenges([]);
       } finally {
         setLoading(false);
       }
@@ -230,13 +153,21 @@ export default function GlobalChallengesPage() {
 
     // Call API to join challenge
     try {
-      await fetch('/api/challenges/global', {
+      const res = await fetch('/api/challenges/global', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ challengeId }),
       });
+      if (!res.ok) throw new Error('Failed to join challenge');
     } catch (error) {
       console.error('Error joining challenge:', error);
+      toast.error('Failed to join challenge', 'Please try again.');
+      // Revert optimistic update
+      setChallenges(challenges.map(c =>
+        c.id === challengeId
+          ? { ...c, isJoined: false, progress: undefined, participantCount: c.participantCount - 1 }
+          : c
+      ));
     }
   };
 
@@ -496,6 +427,36 @@ export default function GlobalChallengesPage() {
               <Lock className="w-12 h-12 text-white/20 mx-auto mb-3" />
               <p className="text-white/60">No upcoming challenges yet</p>
               <p className="text-white/40 text-sm">Check back soon!</p>
+            </div>
+          )}
+
+          {activeTab === 'active' && activeChallenges.length === 0 && !loading && (
+            <div className="text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+              <Trophy className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              {!session?.user ? (
+                <>
+                  <p className="text-white/60 mb-2">Log in to see available challenges</p>
+                  <Link
+                    href="/login"
+                    className="inline-block px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all"
+                  >
+                    Log In
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-white/60 mb-2">No active challenges right now</p>
+                  <p className="text-white/40 text-sm">Check back later for new challenges!</p>
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'completed' && completedChallenges.length === 0 && !loading && (
+            <div className="text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+              <CheckCircle className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              <p className="text-white/60 mb-2">No completed challenges yet</p>
+              <p className="text-white/40 text-sm">Join a challenge and complete it to see it here!</p>
             </div>
           )}
         </div>
