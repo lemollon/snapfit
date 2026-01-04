@@ -31,17 +31,17 @@ export async function GET(request: Request) {
     results.usersTableError = error instanceof Error ? error.message : String(error);
   }
 
-  // Test 3: Check if specific email exists
+  // Test 3: Check if specific email exists using db.select (same as auth.ts)
   if (email) {
     try {
-      const existingUser = await db.query.users.findFirst({
-        where: eq(users.email, email.toLowerCase()),
-      });
+      const result = await db.select().from(users).where(eq(users.email, email.toLowerCase())).limit(1);
+      const existingUser = result[0];
       results.emailCheck = email;
       results.emailExists = !!existingUser;
       if (existingUser) {
         results.existingUserId = existingUser.id;
         results.existingUserName = existingUser.name;
+        results.hasPassword = !!existingUser.password;
       }
     } catch (error) {
       results.emailCheckError = error instanceof Error ? error.message : String(error);
