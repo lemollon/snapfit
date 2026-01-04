@@ -269,7 +269,10 @@ function SnapFitContent() {
       }
 
       fetch('/api/profile')
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch profile');
+          return res.json();
+        })
         .then(data => {
           if (data.user && !data.user.onboardingCompleted) {
             router.push('/onboarding');

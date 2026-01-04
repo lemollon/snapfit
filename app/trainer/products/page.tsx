@@ -120,9 +120,12 @@ export default function TrainerProductsPage() {
 
   const handleDeleteProduct = async (productId: string) => {
     try {
-      await fetch(`/api/trainer/products?id=${productId}`, {
+      const res = await fetch(`/api/trainer/products?id=${productId}`, {
         method: 'DELETE',
       });
+      if (!res.ok) {
+        throw new Error('Failed to delete product');
+      }
       setProducts(products.filter(p => p.id !== productId));
       setDeleteConfirm({ isOpen: false, productId: null });
       toast.success('Product deleted', 'The product has been removed.');

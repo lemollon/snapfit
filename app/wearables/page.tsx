@@ -244,12 +244,53 @@ export default function WearablesPage() {
     setIsSyncing(false);
   };
 
-  const toggleSyncSetting = (deviceId: string, setting: keyof WearableDevice['syncSettings']) => {
+  const toggleSyncSetting = async (deviceId: string, setting: keyof WearableDevice['syncSettings']) => {
+    const device = devices.find(d => d.id === deviceId);
+    if (!device) return;
+
+    const newValue = !device.syncSettings[setting];
+
+    // Optimistically update UI
     setDevices(devices.map(d =>
       d.id === deviceId
-        ? { ...d, syncSettings: { ...d.syncSettings, [setting]: !d.syncSettings[setting] } }
+        ? { ...d, syncSettings: { ...d.syncSettings, [setting]: newValue } }
         : d
     ));
+
+    // Save to API
+    try {
+      const settingMap: Record<string, string> = {
+        steps: 'syncSteps',
+        heartRate: 'syncHeartRate',
+        sleep: 'syncSleep',
+        workouts: 'syncWorkouts',
+        weight: 'syncWeight',
+      };
+
+      const res = await fetch('/api/wearables', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId,
+          [settingMap[setting]]: newValue,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to save setting');
+      }
+
+      toast.success('Setting saved', `${setting} sync ${newValue ? 'enabled' : 'disabled'}`);
+    } catch (error) {
+      console.error('Failed to save sync setting:', error);
+      toast.error('Failed to save', 'Please try again.');
+      // Revert on error
+      setDevices(devices.map(d =>
+        d.id === deviceId
+          ? { ...d, syncSettings: { ...d.syncSettings, [setting]: !newValue } }
+          : d
+      ));
+    }
   };
 
   return (

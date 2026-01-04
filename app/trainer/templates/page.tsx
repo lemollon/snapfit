@@ -170,9 +170,10 @@ export default function TrainerTemplatesPage() {
 
   const handleDeleteTemplate = async (templateId: string) => {
     try {
-      await fetch(`/api/trainer/templates?id=${templateId}`, {
+      const res = await fetch(`/api/trainer/templates?id=${templateId}`, {
         method: 'DELETE',
       });
+      if (!res.ok) throw new Error('Failed to delete template');
       setTemplates(templates.filter(t => t.id !== templateId));
       setDeleteConfirm({ isOpen: false, templateId: null });
       toast.success('Template deleted', 'The workout template has been removed.');

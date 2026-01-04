@@ -225,7 +225,7 @@ export default function HabitsPage() {
     // Save to API if logged in
     if (session?.user && !habitId.startsWith('demo-')) {
       try {
-        await fetch('/api/habits', {
+        const res = await fetch('/api/habits', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -234,8 +234,17 @@ export default function HabitsPage() {
             completed,
           }),
         });
+        if (!res.ok) throw new Error('Failed to update habit');
       } catch (error) {
         console.error('Error updating habit:', error);
+        // Revert optimistic update on error
+        setHabits(habits.map(h => {
+          if (h.id === habitId) {
+            return { ...h, todayValue: habit.todayValue, todayCompleted: wasCompleted };
+          }
+          return h;
+        }));
+        toast.error('Sync failed', 'Could not save habit update.');
       }
     }
   };
@@ -257,7 +266,7 @@ export default function HabitsPage() {
     // Save to API if logged in
     if (session?.user && !habitId.startsWith('demo-')) {
       try {
-        await fetch('/api/habits', {
+        const res = await fetch('/api/habits', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -266,8 +275,17 @@ export default function HabitsPage() {
             completed: newCompleted,
           }),
         });
+        if (!res.ok) throw new Error('Failed to toggle habit');
       } catch (error) {
         console.error('Error updating habit:', error);
+        // Revert optimistic update on error
+        setHabits(habits.map(h => {
+          if (h.id === habitId) {
+            return { ...h, todayCompleted: !newCompleted };
+          }
+          return h;
+        }));
+        toast.error('Sync failed', 'Could not save habit update.');
       }
     }
   };
@@ -422,9 +440,10 @@ export default function HabitsPage() {
 
     setDeleting(true);
     try {
-      await fetch(`/api/habits?id=${habitId}`, {
+      const res = await fetch(`/api/habits?id=${habitId}`, {
         method: 'DELETE',
       });
+      if (!res.ok) throw new Error('Failed to delete habit');
     } catch (error) {
       console.error('Error deleting habit:', error);
       toast.error('Sync error', 'Habit removed locally but may not have synced.');
