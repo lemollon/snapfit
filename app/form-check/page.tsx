@@ -66,16 +66,47 @@ export default function FormCheckPage() {
 
     setUploading(true);
     try {
-      // In a real app, upload to cloud storage first
-      const videoUrl = URL.createObjectURL(file);
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(file);
+      const base64Video = await base64Promise;
 
+      // Upload to Cloudinary via our API
+      const uploadRes = await fetch('/api/upload/video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          video: base64Video,
+          folder: 'form-checks',
+        }),
+      });
+
+      if (!uploadRes.ok) {
+        const error = await uploadRes.json();
+        throw new Error(error.error || 'Failed to upload video');
+      }
+
+      const uploadData = await uploadRes.json();
+      const videoUrl = uploadData.data?.url;
+      const thumbnailUrl = uploadData.data?.thumbnailUrl;
+
+      if (!videoUrl) {
+        throw new Error('No URL returned from upload');
+      }
+
+      // Create form check with uploaded video URL
       const res = await fetch('/api/form-check', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           exerciseName,
           videoUrl,
-          duration: 30, // Would be extracted from video
+          thumbnailUrl,
+          duration: 30, // Could be extracted from video metadata
         }),
       });
 
@@ -85,9 +116,12 @@ export default function FormCheckPage() {
         setSelectedCheck(data.formCheck);
         setShowUpload(false);
         setExerciseName('');
+      } else {
+        throw new Error('Failed to create form check');
       }
     } catch (error) {
       console.error('Upload failed:', error);
+      alert(error instanceof Error ? error.message : 'Failed to upload video');
     } finally {
       setUploading(false);
     }
