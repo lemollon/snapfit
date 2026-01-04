@@ -141,7 +141,7 @@ const TYPE_CONFIG = {
 export default function GlobalChallengesPage() {
   const { data: session } = useSession();
   const toast = useToast();
-  const [challenges, setChallenges] = useState<GlobalChallenge[]>(SAMPLE_CHALLENGES);
+  const [challenges, setChallenges] = useState<GlobalChallenge[]>([]);
   const [selectedChallenge, setSelectedChallenge] = useState<GlobalChallenge | null>(null);
   const [activeTab, setActiveTab] = useState<'active' | 'upcoming' | 'completed'>('active');
   const [loading, setLoading] = useState(true);
@@ -194,26 +194,34 @@ export default function GlobalChallengesPage() {
   useEffect(() => {
     const fetchChallenges = async () => {
       if (!session?.user) {
+        // Show sample data for demo (logged out users)
+        setChallenges(SAMPLE_CHALLENGES);
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch('/api/challenges/global');
-        if (response.ok) {
-          const data = await response.json();
-          // API returns array directly
-          if (Array.isArray(data) && data.length > 0) {
-            const apiChallenges = data.map((challenge: any) => ({
-              ...challenge,
-              daysLeft: Math.max(0, Math.ceil((new Date(challenge.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
-            }));
-            setChallenges(apiChallenges);
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch challenges');
+        }
+        const data = await response.json();
+        // API returns array directly
+        if (Array.isArray(data) && data.length > 0) {
+          const apiChallenges = data.map((challenge: any) => ({
+            ...challenge,
+            daysLeft: Math.max(0, Math.ceil((new Date(challenge.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
+          }));
+          setChallenges(apiChallenges);
+        } else {
+          // Use sample data when no challenges returned
+          setChallenges(SAMPLE_CHALLENGES);
         }
       } catch (error) {
         console.error('Error fetching challenges:', error);
         toast.error('Failed to load challenges', 'Please try refreshing the page.');
+        // Use sample data as fallback
+        setChallenges(SAMPLE_CHALLENGES);
       } finally {
         setLoading(false);
       }

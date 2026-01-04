@@ -69,8 +69,8 @@ const CATEGORY_CONFIG = {
 export default function RecordsPage() {
   const { data: session } = useSession();
   const toast = useToast();
-  const [records, setRecords] = useState<PersonalRecord[]>(SAMPLE_RECORDS);
-  const [history, setHistory] = useState<PRHistory[]>(SAMPLE_HISTORY);
+  const [records, setRecords] = useState<PersonalRecord[]>([]);
+  const [history, setHistory] = useState<PRHistory[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -93,42 +93,46 @@ export default function RecordsPage() {
   useEffect(() => {
     const fetchRecords = async () => {
       if (!session?.user) {
+        // Show sample data for demo (logged out users)
+        setRecords(SAMPLE_RECORDS);
+        setHistory(SAMPLE_HISTORY);
         setLoading(false);
         return;
       }
 
       try {
         const response = await fetch('/api/records');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.records && data.records.length > 0) {
-            const transformedRecords = data.records.map((r: any) => ({
-              id: r.id,
-              exerciseName: r.exerciseName,
-              category: r.category,
-              maxWeight: r.maxWeight,
-              maxReps: r.maxReps,
-              fastestTime: r.fastestTime,
-              longestDistance: r.longestDistance,
-              unit: r.unit,
-              achievedAt: r.updatedAt || r.createdAt,
-              improvement: r.improvement,
-              isNew: r.isNew,
-            }));
-            setRecords(transformedRecords);
-          }
-          if (data.history && data.history.length > 0) {
-            const transformedHistory = data.history.map((h: any) => ({
-              id: h.id,
-              exerciseName: h.exerciseName,
-              recordType: h.recordType,
-              previousValue: h.previousValue,
-              newValue: h.newValue,
-              improvement: h.improvementPercent || ((h.newValue - h.previousValue) / h.previousValue * 100),
-              achievedAt: h.achievedAt || h.createdAt,
-            }));
-            setHistory(transformedHistory);
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch records');
+        }
+        const data = await response.json();
+        if (data.records && data.records.length > 0) {
+          const transformedRecords = data.records.map((r: any) => ({
+            id: r.id,
+            exerciseName: r.exerciseName,
+            category: r.category,
+            maxWeight: r.maxWeight,
+            maxReps: r.maxReps,
+            fastestTime: r.fastestTime,
+            longestDistance: r.longestDistance,
+            unit: r.unit,
+            achievedAt: r.updatedAt || r.createdAt,
+            improvement: r.improvement,
+            isNew: r.isNew,
+          }));
+          setRecords(transformedRecords);
+        }
+        if (data.history && data.history.length > 0) {
+          const transformedHistory = data.history.map((h: any) => ({
+            id: h.id,
+            exerciseName: h.exerciseName,
+            recordType: h.recordType,
+            previousValue: h.previousValue,
+            newValue: h.newValue,
+            improvement: h.improvementPercent || ((h.newValue - h.previousValue) / h.previousValue * 100),
+            achievedAt: h.achievedAt || h.createdAt,
+          }));
+          setHistory(transformedHistory);
         }
       } catch (error) {
         console.error('Error fetching records:', error);

@@ -170,7 +170,7 @@ const DIET_FILTERS = ['All', 'High-Protein', 'Keto', 'Vegan', 'Vegetarian', 'Glu
 export default function RecipesPage() {
   const { data: session } = useSession();
   const toast = useToast();
-  const [recipes, setRecipes] = useState<Recipe[]>(SAMPLE_RECIPES);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -191,36 +191,42 @@ export default function RecipesPage() {
         if (searchQuery) params.append('search', searchQuery);
 
         const response = await fetch(`/api/recipes?${params.toString()}`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.recipes && data.recipes.length > 0) {
-            const transformedRecipes = data.recipes.map((r: any) => ({
-              id: r.id,
-              name: r.name,
-              description: r.description,
-              imageUrl: r.imageUrl,
-              category: r.category,
-              cuisine: r.cuisine,
-              tags: r.tags || [],
-              prepTime: r.prepTime,
-              cookTime: r.cookTime,
-              servings: r.servings,
-              difficulty: r.difficulty || 'medium',
-              calories: r.calories,
-              protein: r.protein,
-              carbs: r.carbs,
-              fat: r.fat,
-              rating: r.rating || 4.5,
-              ratingCount: r.ratingCount || 0,
-              isSaved: data.savedRecipeIds?.includes(r.id) || false,
-              isFeatured: r.isFeatured,
-            }));
-            setRecipes(transformedRecipes);
-          }
+        if (!response.ok) {
+          throw new Error('Failed to fetch recipes');
+        }
+        const data = await response.json();
+        if (data.recipes && data.recipes.length > 0) {
+          const transformedRecipes = data.recipes.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            imageUrl: r.imageUrl,
+            category: r.category,
+            cuisine: r.cuisine,
+            tags: r.tags || [],
+            prepTime: r.prepTime,
+            cookTime: r.cookTime,
+            servings: r.servings,
+            difficulty: r.difficulty || 'medium',
+            calories: r.calories,
+            protein: r.protein,
+            carbs: r.carbs,
+            fat: r.fat,
+            rating: r.rating || 4.5,
+            ratingCount: r.ratingCount || 0,
+            isSaved: data.savedRecipeIds?.includes(r.id) || false,
+            isFeatured: r.isFeatured,
+          }));
+          setRecipes(transformedRecipes);
+        } else {
+          // Use sample data when no recipes returned (for demo)
+          setRecipes(SAMPLE_RECIPES);
         }
       } catch (error) {
         console.error('Error fetching recipes:', error);
         toast.error('Failed to load recipes', 'Please try refreshing the page.');
+        // Use sample data as fallback for demo
+        setRecipes(SAMPLE_RECIPES);
       } finally {
         setLoading(false);
       }

@@ -170,6 +170,7 @@ export default function CalendarPage() {
       }
 
       const res = await fetch(`/api/calendar?start=${formatDate(start)}&end=${formatDate(end)}&view=${view}`);
+      if (!res.ok) throw new Error('Failed to fetch calendar');
       const data = await res.json();
       setCalendarData(data);
     } catch (error) {
@@ -186,6 +187,7 @@ export default function CalendarPage() {
       const res = await fetch(
         `/api/calendar/timeline?page=${page}&limit=20&filter=${timelineFilter}`
       );
+      if (!res.ok) throw new Error('Failed to fetch timeline');
       const data = await res.json();
 
       if (reset) {
@@ -228,6 +230,7 @@ export default function CalendarPage() {
       const res = await fetch(
         `/api/calendar/search?q=${encodeURIComponent(query)}&type=${searchType}`
       );
+      if (!res.ok) throw new Error('Search failed');
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch (error) {
