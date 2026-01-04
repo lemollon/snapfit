@@ -195,38 +195,32 @@ export default function RecipesPage() {
           throw new Error('Failed to fetch recipes');
         }
         const data = await response.json();
-        if (data.recipes && data.recipes.length > 0) {
-          const transformedRecipes = data.recipes.map((r: any) => ({
-            id: r.id,
-            name: r.name,
-            description: r.description,
-            imageUrl: r.imageUrl,
-            category: r.category,
-            cuisine: r.cuisine,
-            tags: r.tags || [],
-            prepTime: r.prepTime,
-            cookTime: r.cookTime,
-            servings: r.servings,
-            difficulty: r.difficulty || 'medium',
-            calories: r.calories,
-            protein: r.protein,
-            carbs: r.carbs,
-            fat: r.fat,
-            rating: r.rating || 4.5,
-            ratingCount: r.ratingCount || 0,
-            isSaved: data.savedRecipeIds?.includes(r.id) || false,
-            isFeatured: r.isFeatured,
-          }));
-          setRecipes(transformedRecipes);
-        } else {
-          // Use sample data when no recipes returned (for demo)
-          setRecipes(SAMPLE_RECIPES);
-        }
+        const transformedRecipes = (data.recipes || []).map((r: any) => ({
+          id: r.id,
+          name: r.name,
+          description: r.description,
+          imageUrl: r.imageUrl,
+          category: r.category,
+          cuisine: r.cuisine,
+          tags: r.tags || [],
+          prepTime: r.prepTime,
+          cookTime: r.cookTime,
+          servings: r.servings,
+          difficulty: r.difficulty || 'medium',
+          calories: r.calories,
+          protein: r.protein,
+          carbs: r.carbs,
+          fat: r.fat,
+          rating: r.rating || 4.5,
+          ratingCount: r.ratingCount || 0,
+          isSaved: data.savedRecipeIds?.includes(r.id) || false,
+          isFeatured: r.isFeatured,
+        }));
+        setRecipes(transformedRecipes);
       } catch (error) {
         console.error('Error fetching recipes:', error);
         toast.error('Failed to load recipes', 'Please try refreshing the page.');
-        // Use sample data as fallback for demo
-        setRecipes(SAMPLE_RECIPES);
+        setRecipes([]);
       } finally {
         setLoading(false);
       }
@@ -517,6 +511,17 @@ export default function RecipesPage() {
             {filteredRecipes.length} Recipes
           </h2>
 
+          {filteredRecipes.length === 0 ? (
+            <div className="text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+              <ChefHat className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              <p className="text-white/60 mb-2">No recipes found</p>
+              {searchQuery || selectedDiet !== 'All' || selectedCategory !== 'all' ? (
+                <p className="text-white/40 text-sm">Try adjusting your filters or search</p>
+              ) : (
+                <p className="text-white/40 text-sm">Check back later for new recipes</p>
+              )}
+            </div>
+          ) : (
           <div className="grid grid-cols-2 gap-3">
             {filteredRecipes.map((recipe) => (
               <div
@@ -555,6 +560,7 @@ export default function RecipesPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
 
         {/* Macro Summary Card */}

@@ -93,9 +93,9 @@ export default function RecordsPage() {
   useEffect(() => {
     const fetchRecords = async () => {
       if (!session?.user) {
-        // Show sample data for demo (logged out users)
-        setRecords(SAMPLE_RECORDS);
-        setHistory(SAMPLE_HISTORY);
+        // Not logged in - show empty state
+        setRecords([]);
+        setHistory([]);
         setLoading(false);
         return;
       }
@@ -121,6 +121,8 @@ export default function RecordsPage() {
             isNew: r.isNew,
           }));
           setRecords(transformedRecords);
+        } else {
+          setRecords([]);
         }
         if (data.history && data.history.length > 0) {
           const transformedHistory = data.history.map((h: any) => ({
@@ -133,6 +135,8 @@ export default function RecordsPage() {
             achievedAt: h.achievedAt || h.createdAt,
           }));
           setHistory(transformedHistory);
+        } else {
+          setHistory([]);
         }
       } catch (error) {
         console.error('Error fetching records:', error);
@@ -373,6 +377,34 @@ export default function RecordsPage() {
           </h2>
 
           <AnimatePresence mode="popLayout">
+            {filteredRecords.length === 0 && (
+              <div className="text-center py-12">
+                <Trophy className="w-16 h-16 text-white/20 mx-auto mb-4" />
+                {!session?.user ? (
+                  <>
+                    <p className="text-white/60 mb-2">Log in to track your personal records</p>
+                    <Link
+                      href="/login"
+                      className="inline-block px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all"
+                    >
+                      Log In
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-white/60 mb-2">No personal records yet</p>
+                    <p className="text-white/40 text-sm mb-4">Start logging your PRs to track your progress</p>
+                    <button
+                      onClick={() => setShowNewPRModal(true)}
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white"
+                    >
+                      <Plus className="w-4 h-4" />
+                      Log Your First PR
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
             {filteredRecords.map((record, index) => {
               const categoryConfig = CATEGORY_CONFIG[record.category];
               const CategoryIcon = categoryConfig.icon;
@@ -457,22 +489,30 @@ export default function RecordsPage() {
           </h2>
 
           <div className="bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden divide-y divide-white/5">
-            {history.map((item) => (
-              <div key={item.id} className="p-4 flex items-center justify-between">
-                <div>
-                  <h3 className="font-medium text-white">{item.exerciseName}</h3>
-                  <p className="text-sm text-white/50">{formatDate(item.achievedAt)}</p>
-                </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-2 text-white">
-                    <span className="text-white/40">{item.previousValue}</span>
-                    <ChevronRight className="w-4 h-4 text-white/40" />
-                    <span className="font-bold text-green-400">{item.newValue}</span>
-                  </div>
-                  <p className="text-sm text-green-400">+{item.improvement.toFixed(1)}%</p>
-                </div>
+            {history.length === 0 ? (
+              <div className="p-8 text-center">
+                <Calendar className="w-10 h-10 text-white/20 mx-auto mb-2" />
+                <p className="text-white/50 text-sm">No PR history yet</p>
+                <p className="text-white/30 text-xs">Your progress improvements will appear here</p>
               </div>
-            ))}
+            ) : (
+              history.map((item) => (
+                <div key={item.id} className="p-4 flex items-center justify-between">
+                  <div>
+                    <h3 className="font-medium text-white">{item.exerciseName}</h3>
+                    <p className="text-sm text-white/50">{formatDate(item.achievedAt)}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="flex items-center gap-2 text-white">
+                      <span className="text-white/40">{item.previousValue}</span>
+                      <ChevronRight className="w-4 h-4 text-white/40" />
+                      <span className="font-bold text-green-400">{item.newValue}</span>
+                    </div>
+                    <p className="text-sm text-green-400">+{item.improvement.toFixed(1)}%</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 

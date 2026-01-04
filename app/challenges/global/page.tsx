@@ -194,8 +194,8 @@ export default function GlobalChallengesPage() {
   useEffect(() => {
     const fetchChallenges = async () => {
       if (!session?.user) {
-        // Show sample data for demo (logged out users)
-        setChallenges(SAMPLE_CHALLENGES);
+        // Not logged in - show empty state
+        setChallenges([]);
         setLoading(false);
         return;
       }
@@ -207,21 +207,19 @@ export default function GlobalChallengesPage() {
         }
         const data = await response.json();
         // API returns array directly
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           const apiChallenges = data.map((challenge: any) => ({
             ...challenge,
             daysLeft: Math.max(0, Math.ceil((new Date(challenge.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))),
           }));
           setChallenges(apiChallenges);
         } else {
-          // Use sample data when no challenges returned
-          setChallenges(SAMPLE_CHALLENGES);
+          setChallenges([]);
         }
       } catch (error) {
         console.error('Error fetching challenges:', error);
         toast.error('Failed to load challenges', 'Please try refreshing the page.');
-        // Use sample data as fallback
-        setChallenges(SAMPLE_CHALLENGES);
+        setChallenges([]);
       } finally {
         setLoading(false);
       }
@@ -513,6 +511,36 @@ export default function GlobalChallengesPage() {
               <Lock className="w-12 h-12 text-white/20 mx-auto mb-3" />
               <p className="text-white/60">No upcoming challenges yet</p>
               <p className="text-white/40 text-sm">Check back soon!</p>
+            </div>
+          )}
+
+          {activeTab === 'active' && activeChallenges.length === 0 && !loading && (
+            <div className="text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+              <Trophy className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              {!session?.user ? (
+                <>
+                  <p className="text-white/60 mb-2">Log in to see available challenges</p>
+                  <Link
+                    href="/login"
+                    className="inline-block px-6 py-3 bg-gradient-to-r from-violet-500 to-purple-600 rounded-2xl font-semibold text-white hover:from-violet-600 hover:to-purple-700 transition-all"
+                  >
+                    Log In
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <p className="text-white/60 mb-2">No active challenges right now</p>
+                  <p className="text-white/40 text-sm">Check back later for new challenges!</p>
+                </>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'completed' && completedChallenges.length === 0 && !loading && (
+            <div className="text-center py-12 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10">
+              <CheckCircle className="w-16 h-16 text-white/20 mx-auto mb-4" />
+              <p className="text-white/60 mb-2">No completed challenges yet</p>
+              <p className="text-white/40 text-sm">Join a challenge and complete it to see it here!</p>
             </div>
           )}
         </div>
