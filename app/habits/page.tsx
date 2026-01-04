@@ -184,13 +184,14 @@ export default function HabitsPage() {
         }
       } catch (error) {
         console.error('Error fetching habits:', error);
+        toast.error('Failed to load habits', 'Please try refreshing the page.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchHabits();
-  }, [session]);
+  }, [session, toast]);
 
   const completedToday = habits.filter(h => h.todayCompleted).length;
   const totalHabits = habits.length;

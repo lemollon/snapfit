@@ -60,6 +60,7 @@ export default function RecoveryPage() {
   const fetchRecoveryData = async () => {
     try {
       const res = await fetch('/api/recovery?days=14');
+      if (!res.ok) throw new Error('Failed to fetch recovery data');
       const data = await res.json();
       setLogs(data.logs || []);
       setTodayLog(data.todayLog);
@@ -99,11 +100,13 @@ export default function RecoveryPage() {
         }),
       });
 
+      if (!res.ok) throw new Error('Failed to save recovery data');
       const data = await res.json();
       if (data.log) {
         setTodayLog(data.log);
         setHasLoggedToday(true);
         fetchRecoveryData();
+        toast.success('Recovery logged', 'Your recovery data has been saved.');
       }
     } catch (error) {
       console.error('Failed to save recovery data:', error);

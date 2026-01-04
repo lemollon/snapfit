@@ -71,6 +71,7 @@ export default function ProgramsPage() {
       if (search) url += `&search=${encodeURIComponent(search)}`;
 
       const res = await fetch(url);
+      if (!res.ok) throw new Error('Failed to fetch programs');
       const data = await res.json();
       setPrograms(data.programs || []);
     } catch (error) {
@@ -84,6 +85,7 @@ export default function ProgramsPage() {
   const fetchOwnedPrograms = async () => {
     try {
       const res = await fetch('/api/programs?type=owned');
+      if (!res.ok) throw new Error('Failed to fetch owned programs');
       const data = await res.json();
       setOwnedPrograms(data.purchases || []);
     } catch (error) {

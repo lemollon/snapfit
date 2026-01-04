@@ -129,6 +129,10 @@ export default function AchievementsPage() {
         fetch('/api/profile'),
       ]);
 
+      if (!achievementsRes.ok || !profileRes.ok) {
+        throw new Error('Failed to fetch achievements data');
+      }
+
       const [achievementsData, profileData] = await Promise.all([
         achievementsRes.json(),
         profileRes.json(),

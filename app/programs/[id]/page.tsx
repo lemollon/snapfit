@@ -128,13 +128,15 @@ export default function ProgramDetailPage() {
 
   const handleStartWeek = async (weekNumber: number) => {
     try {
-      await fetch(`/api/programs/${programId}/progress`, {
+      const res = await fetch(`/api/programs/${programId}/progress`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ currentWeek: weekNumber }),
       });
+      if (!res.ok) throw new Error('Failed to update progress');
       setPurchaseInfo(prev => prev ? { ...prev, currentWeek: weekNumber } : null);
       setActiveWeek(weekNumber);
+      toast.success('Progress updated', 'You\'re now on week ' + weekNumber + '.');
     } catch (error) {
       console.error('Failed to update progress:', error);
       toast.error('Failed to update progress', 'Please try again.');
