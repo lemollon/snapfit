@@ -29,6 +29,7 @@ export const users = pgTable('users', {
   height: real('height'), // in cm
   dateOfBirth: date('date_of_birth'),
   gender: text('gender'),
+  location: text('location'), // City, Country
   // Trainer specific
   certifications: text('certifications').array(),
   specializations: text('specializations').array(),
@@ -1258,6 +1259,7 @@ export const trainerBranding = pgTable('trainer_branding', {
   instagramHandle: text('instagram_handle'),
   tiktokHandle: text('tiktok_handle'),
   youtubeHandle: text('youtube_handle'),
+  twitterHandle: text('twitter_handle'),
   // Settings
   hideSnapfitBranding: boolean('hide_snapfit_branding').default(false), // Premium feature
   customCss: text('custom_css'), // Advanced customization

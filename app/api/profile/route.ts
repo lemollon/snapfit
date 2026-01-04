@@ -130,6 +130,7 @@ export async function PATCH(req: Request) {
     const {
       name,
       bio,
+      location,
       avatarUrl,
       coverUrl,
       instagramUrl,
@@ -159,6 +160,7 @@ export async function PATCH(req: Request) {
 
     if (name !== undefined) updateData.name = name;
     if (bio !== undefined) updateData.bio = bio;
+    if (location !== undefined) updateData.location = location;
 
     // Handle avatar upload to Cloudinary
     if (avatarUrl !== undefined) {
