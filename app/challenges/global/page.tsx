@@ -89,11 +89,12 @@ export default function GlobalChallengesPage() {
       setLeaderboardLoading(true);
       try {
         const response = await fetch(`/api/challenges/global/leaderboard?challengeId=${selectedChallenge.id}&limit=10`);
-        if (response.ok) {
-          const data = await response.json();
-          setLeaderboard(data.leaderboard || []);
-          setCurrentUserPosition(data.currentUserPosition || null);
+        if (!response.ok) {
+          throw new Error('Failed to fetch leaderboard');
         }
+        const data = await response.json();
+        setLeaderboard(data.leaderboard || []);
+        setCurrentUserPosition(data.currentUserPosition || null);
       } catch (error) {
         console.error('Error fetching leaderboard:', error);
         toast.error('Failed to load leaderboard', 'Please try again.');
