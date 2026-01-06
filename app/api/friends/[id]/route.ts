@@ -20,14 +20,14 @@ export async function PATCH(
     const userId = (session.user as any).id;
     const { action } = await req.json(); // 'accept' or 'reject'
 
-    // Find the friendship where current user is the receiver
-    const friendship = await db.query.friendships.findFirst({
-      where: and(
+    // Find the friendship where current user is the receiver using select API
+    const [friendship] = await db.select().from(friendships)
+      .where(and(
         eq(friendships.senderId, params.id),
         eq(friendships.receiverId, userId),
         eq(friendships.status, 'pending')
-      ),
-    });
+      ))
+      .limit(1);
 
     if (!friendship) {
       return NextResponse.json({ error: 'Friend request not found' }, { status: 404 });

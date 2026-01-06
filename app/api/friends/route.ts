@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { friendships, users } from '@/lib/db/schema';
-import { eq, or, and } from 'drizzle-orm';
+import { eq, or, and, inArray } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -15,49 +15,41 @@ export async function GET() {
 
     const userId = (session.user as any).id;
 
-    // Get all friendships (accepted)
-    const allFriendships = await db.query.friendships.findMany({
-      where: and(
+    // Get all friendships (accepted) using select API
+    const allFriendships = await db.select().from(friendships)
+      .where(and(
         or(eq(friendships.senderId, userId), eq(friendships.receiverId, userId)),
         eq(friendships.status, 'accepted')
-      ),
-    });
+      ));
 
     // Get friend details
     const friendIds = allFriendships.map(f =>
       f.senderId === userId ? f.receiverId : f.senderId
     );
 
-    // Handle empty array case to avoid or() with no arguments
+    // Handle empty array case
     const friends = friendIds.length > 0
-      ? await db.query.users.findMany({
-          where: or(...friendIds.map(id => eq(users.id, id))),
-          columns: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-            isTrainer: true,
-          },
-        })
+      ? await db.select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          avatarUrl: users.avatarUrl,
+          isTrainer: users.isTrainer,
+        }).from(users).where(inArray(users.id, friendIds))
       : [];
 
-    // Get pending requests (received)
-    const pendingRequests = await db.query.friendships.findMany({
-      where: and(eq(friendships.receiverId, userId), eq(friendships.status, 'pending')),
-    });
+    // Get pending requests (received) using select API
+    const pendingRequests = await db.select().from(friendships)
+      .where(and(eq(friendships.receiverId, userId), eq(friendships.status, 'pending')));
 
     const pendingFromIds = pendingRequests.map(f => f.senderId);
     const pendingFrom = pendingFromIds.length > 0
-      ? await db.query.users.findMany({
-          where: or(...pendingFromIds.map(id => eq(users.id, id))),
-          columns: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-          },
-        })
+      ? await db.select({
+          id: users.id,
+          name: users.name,
+          email: users.email,
+          avatarUrl: users.avatarUrl,
+        }).from(users).where(inArray(users.id, pendingFromIds))
       : [];
 
     return NextResponse.json({ friends, pendingRequests: pendingFrom });
@@ -78,10 +70,10 @@ export async function POST(req: Request) {
     const userId = (session.user as any).id;
     const { email } = await req.json();
 
-    // Find user by email
-    const targetUser = await db.query.users.findFirst({
-      where: eq(users.email, email),
-    });
+    // Find user by email using select API
+    const [targetUser] = await db.select().from(users)
+      .where(eq(users.email, email))
+      .limit(1);
 
     if (!targetUser) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
@@ -91,13 +83,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Cannot add yourself' }, { status: 400 });
     }
 
-    // Check if friendship exists
-    const existing = await db.query.friendships.findFirst({
-      where: or(
+    // Check if friendship exists using select API
+    const [existing] = await db.select().from(friendships)
+      .where(or(
         and(eq(friendships.senderId, userId), eq(friendships.receiverId, targetUser.id)),
         and(eq(friendships.senderId, targetUser.id), eq(friendships.receiverId, userId))
-      ),
-    });
+      ))
+      .limit(1);
 
     if (existing) {
       return NextResponse.json({ error: 'Friend request already exists' }, { status: 400 });

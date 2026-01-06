@@ -19,9 +19,7 @@ export async function POST(req: Request) {
     const results: string[] = [];
 
     // Check and create Regular User
-    const existingUser = await db.query.users.findFirst({
-      where: eq(users.email, 'testuser@snapfit.com'),
-    });
+    const [existingUser] = await db.select().from(users).where(eq(users.email, 'testuser@snapfit.com')).limit(1);
 
     if (!existingUser) {
       await db.insert(users).values({
@@ -48,9 +46,7 @@ export async function POST(req: Request) {
     }
 
     // Check and create Trainer User
-    const existingTrainer = await db.query.users.findFirst({
-      where: eq(users.email, 'testtrainer@snapfit.com'),
-    });
+    const [existingTrainer] = await db.select().from(users).where(eq(users.email, 'testtrainer@snapfit.com')).limit(1);
 
     if (!existingTrainer) {
       await db.insert(users).values({

@@ -31,12 +31,12 @@ export async function GET(request: Request) {
     results.usersTableError = error instanceof Error ? error.message : String(error);
   }
 
-  // Test 3: Check if specific email exists
+  // Test 3: Check if specific email exists - use select API instead of query API
   if (email) {
     try {
-      const existingUser = await db.query.users.findFirst({
-        where: eq(users.email, email.toLowerCase()),
-      });
+      const [existingUser] = await db.select().from(users)
+        .where(eq(users.email, email.toLowerCase()))
+        .limit(1);
       results.emailCheck = email;
       results.emailExists = !!existingUser;
       if (existingUser) {

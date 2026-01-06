@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { challenges, challengeParticipants, users, Challenge } from '@/lib/db/schema';
-import { eq, desc, or, gte } from 'drizzle-orm';
+import { eq, desc, inArray } from 'drizzle-orm';
 
 export async function GET(req: Request) {
   try {
@@ -17,47 +17,41 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const type = searchParams.get('type'); // 'my', 'joined', 'public'
 
-    const now = new Date();
-
     let allChallenges: Challenge[] = [];
 
     if (type === 'my') {
-      // Challenges created by user
-      allChallenges = await db.query.challenges.findMany({
-        where: eq(challenges.creatorId, userId),
-        orderBy: [desc(challenges.createdAt)],
-      });
+      // Challenges created by user - use select API
+      allChallenges = await db.select().from(challenges)
+        .where(eq(challenges.creatorId, userId))
+        .orderBy(desc(challenges.createdAt));
     } else if (type === 'joined') {
-      // Challenges user has joined
-      const participations = await db.query.challengeParticipants.findMany({
-        where: eq(challengeParticipants.userId, userId),
-      });
+      // Challenges user has joined - use select API
+      const participations = await db.select().from(challengeParticipants)
+        .where(eq(challengeParticipants.userId, userId));
 
       const challengeIds = participations.map(p => p.challengeId);
 
       if (challengeIds.length > 0) {
-        allChallenges = await db.query.challenges.findMany({
-          where: or(...challengeIds.map(id => eq(challenges.id, id))),
-          orderBy: [desc(challenges.startDate)],
-        });
+        allChallenges = await db.select().from(challenges)
+          .where(inArray(challenges.id, challengeIds))
+          .orderBy(desc(challenges.startDate));
       } else {
         allChallenges = [];
       }
     } else {
-      // Public active challenges
-      allChallenges = await db.query.challenges.findMany({
-        where: eq(challenges.isPublic, true),
-        orderBy: [desc(challenges.createdAt)],
-        limit: 20,
-      });
+      // Public active challenges - use select API
+      allChallenges = await db.select().from(challenges)
+        .where(eq(challenges.isPublic, true))
+        .orderBy(desc(challenges.createdAt))
+        .limit(20);
     }
 
     // Get participant counts for each challenge
     const challengesWithCounts = await Promise.all(
       allChallenges.map(async (challenge) => {
-        const participants = await db.query.challengeParticipants.findMany({
-          where: eq(challengeParticipants.challengeId, challenge.id),
-        });
+        // Use select API instead of query API
+        const participants = await db.select().from(challengeParticipants)
+          .where(eq(challengeParticipants.challengeId, challenge.id));
 
         const isJoined = participants.some(p => p.userId === userId);
         const userProgress = participants.find(p => p.userId === userId)?.progress || 0;
