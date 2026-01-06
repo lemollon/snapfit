@@ -25,20 +25,20 @@ export async function GET(req: Request) {
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
 
-      logs = await db.query.foodLogs.findMany({
-        where: and(
+      // Use select API instead of query API
+      logs = await db.select().from(foodLogs)
+        .where(and(
           eq(foodLogs.userId, userId),
           gte(foodLogs.loggedAt, startOfDay),
           lte(foodLogs.loggedAt, endOfDay)
-        ),
-        orderBy: [desc(foodLogs.loggedAt)],
-      });
+        ))
+        .orderBy(desc(foodLogs.loggedAt));
     } else {
-      logs = await db.query.foodLogs.findMany({
-        where: eq(foodLogs.userId, userId),
-        orderBy: [desc(foodLogs.loggedAt)],
-        limit: 50,
-      });
+      // Use select API instead of query API
+      logs = await db.select().from(foodLogs)
+        .where(eq(foodLogs.userId, userId))
+        .orderBy(desc(foodLogs.loggedAt))
+        .limit(50);
     }
 
     return NextResponse.json({ foodLogs: logs });
@@ -102,9 +102,10 @@ export async function POST(req: Request) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const existingStats = await db.query.dailyStats.findFirst({
-      where: and(eq(dailyStats.userId, userId), eq(dailyStats.date, today)),
-    });
+    // Use select API instead of query API
+    const [existingStats] = await db.select().from(dailyStats)
+      .where(and(eq(dailyStats.userId, userId), eq(dailyStats.date, today)))
+      .limit(1);
 
     if (existingStats) {
       await db.update(dailyStats)

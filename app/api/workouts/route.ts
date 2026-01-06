@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { workouts, exercises } from '@/lib/db/schema';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, inArray } from 'drizzle-orm';
 
 export async function GET() {
   try {
@@ -15,15 +15,24 @@ export async function GET() {
 
     const userId = (session.user as any).id;
 
-    const userWorkouts = await db.query.workouts.findMany({
-      where: eq(workouts.userId, userId),
-      orderBy: [desc(workouts.createdAt)],
-      with: {
-        exercises: true,
-      },
-    });
+    // Get workouts using select API
+    const userWorkouts = await db.select().from(workouts)
+      .where(eq(workouts.userId, userId))
+      .orderBy(desc(workouts.createdAt));
 
-    return NextResponse.json({ workouts: userWorkouts });
+    // Get exercises for all workouts
+    const workoutIds = userWorkouts.map(w => w.id);
+    const workoutExercises = workoutIds.length > 0
+      ? await db.select().from(exercises).where(inArray(exercises.workoutId, workoutIds))
+      : [];
+
+    // Combine workouts with their exercises
+    const workoutsWithExercises = userWorkouts.map(workout => ({
+      ...workout,
+      exercises: workoutExercises.filter(e => e.workoutId === workout.id),
+    }));
+
+    return NextResponse.json({ workouts: workoutsWithExercises });
   } catch (error) {
     console.error('Error fetching workouts:', error);
     return NextResponse.json({ error: 'Failed to fetch workouts' }, { status: 500 });

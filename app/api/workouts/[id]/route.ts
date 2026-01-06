@@ -10,12 +10,10 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const workout = await db.query.workouts.findFirst({
-      where: eq(workouts.id, params.id),
-      with: {
-        exercises: true,
-      },
-    });
+    // Get workout using select API
+    const [workout] = await db.select().from(workouts)
+      .where(eq(workouts.id, params.id))
+      .limit(1);
 
     if (!workout) {
       return NextResponse.json({ error: 'Workout not found' }, { status: 404 });
@@ -29,7 +27,11 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    return NextResponse.json({ workout });
+    // Get exercises for this workout
+    const workoutExercises = await db.select().from(exercises)
+      .where(eq(exercises.workoutId, params.id));
+
+    return NextResponse.json({ workout: { ...workout, exercises: workoutExercises } });
   } catch (error) {
     console.error('Error fetching workout:', error);
     return NextResponse.json({ error: 'Failed to fetch workout' }, { status: 500 });
@@ -49,10 +51,10 @@ export async function DELETE(
 
     const userId = (session.user as any).id;
 
-    // Verify ownership
-    const workout = await db.query.workouts.findFirst({
-      where: and(eq(workouts.id, params.id), eq(workouts.userId, userId)),
-    });
+    // Verify ownership using select API
+    const [workout] = await db.select().from(workouts)
+      .where(and(eq(workouts.id, params.id), eq(workouts.userId, userId)))
+      .limit(1);
 
     if (!workout) {
       return NextResponse.json({ error: 'Workout not found or unauthorized' }, { status: 404 });

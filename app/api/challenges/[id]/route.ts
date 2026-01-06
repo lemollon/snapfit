@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { challenges, challengeParticipants, users } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 
 export async function GET(
   req: Request,
@@ -16,28 +16,29 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const challenge = await db.query.challenges.findFirst({
-      where: eq(challenges.id, params.id),
-    });
+    // Use select API instead of query API
+    const [challenge] = await db.select().from(challenges)
+      .where(eq(challenges.id, params.id))
+      .limit(1);
 
     if (!challenge) {
       return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
     }
 
-    // Get participants with user info
-    const participants = await db.query.challengeParticipants.findMany({
-      where: eq(challengeParticipants.challengeId, params.id),
-    });
+    // Get participants using select API
+    const participants = await db.select().from(challengeParticipants)
+      .where(eq(challengeParticipants.challengeId, params.id));
 
     const participantIds = participants.map(p => p.userId);
-    const participantUsers = await db.query.users.findMany({
-      where: (users, { or }) => or(...participantIds.map(id => eq(users.id, id))),
-      columns: {
-        id: true,
-        name: true,
-        avatarUrl: true,
-      },
-    });
+
+    // Get participant users using select API with inArray
+    const participantUsers = participantIds.length > 0
+      ? await db.select({
+          id: users.id,
+          name: users.name,
+          avatarUrl: users.avatarUrl,
+        }).from(users).where(inArray(users.id, participantIds))
+      : [];
 
     const leaderboard = participants
       .map(p => {
@@ -71,22 +72,22 @@ export async function POST(
 
     const userId = (session.user as any).id;
 
-    // Check if challenge exists
-    const challenge = await db.query.challenges.findFirst({
-      where: eq(challenges.id, params.id),
-    });
+    // Check if challenge exists using select API
+    const [challenge] = await db.select().from(challenges)
+      .where(eq(challenges.id, params.id))
+      .limit(1);
 
     if (!challenge) {
       return NextResponse.json({ error: 'Challenge not found' }, { status: 404 });
     }
 
-    // Check if already joined
-    const existing = await db.query.challengeParticipants.findFirst({
-      where: and(
+    // Check if already joined using select API
+    const [existing] = await db.select().from(challengeParticipants)
+      .where(and(
         eq(challengeParticipants.challengeId, params.id),
         eq(challengeParticipants.userId, userId)
-      ),
-    });
+      ))
+      .limit(1);
 
     if (existing) {
       return NextResponse.json({ error: 'Already joined this challenge' }, { status: 400 });
@@ -121,12 +122,13 @@ export async function PATCH(
     const userId = (session.user as any).id;
     const { progress } = await req.json();
 
-    const existing = await db.query.challengeParticipants.findFirst({
-      where: and(
+    // Use select API instead of query API
+    const [existing] = await db.select().from(challengeParticipants)
+      .where(and(
         eq(challengeParticipants.challengeId, params.id),
         eq(challengeParticipants.userId, userId)
-      ),
-    });
+      ))
+      .limit(1);
 
     if (!existing) {
       return NextResponse.json({ error: 'Not a participant' }, { status: 400 });
