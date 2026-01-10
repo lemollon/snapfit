@@ -25,33 +25,83 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        const isDev = process.env.NODE_ENV === 'development';
+
+        // Validate credentials exist
         if (!credentials?.email || !credentials?.password) {
+          console.log('[Auth] Missing credentials');
+          throw new Error('Please enter email and password');
+        }
+
+        // Ensure password is a non-empty string
+        const passwordInput = String(credentials.password || '').trim();
+        if (!passwordInput) {
+          console.log('[Auth] Empty password after trim');
           throw new Error('Please enter email and password');
         }
 
         // Normalize email
         const normalizedEmail = credentials.email.toLowerCase().trim();
+        if (isDev) {
+          console.log('[Auth] Attempting login for:', normalizedEmail);
+        }
 
         let user;
         try {
           const result = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
           user = result[0];
+          if (isDev) {
+            console.log('[Auth] User lookup result:', {
+              found: !!user,
+              userId: user?.id,
+              hasPassword: !!user?.password,
+            });
+          }
         } catch (dbError) {
           // Log the actual error for debugging but don't expose it to users
-          console.error('Database error during login:', dbError);
+          console.error('[Auth] Database error during login:', dbError);
           throw new Error('Unable to sign in. Please try again later.');
         }
 
-        if (!user || !user.password) {
-          // Generic message to prevent user enumeration
+        if (!user) {
+          if (isDev) {
+            console.log('[Auth] User not found for email:', normalizedEmail);
+          }
           throw new Error('Invalid email or password');
         }
 
-        const passwordMatch = await bcrypt.compare(credentials.password, user.password);
+        if (!user.password) {
+          console.error('[Auth] User found but has no password stored:', user.id);
+          throw new Error('Invalid email or password');
+        }
+
+        // Verify the stored password is a valid bcrypt hash
+        const isBcryptHash = user.password.startsWith('$2a$') || user.password.startsWith('$2b$');
+        if (!isBcryptHash) {
+          console.error('[Auth] Invalid password hash format for user:', user.id);
+          throw new Error('Invalid email or password');
+        }
+
+        let passwordMatch: boolean;
+        try {
+          passwordMatch = await bcrypt.compare(passwordInput, user.password);
+          if (isDev) {
+            console.log('[Auth] Password comparison result:', passwordMatch);
+          }
+        } catch (bcryptError) {
+          console.error('[Auth] Bcrypt comparison error:', bcryptError);
+          throw new Error('Unable to sign in. Please try again later.');
+        }
 
         if (!passwordMatch) {
-          // Same generic message
+          if (isDev) {
+            console.log('[Auth] Password mismatch for user:', user.id);
+          }
           throw new Error('Invalid email or password');
+        }
+
+        if (isDev) {
+          console.log('[Auth] Login successful for user:', user.id);
         }
 
         return {
