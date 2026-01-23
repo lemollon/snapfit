@@ -11,6 +11,8 @@ export const users = pgTable('users', {
   coverUrl: text('cover_url'), // Profile cover/banner image
   isTrainer: boolean('is_trainer').default(false),
   isAdmin: boolean('is_admin').default(false),
+  emailVerified: boolean('email_verified').default(false),
+  emailVerifiedAt: timestamp('email_verified_at'),
   bio: text('bio'),
   // Social links
   instagramUrl: text('instagram_url'),
@@ -53,6 +55,17 @@ export const users = pgTable('users', {
 
 // Password Reset Tokens
 export const passwordResetTokens = pgTable('password_reset_tokens', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  email: text('email').notNull(),
+  code: text('code').notNull(), // 6-digit code
+  expiresAt: timestamp('expires_at').notNull(),
+  used: boolean('used').default(false),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Email Verification Tokens
+export const emailVerificationTokens = pgTable('email_verification_tokens', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   email: text('email').notNull(),
@@ -1487,3 +1500,4 @@ export type RevenueSnapshot = typeof revenueSnapshots.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type TestimonialRequest = typeof testimonialRequests.$inferSelect;
 export type AiProgramDraft = typeof aiProgramDrafts.$inferSelect;
+export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect;
