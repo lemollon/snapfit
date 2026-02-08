@@ -1,8 +1,14 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users } from '@/lib/db/schema';
+import { users, emailVerificationTokens } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
+import { sendEmailVerificationEmail } from '@/lib/email';
+
+// Generate a 6-digit verification code
+function generateVerificationCode(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 // Email validation regex
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -52,13 +58,39 @@ export async function POST(req: Request) {
     // Hash password with bcrypt (cost factor 12)
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Create user
+    // Create user with emailVerified = false
     const [newUser] = await db.insert(users).values({
       email: normalizedEmail,
       password: hashedPassword,
       name: name?.trim() || normalizedEmail.split('@')[0],
       isTrainer: isTrainer || false,
+      emailVerified: false,
     }).returning();
+
+    // Generate verification code
+    const verificationCode = generateVerificationCode();
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiry
+
+    // Store verification token
+    await db.insert(emailVerificationTokens).values({
+      userId: newUser.id,
+      email: normalizedEmail,
+      code: verificationCode,
+      expiresAt,
+    });
+
+    // Send verification email
+    const emailResult = await sendEmailVerificationEmail(
+      normalizedEmail,
+      verificationCode,
+      newUser.name || undefined
+    );
+
+    if (!emailResult.success) {
+      console.error('Failed to send verification email:', emailResult.error);
+      // Don't fail registration, but log it
+    }
 
     return NextResponse.json({
       user: {
@@ -66,7 +98,10 @@ export async function POST(req: Request) {
         email: newUser.email,
         name: newUser.name,
         isTrainer: newUser.isTrainer,
+        emailVerified: false,
       },
+      message: 'Account created. Please check your email for verification code.',
+      requiresVerification: true,
     });
   } catch (error) {
     console.error('Registration error:', error);

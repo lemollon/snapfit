@@ -100,6 +100,14 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Invalid email or password');
         }
 
+        // Check if email is verified
+        if (!user.emailVerified) {
+          if (isDev) {
+            console.log('[Auth] Email not verified for user:', user.id);
+          }
+          throw new Error('EMAIL_NOT_VERIFIED');
+        }
+
         if (isDev) {
           console.log('[Auth] Login successful for user:', user.id);
         }

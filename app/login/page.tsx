@@ -147,6 +147,11 @@ export default function LoginPage() {
       if (isLogin) {
         const result = await signIn('credentials', { email, password, redirect: false });
         if (result?.error) {
+          // Handle email not verified error
+          if (result.error === 'EMAIL_NOT_VERIFIED') {
+            router.push(`/verify-email?email=${encodeURIComponent(email)}`);
+            return;
+          }
           setError(result.error);
         } else {
           router.push('/');
@@ -162,11 +167,8 @@ export default function LoginPage() {
         if (!res.ok) {
           setError(data.error);
         } else {
-          const result = await signIn('credentials', { email, password, redirect: false });
-          if (result?.ok) {
-            router.push('/');
-            router.refresh();
-          }
+          // Redirect to verification page after successful registration
+          router.push(`/verify-email?email=${encodeURIComponent(email)}`);
         }
       }
     } catch {
